@@ -1,0 +1,32 @@
+fastapi
+uvicorn
+gunicorn
+
+# Validation
+pydantic
+pydantic-settings
+email-validator
+
+# Forms (PayFast notify)
+python-multipart
+
+# Static files
+starlette
+
+# OpenAI (used in app.ai)
+openai
+
+# Excel generation (very likely needed)
+openpyxl
+
+psycopg2-binary
+
+# Data analysis
+pandas
+
+sqlalchemy
+requests
+yahooquery
+bcrypt
+python-jose[cryptography]
+httpx

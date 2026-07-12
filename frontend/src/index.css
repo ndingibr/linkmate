@@ -1,0 +1,485 @@
+/* ================================
+   BASE RESET (Normalized)
+================================ */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  line-height: 1.15;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #ffffff;
+}
+
+/* ================================
+   SEARCH PAGE LAYOUT
+================================ */
+.s130 {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+}
+
+/* Hero search section */
+.search-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-top: 100px;
+}
+
+/* ================================
+   SEARCH FORM
+================================ */
+.s130 form {
+  width: 100%;
+  max-width: 1100px;
+}
+
+.inner-form {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border-radius: 34px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  margin-bottom: 30px;
+}
+
+.input-field {
+  height: 80px;
+}
+
+.input-field input {
+  height: 100%;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 10px 0;
+  font-size: 18px;
+  color: #000;
+}
+
+.input-field input:focus {
+  outline: none;
+}
+
+/* Search input */
+.first-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #d9f1e3;
+}
+
+.svg-wrapper {
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+svg {
+  width: 36px;
+  height: 36px;
+  fill: #222;
+}
+
+/* Search button */
+.second-wrap {
+  min-width: 216px;
+}
+
+.btn-search {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  cursor: pointer;
+  font-size: 18px;
+  color: #fff;
+  background: #00ad5f;
+  transition: background 0.2s ease;
+}
+
+.btn-search:hover {
+  background: #009451;
+}
+
+.info {
+  font-size: 13px;
+  color: #555;
+  margin-top: 8px;
+}
+
+/* ================================
+   RESULTS SECTION
+================================ */
+.results-section {
+  width: 100%;
+  max-width: 1100px;
+  margin-top: 40px;
+  padding: 0 20px;
+}
+
+.results-title {
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.results-meta {
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+/* ================================
+   GOOGLE-LIKE RESULT CARD
+================================ */
+.result-card {
+  display: flex;
+  gap: 16px;
+}
+
+.result-image img {
+  width: 92px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.result-content {
+  flex: 1;
+}
+
+.result-content h3 {
+  font-size: 18px;
+  font-weight: 400;
+  margin: 0 0 4px;
+  color: #1a0dab;
+  cursor: pointer;
+}
+
+.result-content h3:hover {
+  text-decoration: underline;
+}
+
+.result-url {
+  font-size: 12px;
+  color: #006621;
+  margin-bottom: 6px;
+}
+
+.result-description {
+  font-size: 14px;
+  line-height: 1.58;
+  color: #4d5156;
+}
+
+/* ================================
+   STATES
+================================ */
+.search-loading,
+.search-error {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ================================
+   CONTACT/QUOTE SECTION
+================================ */
+.contact-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 80px auto;
+}
+
+.contact-info {
+  background: linear-gradient(135deg, #e0f7f1, #ffffff);
+  padding: 50px 40px;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-info h2 {
+  font-size: 28px;
+  color: #00ad5f;
+  margin-bottom: 20px;
+}
+
+.contact-info h3 {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.contact-info p {
+  font-size: 16px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.contact-info h4 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.contact-info ul {
+  list-style: disc;
+  padding-left: 20px;
+}
+
+.contact-info ul li {
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+/* Form panel */
+.contact-form-panel {
+  background: #f9f9f9;
+  padding: 50px 40px;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.contact-form-panel h2 {
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: #00ad5f;
+}
+
+.contact-form-panel label {
+  display: block;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.contact-form-panel input,
+.contact-form-panel textarea {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 20px;
+  border: 1px solid #d0e8df;
+  margin-bottom: 20px;
+  font-size: 15px;
+}
+
+.contact-form-panel textarea {
+  height: auto;
+  padding: 20px 20px;
+  resize: none;
+}
+
+.contact-form-panel input:focus,
+.contact-form-panel textarea:focus {
+  outline: none;
+  border-color: #00ad5f;
+  box-shadow: 0 0 5px rgba(0, 173, 95, 0.3);
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.contact-form-panel button {
+  background: #00ad5f;
+  color: #fff;
+  border: none;
+  padding: 14px 32px;
+  font-size: 16px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.contact-form-panel button:hover {
+  background: #009451;
+}
+
+/* ================================
+   MOBILE
+================================ */
+@media (max-width: 900px) {
+  .search-section {
+    padding-top: 180px;
+  }
+
+  .contact-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-info,
+  .contact-form-panel {
+    padding: 40px;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .second-wrap {
+    min-width: 100px;
+  }
+
+  .btn-search {
+    font-size: 14px;
+  }
+
+  .result-card {
+    flex-direction: column;
+  }
+
+  .result-image img {
+    width: 100%;
+    height: 160px;
+  }
+}
+
+/* Responsive Nav Header */
+.main-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: #f17c13;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  flex-wrap: wrap;
+}
+
+.main-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #ffffff;
+  cursor: pointer;
+  letter-spacing: -0.03em;
+}
+
+.main-nav-toggle-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  outline: none;
+  padding: 6px;
+}
+
+.main-nav-items-wrapper {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.main-nav-auth-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .main-nav-header {
+    padding: 1rem 1rem;
+    position: sticky;
+  }
+
+  .main-nav-toggle-btn {
+    display: block;
+  }
+
+  .main-nav-logo {
+    font-size: 1.4rem;
+  }
+
+  .main-nav-items-wrapper {
+    flex-basis: 100%;
+    flex-direction: column;
+    gap: 0;
+    align-items: stretch;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.3s ease;
+    padding: 0;
+  }
+
+  .main-nav-items-wrapper.open {
+    max-height: 400px;
+    opacity: 1;
+    padding: 1rem 0 0.5rem;
+  }
+
+  .main-nav-items-wrapper span,
+  .main-nav-items-wrapper a {
+    display: block;
+    text-align: center;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 1rem !important;
+  }
+
+  .main-nav-items-wrapper span:last-of-type {
+    border-bottom: none;
+  }
+
+  .main-nav-auth-group {
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-left: 0 !important;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .main-nav-auth-group button {
+    width: 100%;
+  }
+
+  .inner-form {
+    flex-direction: column;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
+  .first-wrap {
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+  }
+  .second-wrap {
+    width: 100%;
+    min-width: unset;
+  }
+  .input-field {
+    height: 60px;
+  }
+  .btn-search {
+    height: 50px;
+    font-size: 16px;
+    border-radius: 0 0 20px 20px;
+  }
+}
