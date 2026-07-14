@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logoImg from "./img/ventureai_logo.jpg";
 import heroBg from "./img/ventureai_hero.jpg";
-import b2bPeopleSketch from "./img/b2b_people_sketch.jpg";
+import handshakeB2bSketch from "./img/handshake_b2b_sketch.jpg";
 import HowItWorks from "./components/HowItWorks";
 import ContactSection from "./Contact";
 import Footer from "./components/Footer";
@@ -142,60 +142,20 @@ export default function Main() {
               </span>
             </div>
 
-            {/* Right Column — B2B Intro Matching Sketch Diagram */}
-            <div className="col-lg-5">
-              <div style={{
-                backgroundColor: "var(--background-color, #ffffff)",
-                borderRadius: "24px",
-                border: "1px solid #f3e8df",
-                boxShadow: "rgba(92, 75, 54, 0.05) 0px 20px 40px",
-                padding: "30px 28px",
-                textAlign: "center"
-              }}>
-                <span style={{ fontSize: "0.72rem", fontWeight: "800", color: "#f17c13", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "20px" }}>
-                  B2B Matchmaking Diagram
-                </span>
-
-                {/* Sketch Image Illustration */}
-                <div style={{
+            {/* Right Column — Handshake Sketch (No Card Wrapper & No Text) */}
+            <div className="col-lg-5" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              <img
+                src={handshakeB2bSketch}
+                alt="B2B Matchmaking Sketch"
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  maxWidth: "400px",
+                  display: "block",
                   borderRadius: "16px",
-                  overflow: "hidden",
-                  border: "1px solid #f3e8df",
-                  marginBottom: "20px",
-                  backgroundColor: "#fffbf8"
-                }}>
-                  <img
-                    src={b2bPeopleSketch}
-                    alt="B2B Matchmaking Sketch Diagram"
-                    style={{
-                      width: "100%",
-                      height: "auto",
-                      display: "block"
-                    }}
-                  />
-                </div>
-
-                {/* One Click Match Action */}
-                <button 
-                  onClick={() => navigate("/register")}
-                  className="sim-claim-btn"
-                  style={{ marginTop: "10px" }}
-                >
-                  <span>Find B2B Partners</span> <ArrowRight size={16} />
-                </button>
-
-                <div style={{
-                  marginTop: "18px",
-                  paddingTop: "12px",
-                  borderTop: "1px solid #f9fafb",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}>
-                  <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>✦ Fast & Free Matchmaking</span>
-                </div>
-
-              </div>
+                  mixBlendMode: "multiply"
+                }}
+              />
             </div>
           </div>
         </div>
