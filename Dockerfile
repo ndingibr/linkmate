@@ -27,7 +27,7 @@ COPY backend/main.py ./
 COPY backend/app ./app  
 
 # Copy React build into FastAPI static directory
-COPY --from=frontend-build /frontend/dist ./app/static
+COPY --from=frontend-build /backend/app/static ./app/static
 
 # Set environment variables
 ENV PORT=8080
