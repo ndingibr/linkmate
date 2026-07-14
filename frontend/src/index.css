@@ -362,14 +362,20 @@ body {
   position: sticky;
   top: 0;
   z-index: 1000;
+  background: rgba(255, 253, 251, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(241, 124, 19, 0.06);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.015);
+  transition: all 0.3s ease;
 }
 
 .main-nav-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 20px;
-  max-width: 1200px;
+  padding: 0.85rem 20px;
+  max-width: 960px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;

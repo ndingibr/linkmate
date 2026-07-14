@@ -57,15 +57,16 @@ export default function Header({ profileOverride }) {
             width: "35px",
             borderRadius: "8px",
             objectFit: "cover",
+            border: "1px solid rgba(255, 255, 255, 0.15)"
           }}
         />
         <span style={{ color: "#f17c13", fontWeight: "800", fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
-          link<span style={{ color: "#111827" }}>mate</span>
+          link<span style={{ color: "#ffffff" }}>mate</span>
         </span>
       </div>
 
       {/* Mobile Hamburger Toggle */}
-      <button className="main-nav-toggle-btn" style={{ color: "#4b5563" }} onClick={() => setMenuOpen(!menuOpen)}>
+      <button className="main-nav-toggle-btn" style={{ color: "#ffffff" }} onClick={() => setMenuOpen(!menuOpen)}>
         {menuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
@@ -78,13 +79,13 @@ export default function Header({ profileOverride }) {
           }}
           style={{
             cursor: "pointer",
-            color: "#4b5563",
+            color: "#d1d5db",
             fontWeight: "600",
             fontSize: "0.95rem",
             transition: "color 0.2s"
           }}
           onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
-          onMouseLeave={(e) => e.currentTarget.style.color = "#4b5563"}
+          onMouseLeave={(e) => e.currentTarget.style.color = "#d1d5db"}
         >
           Home
         </span>
@@ -94,13 +95,13 @@ export default function Header({ profileOverride }) {
           onClick={() => setMenuOpen(false)}
           style={{
             textDecoration: "none",
-            color: "#4b5563",
+            color: "#d1d5db",
             fontWeight: "600",
             fontSize: "0.95rem",
             transition: "color 0.2s"
           }}
           onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
-          onMouseLeave={(e) => e.currentTarget.style.color = "#4b5563"}
+          onMouseLeave={(e) => e.currentTarget.style.color = "#d1d5db"}
         >
           About Us
         </a>
@@ -113,7 +114,7 @@ export default function Header({ profileOverride }) {
             }}
             style={{
               cursor: "pointer",
-              color: "#4b5563",
+              color: "#d1d5db",
               fontWeight: "600",
               fontSize: "0.95rem",
               transition: "color 0.2s",
@@ -123,7 +124,7 @@ export default function Header({ profileOverride }) {
             }}
             title="Messages"
             onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
-            onMouseLeave={(e) => e.currentTarget.style.color = "#4b5563"}
+            onMouseLeave={(e) => e.currentTarget.style.color = "#d1d5db"}
           >
             <MessageSquare size={20} />
             {unreadCount > 0 && (
@@ -190,19 +191,27 @@ export default function Header({ profileOverride }) {
               <button
                 onClick={handleLogout}
                 style={{
-                  backgroundColor: "rgba(241, 124, 19, 0.1)",
-                  color: "#f17c13",
-                  border: "none",
+                  backgroundColor: "rgba(255, 255, 255, 0.08)",
+                  color: "#ffffff",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
                   padding: "0.5rem 1.2rem",
                   borderRadius: "20px",
                   fontWeight: "600",
                   cursor: "pointer",
                   fontSize: "0.9rem",
                   marginLeft: "8px",
-                  transition: "background-color 0.2s"
+                  transition: "all 0.2s"
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(241, 124, 19, 0.15)"}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(241, 124, 19, 0.1)"}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.15)";
+                  e.currentTarget.style.borderColor = "#f17c13";
+                  e.currentTarget.style.color = "#f17c13";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                  e.currentTarget.style.color = "#ffffff";
+                }}
               >
                 Logout
               </button>
@@ -216,8 +225,8 @@ export default function Header({ profileOverride }) {
                 }}
                 style={{
                   backgroundColor: "transparent",
-                  color: "#4b5563",
-                  border: "1px solid #d1d5db",
+                  color: "#d1d5db",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
                   padding: "0.5rem 1.2rem",
                   borderRadius: "20px",
                   fontWeight: "600",
@@ -226,14 +235,14 @@ export default function Header({ profileOverride }) {
                   transition: "all 0.2s"
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f9fafb";
-                  e.currentTarget.style.borderColor = "#9ca3af";
-                  e.currentTarget.style.color = "#111827";
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                  e.currentTarget.style.borderColor = "#f17c13";
+                  e.currentTarget.style.color = "#ffffff";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.borderColor = "#d1d5db";
-                  e.currentTarget.style.color = "#4b5563";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                  e.currentTarget.style.color = "#d1d5db";
                 }}
               >
                 Login
