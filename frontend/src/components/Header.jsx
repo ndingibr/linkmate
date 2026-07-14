@@ -48,19 +48,12 @@ export default function Header({ profileOverride }) {
     <nav className="main-nav-header">
       <div className="main-nav-container">
       {/* Logo */}
-      <div onClick={() => navigate("/")} className="main-nav-logo" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
-        <img
-          src={logoImg}
-          alt="LinkMate Logo"
-          style={{
-            height: "35px",
-            width: "35px",
-            borderRadius: "8px",
-            objectFit: "cover",
-            border: "1px solid rgba(0, 0, 0, 0.08)"
-          }}
-        />
-        <span style={{ color: "#f17c13", fontWeight: "800", fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
+      <div onClick={() => navigate("/")} className="main-nav-logo" style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}>
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: "2px" }}>
+          <circle cx="19" cy="24" r="11" stroke="#f17c13" strokeWidth="3" fill="none" />
+          <circle cx="29" cy="24" r="11" stroke="#f17c13" strokeWidth="3" fill="none" />
+        </svg>
+        <span style={{ color: "#f17c13", fontWeight: "800", fontSize: "1.9rem", letterSpacing: "-0.03em" }}>
           link<span style={{ color: "#111827" }}>mate</span>
         </span>
       </div>

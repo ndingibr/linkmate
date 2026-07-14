@@ -113,11 +113,43 @@ export default function Messages() {
   };
 
   const loadMessages = (selectPartnerId = null) => {
-    setLoadingMessages(true);
+    // Attempt to load from sessionStorage cache first
+    const cachedInbox = sessionStorage.getItem("linkmate_inbox");
+    const cachedSent = sessionStorage.getItem("linkmate_sent");
+    let loadedFromCache = false;
+
+    if (cachedInbox && cachedSent) {
+      try {
+        const inboxList = JSON.parse(cachedInbox);
+        const sentList = JSON.parse(cachedSent);
+        const conversationThreads = buildThreads(inboxList, sentList);
+        
+        setThreads(conversationThreads);
+        
+        if (selectPartnerId) {
+          setActiveThreadId(Number(selectPartnerId));
+        } else if (!activeThreadId && conversationThreads.length > 0) {
+          setActiveThreadId(conversationThreads[0].partnerId);
+        }
+        loadedFromCache = true;
+      } catch (e) {
+        console.error("Failed to parse message cache:", e);
+      }
+    }
+
+    if (!loadedFromCache) {
+      setLoadingMessages(true);
+    }
+
     Promise.all([getInboxMessages(), getSentMessages()])
       .then(([inbox, sent]) => {
         const inboxList = Array.isArray(inbox) ? inbox : [];
         const sentList = Array.isArray(sent) ? sent : [];
+        
+        // Cache the latest messages
+        sessionStorage.setItem("linkmate_inbox", JSON.stringify(inboxList));
+        sessionStorage.setItem("linkmate_sent", JSON.stringify(sentList));
+        
         const conversationThreads = buildThreads(inboxList, sentList);
         
         // Check if the selected partner ID already has a thread
@@ -206,6 +238,8 @@ export default function Messages() {
 
     Promise.all(unreadMsgs.map(m => markMessageRead(m.id)))
       .then(() => {
+        sessionStorage.removeItem("linkmate_inbox");
+        sessionStorage.removeItem("linkmate_sent");
         // Update local state to clear unread badges
         setThreads(threads.map(t => {
           if (t.partnerId === activeThreadId) {
@@ -243,6 +277,9 @@ export default function Messages() {
         subject: subject,
         body: finalBody
       });
+
+      sessionStorage.removeItem("linkmate_inbox");
+      sessionStorage.removeItem("linkmate_sent");
 
       setReplyText("");
       setAttachedFile(null);

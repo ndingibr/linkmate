@@ -12,6 +12,8 @@ function getAuthHeader() {
 
 export function logout() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
+  sessionStorage.removeItem("linkmate_inbox");
+  sessionStorage.removeItem("linkmate_sent");
 }
 
 export function isAuthenticated() {

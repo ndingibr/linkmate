@@ -378,8 +378,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.85rem 20px;
-  max-width: 960px;
+  padding: 0.85rem 24px;
+  max-width: 1060px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;

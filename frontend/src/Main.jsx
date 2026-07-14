@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logoImg from "./img/ventureai_logo.jpg";
 import heroBg from "./img/ventureai_hero.jpg";
-import realHandshakeAngled from "./img/real_handshake_angled.jpg";
+import realHandshake120 from "./img/real_handshake_120deg.png";
 import HowItWorks from "./components/HowItWorks";
 import ContactSection from "./Contact";
 import Footer from "./components/Footer";
@@ -130,7 +130,13 @@ export default function Main() {
 
               <div style={{ marginBottom: "1rem" }}>
                 <button 
-                  onClick={() => navigate("/register")}
+                  onClick={() => {
+                    if (isAuthenticated()) {
+                      navigate("/profile");
+                    } else {
+                      navigate("/register");
+                    }
+                  }}
                   className="cta-button-glowing"
                 >
                   Declare B2B Intent — Free
@@ -142,25 +148,35 @@ export default function Main() {
               </span>
             </div>
 
-            {/* Right Column — Real Angled Handshake (No Card Wrapper & No Text, Overlapping Behind Letters, Semi-Transparent) */}
-            <div className="col-lg-5" style={{ position: "relative", minHeight: "380px", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-              <img
-                src={realHandshakeAngled}
-                alt="B2B Matchmaking Connection"
-                style={{
-                  position: "absolute",
-                  right: "-50px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: "550px",
-                  maxWidth: "none",
-                  display: "block",
-                  mixBlendMode: "multiply",
-                  pointerEvents: "none",
-                  zIndex: 1,
-                  opacity: 0.65
-                }}
-              />
+            {/* Right Column — Handshake Picture inside a Circle with Background and Without Borders */}
+            <div className="col-lg-5" style={{ position: "relative", minHeight: "450px", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
+              <div style={{
+                width: "420px",
+                height: "420px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(241, 124, 19, 0.04)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+                position: "absolute",
+                right: "-20px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
+                zIndex: 1
+              }}>
+                <img
+                  src={realHandshake120}
+                  alt="B2B Matchmaking Connection"
+                  style={{
+                    width: "120%",
+                    height: "auto",
+                    display: "block",
+                    opacity: 0.85
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
