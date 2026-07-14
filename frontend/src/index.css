@@ -362,10 +362,10 @@ body {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 253, 251, 0.88);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(241, 124, 19, 0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.015);
   transition: all 0.3s ease;
 }
