@@ -64,7 +64,7 @@ export default function Register() {
 
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fbf7f3", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fffcf9", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <Header />
 
       <style>{`
@@ -72,7 +72,7 @@ export default function Register() {
           display: flex;
           align-items: center;
           gap: 4rem;
-          max-width: 1200px;
+          max-width: 960px;
           margin: 0 auto;
           width: 100%;
           padding: 0 20px;
