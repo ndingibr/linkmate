@@ -678,3 +678,61 @@ body {
   }
 }
 
+/* B2B Match Simulator */
+.sim-tab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid #f3e8df;
+  background: #ffffff;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  white-space: nowrap;
+  outline: none;
+}
+.sim-tab-btn.active {
+  background: #f17c13;
+  color: #ffffff;
+  border-color: #f17c13;
+  box-shadow: 0 4px 12px rgba(241, 124, 19, 0.15);
+}
+.sim-tab-btn:hover:not(.active) {
+  border-color: #f17c13;
+  color: #f17c13;
+  background: #fffbf9;
+}
+.sim-result-container {
+  margin-top: 18px;
+  background: #fffbf9;
+  border: 1px dashed #eddcd2;
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+.sim-claim-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #111827;
+  color: #ffffff;
+  width: 100%;
+  padding: 12px;
+  border-radius: 24px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: all 0.2s ease;
+}
+.sim-claim-btn:hover {
+  background: #f17c13;
+  box-shadow: 0 4px 15px rgba(241, 124, 19, 0.25);
+}
+
+

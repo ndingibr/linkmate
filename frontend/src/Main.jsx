@@ -12,6 +12,7 @@ import { Menu, X, ArrowRight, Sparkles, Building, Briefcase, Mail, CheckCircle, 
 export default function Main() {
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState(null);
+  const [selectedSimTab, setSelectedSimTab] = useState("Selling");
 
   const faqItems = [
     {
@@ -141,7 +142,7 @@ export default function Main() {
               </span>
             </div>
 
-            {/* Right Column — Intent Match Showcase */}
+            {/* Right Column — Intent Match Showcase (B2B Match Simulator) */}
             <div className="col-lg-5">
               <div style={{
                 backgroundColor: "#ffffff",
@@ -151,46 +152,96 @@ export default function Main() {
                 padding: "30px 28px",
                 textAlign: "left"
               }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: "800", color: "#f17c13", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "16px" }}>
-                  Active Introductions Flow
-                </span>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {drivers.map((d, idx) => (
-                    <div 
-                      key={idx}
-                      onClick={() => handleDriverSelect(d)}
-                      className="intent-option-card"
-                    >
-                      <div className="intent-pill-badge">
-                        {d.badge}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: "0.88rem", fontWeight: "700", color: "#111827" }}>
-                          {d.badge === "I'm Selling" ? "Provide Offerings" : d.badge === "I'm Buying" ? "Acquire Services" : "Strategic Partnerships"}
-                        </div>
-                        <div style={{ fontSize: "0.78rem", color: "#6b7280", marginTop: "2px", lineHeight: "1.4" }}>
-                          {d.badge === "I'm Selling" ? "Sourcing active B2B buyers..." : d.badge === "I'm Buying" ? "Sourcing verified suppliers..." : "Connecting B2B networkers..."}
-                        </div>
-                      </div>
-                      <span style={{ color: "#f17c13", fontWeight: "800" }}>→</span>
-                    </div>
-                  ))}
+                <div style={{ display: "flex", alignItems: "center", justifySpaceBetween: "space-between", justifyContent: "space-between", marginBottom: "16px" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: "800", color: "#f17c13", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    B2B MATCHING SIMULATOR
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span className="pulsate-dot" style={{ display: "inline-block", width: "7px", height: "7px", borderRadius: "50%", backgroundColor: "#10b981" }}></span>
+                    <span style={{ fontSize: "0.68rem", color: "#10b981", fontWeight: "700", textTransform: "uppercase" }}>Live Sim</span>
+                  </div>
                 </div>
 
+                {/* Simulation Mode Tabs */}
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button 
+                    onClick={() => setSelectedSimTab("Selling")}
+                    className={`sim-tab-btn ${selectedSimTab === "Selling" ? "active" : ""}`}
+                  >
+                    I Want to Sell
+                  </button>
+                  <button 
+                    onClick={() => setSelectedSimTab("Buying")}
+                    className={`sim-tab-btn ${selectedSimTab === "Buying" ? "active" : ""}`}
+                  >
+                    I Want to Buy
+                  </button>
+                  <button 
+                    onClick={() => setSelectedSimTab("Connecting")}
+                    className={`sim-tab-btn ${selectedSimTab === "Connecting" ? "active" : ""}`}
+                  >
+                    I Want to Connect
+                  </button>
+                </div>
+
+                {/* Simulated Match Result Card */}
+                <div className="sim-result-container">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f3e8df", paddingBottom: "10px", marginBottom: "10px" }}>
+                    <div>
+                      <span style={{ fontSize: "0.68rem", fontWeight: "800", color: "#f17c13", textTransform: "uppercase" }}>
+                        Suggested Match
+                      </span>
+                      <h4 style={{ margin: "2px 0 0", fontSize: "0.95rem", fontWeight: "800", color: "#111827" }}>
+                        {selectedSimTab === "Selling" ? "Modise Contractors (Pty) Ltd" : selectedSimTab === "Buying" ? "Vaal Logistics Ltd" : "GreenTech Innovations SA"}
+                      </h4>
+                    </div>
+                    <span style={{
+                      fontSize: "0.72rem",
+                      fontWeight: "800",
+                      color: "#10b981",
+                      backgroundColor: "rgba(16, 185, 129, 0.08)",
+                      padding: "4px 8px",
+                      borderRadius: "8px"
+                    }}>
+                      {selectedSimTab === "Selling" ? "96% Match" : selectedSimTab === "Buying" ? "94% Match" : "98% Match"}
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: "0.74rem", color: "#4b5563", textTransform: "uppercase", fontWeight: "800", letterSpacing: "0.02em" }}>
+                    Verified Partner Intent:
+                  </div>
+                  <p style={{ margin: "6px 0 0 0", fontSize: "0.82rem", color: "#6b7280", lineHeight: "1.5", fontStyle: "italic" }}>
+                    "{selectedSimTab === "Selling" 
+                      ? "Looking for reliable tool manufacturers and steel suppliers for municipal infrastructure developments in Gauteng." 
+                      : selectedSimTab === "Buying" 
+                      ? "Providing verified refrigerated trucks, containerized freight, and general commercial logistics throughout SA." 
+                      : "Looking to partner with local manufacturers for circular waste sorting and sustainable packaging distribution."}"
+                  </p>
+                </div>
+
+                {/* Claim Intro Action */}
+                <button 
+                  onClick={() => {
+                    const idx = selectedSimTab === "Selling" ? 0 : selectedSimTab === "Buying" ? 1 : 2;
+                    handleDriverSelect(drivers[idx]);
+                  }}
+                  className="sim-claim-btn"
+                >
+                  <span>Claim This Introduction</span> <ArrowRight size={16} />
+                </button>
+
                 <div style={{
-                  marginTop: "20px",
-                  paddingTop: "16px",
+                  marginTop: "16px",
+                  paddingTop: "12px",
                   borderTop: "1px solid #f9fafb",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between"
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#10b981" }}></span>
-                    <span style={{ fontSize: "0.75rem", color: "#4b5563", fontWeight: "600" }}>AI Matchmaker Active</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "0.72rem", color: "#4b5563", fontWeight: "600" }}>AI Semantic Engine Active</span>
                   </div>
-                  <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>384 matches today</span>
+                  <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>384 matches today</span>
                 </div>
 
               </div>
