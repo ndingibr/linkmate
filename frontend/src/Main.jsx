@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logoImg from "./img/ventureai_logo.jpg";
 import heroBg from "./img/ventureai_hero.jpg";
-import b2bMatchSketch from "./img/b2b_match_sketch.jpg";
+import b2bPeopleSketch from "./img/b2b_people_sketch.jpg";
 import HowItWorks from "./components/HowItWorks";
 import ContactSection from "./Contact";
 import Footer from "./components/Footer";
@@ -165,7 +165,7 @@ export default function Main() {
                   backgroundColor: "#fffbf8"
                 }}>
                   <img
-                    src={b2bMatchSketch}
+                    src={b2bPeopleSketch}
                     alt="B2B Matchmaking Sketch Diagram"
                     style={{
                       width: "100%",
