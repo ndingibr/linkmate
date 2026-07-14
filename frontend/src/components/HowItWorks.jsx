@@ -4,33 +4,33 @@ export default function HowItWorks() {
   const steps = [
     {
       num: "01",
-      title: "Company Analysis",
-      desc: "We analyze your business, operations, and goals to identify key growth areas."
+      title: "Identify Yourself",
+      desc: "Tell us about your organization's vertical, size, and business strengths to establish verification."
     },
     {
       num: "02",
-      title: "Technology Proposals",
-      desc: "We design custom proposals marrying your existing business knowledge with digital and AI technology."
+      title: "Declare Your Intent",
+      desc: "Post what you are sourcing, services you require, or capabilities you want to supply in natural language."
     },
     {
       num: "03",
-      title: "Flexible Contracts",
-      desc: "We structure custom agreements with flexible terms—whether it is payment on delivery, milestones, or equity."
+      title: "AI Matchmaking",
+      desc: "Our semantic engine maps corresponding B2B demands by analyzing alignment and capability."
     },
     {
       num: "04",
-      title: "Build & Test",
-      desc: "Our engineering team designs, builds, and rigorously tests your custom solution."
+      title: "Quality Verification",
+      desc: "We review match scores and verify organizational credentials to ensure secure connections."
     },
     {
       num: "05",
-      title: "Implement & Support",
-      desc: "We implement the technology into your business and promise to be there as long-term partners."
+      title: "Emailed Introductions",
+      desc: "Once a match is validated, we dispatch a detailed lead introduction report directly to your inbox."
     },
     {
       num: "06",
-      title: "Scale & Optimize",
-      desc: "We monitor performance, refine algorithms, and continuously scale features to drive ongoing value."
+      title: "Warm Handshake",
+      desc: "Establish direct contact with your pre-qualified partner and begin contract negotiations."
     }
   ];
 
@@ -38,8 +38,8 @@ export default function HowItWorks() {
     <section className="section how-it-works" style={{ backgroundColor: "#fbf7f3", padding: "40px 0" }}>
       <div className="container">
         <div className="section-title text-center mb-4">
-          <h2 style={{ color: "#f17c13", fontWeight: "800", fontSize: "2rem", marginBottom: "5px" }}>How We Engage</h2>
-          <p style={{ color: "#5c4b36", fontSize: "0.95rem", margin: 0 }}>A comprehensive process from strategic analysis to long-term digital partnership</p>
+          <h2 style={{ color: "#f17c13", fontWeight: "800", fontSize: "2rem", marginBottom: "5px" }}>How We Connect</h2>
+          <p style={{ color: "#5c4b36", fontSize: "0.95rem", margin: 0 }}>A comprehensive process from intention mapping to direct emailed leads</p>
         </div>
 
         <div style={{ maxWidth: "800px", margin: "0 auto" }}>

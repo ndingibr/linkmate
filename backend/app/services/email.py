@@ -1,0 +1,167 @@
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+SMTP_HOST = "cp74.domains.co.za"
+SMTP_PORT = 465
+SMTP_USER = "admin@linkmate.co.za"
+SMTP_PASS = "#Doreen001"
+
+def send_activation_email(to_email: str, first_name: str):
+    activation_link = f"http://localhost:5173/login?activate_email={to_email}"
+    
+    # Create message container
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = "Activate your LinkMate Matchmaking Account"
+    msg['From'] = f"LinkMate Team <{SMTP_USER}>"
+    msg['To'] = to_email
+
+    # Plain text version for compatibility
+    text = f"""Hi {first_name},
+
+Thank you for creating an account on LinkMate. We map actual, current business intentions across South African hubs to help B2B partners find each other.
+
+To complete your registration and start discovering B2B matches, please confirm your email address:
+
+Confirm & Activate Intention: {activation_link}
+
+Once confirmed, you will be taken to your dashboard to register your first active intent.
+
+Note: We strictly reject spam and low-quality alerts. If we don't identify any B2B partners matching your profile, we won't clutter your inbox.
+"""
+
+    # HTML version with LinkMate branding
+    html = f"""<html>
+      <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
+        <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
+            <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
+              link<span style="color: #f17c13;">mate</span>
+            </span>
+          </div>
+          <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
+            <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
+            <p>
+              Thank you for creating an account on <strong>LinkMate</strong>. We map actual, current business intentions across South African hubs to help B2B partners find each other.
+            </p>
+            <p>
+              To complete your registration and start discovering B2B matches, please confirm your email address:
+            </p>
+            <div style="margin: 30px 0; text-align: left;">
+              <a href="{activation_link}" style="background-color: #f17c13; color: #ffffff; padding: 12px 28px; border-radius: 30px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 4px 10px rgba(241, 124, 19, 0.25);">
+                Confirm & Activate Intention
+              </a>
+            </div>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 24px;">
+              Once confirmed, you will be taken to your dashboard to register your first active intent.
+            </p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <p style="font-size: 12px; color: #9ca3af; font-style: italic; margin: 0;">
+              Note: We strictly reject spam and low-quality alerts. If we don't identify any high-probability B2B partners matching your profile, we promise not to send updates.
+            </p>
+          </div>
+        </div>
+      </body>
+    </html>"""
+
+    msg.attach(MIMEText(text, 'plain'))
+    msg.attach(MIMEText(html, 'html'))
+
+    # Send email and log status in repo
+    from app.repositories import email_repo
+    try:
+        server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.quit()
+        # Log successful dispatch
+        email_repo.log_sent_email(to_email, msg['Subject'], html, "sent")
+    except Exception as e:
+        # Log failed dispatch
+        email_repo.log_sent_email(to_email, msg['Subject'], html, "failed", str(e))
+        raise e
+
+def send_direct_message_email(
+    to_email: str,
+    recipient_name: str,
+    sender_name: str,
+    sender_company: str,
+    message_subject: str,
+    message_body: str
+):
+    subject = f"New LinkMate Message: {message_subject}"
+    
+    # Create message container
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = f"LinkMate Messenger <{SMTP_USER}>"
+    msg['To'] = to_email
+
+    sender_info = f"{sender_name} from {sender_company}" if sender_company else sender_name
+
+    text = f"""Hi {recipient_name},
+
+You have received a new B2B message on LinkMate from {sender_info}.
+
+Subject: {message_subject}
+
+Message:
+----------------------------------------
+{message_body}
+----------------------------------------
+
+To read or reply to this message, please log in to your LinkMate dashboard:
+http://localhost:5173/profile
+
+Regards,
+LinkMate Team
+"""
+
+    html = f"""<html>
+      <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
+        <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
+            <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
+              link<span style="color: #f17c13;">mate</span>
+            </span>
+          </div>
+          <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
+            <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {recipient_name},</p>
+            <p>
+              You have received a new B2B message on LinkMate from <strong>{sender_info}</strong>.
+            </p>
+            
+            <div style="background-color: #f9fafb; border-left: 4px solid #f17c13; padding: 16px; margin: 24px 0; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-weight: 700; color: #111827;">Subject: {message_subject}</p>
+              <p style="margin: 0; color: #4b5563; white-space: pre-line;">{message_body}</p>
+            </div>
+            
+            <div style="margin: 30px 0; text-align: left;">
+              <a href="http://localhost:5173/profile" style="background-color: #f17c13; color: #ffffff; padding: 12px 28px; border-radius: 30px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 4px 10px rgba(241, 124, 19, 0.25);">
+                Reply on LinkMate
+              </a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+              This is an automated notification. To change your communication settings, update your profile options.
+            </p>
+          </div>
+        </div>
+      </body>
+    </html>"""
+
+    msg.attach(MIMEText(text, 'plain'))
+    msg.attach(MIMEText(html, 'html'))
+
+    from app.repositories import email_repo
+    try:
+        server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.quit()
+        email_repo.log_sent_email(to_email, subject, html, "sent")
+    except Exception as e:
+        email_repo.log_sent_email(to_email, subject, html, "failed", str(e))
+        print(f"SMTP send failed for B2B message notification: {e}")
+

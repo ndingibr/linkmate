@@ -48,7 +48,21 @@ class UserProfile(BaseModel):
     phone: Optional[str] = None
     company_name: Optional[str] = None
     auth_provider: str
+    is_active: bool
     created_at: datetime
+    intent: Optional[str] = None
+    role: Optional[str] = None
+    influence: Optional[str] = None
+    has_budget: Optional[bool] = False
+    budget_min: Optional[float] = None
+    budget_max: Optional[float] = None
+    budget_currency: Optional[str] = "ZAR"
+    comm_channel: Optional[str] = None
+    comm_hours: Optional[str] = None
+    intent_lifespan: Optional[str] = None
+    location: Optional[str] = None
+    intent_active: Optional[bool] = True
+    photo: Optional[str] = None
 
 
 class UserUpdate(BaseModel):
@@ -56,6 +70,19 @@ class UserUpdate(BaseModel):
     last_name: Optional[str] = None
     phone: Optional[str] = None
     company_name: Optional[str] = None
+    intent: Optional[str] = None
+    role: Optional[str] = None
+    influence: Optional[str] = None
+    has_budget: Optional[bool] = None
+    budget_min: Optional[float] = None
+    budget_max: Optional[float] = None
+    budget_currency: Optional[str] = None
+    comm_channel: Optional[str] = None
+    comm_hours: Optional[str] = None
+    intent_lifespan: Optional[str] = None
+    location: Optional[str] = None
+    intent_active: Optional[bool] = None
+    photo: Optional[str] = None
 
 
 class TokenResponse(BaseModel):
@@ -74,3 +101,27 @@ class ContactMessage(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     message: str
+
+
+class MessageCreate(BaseModel):
+    recipient_id: int
+    subject: str
+    body: str
+
+
+class MessageResponse(BaseModel):
+    id: int
+    sender_id: int
+    recipient_id: int
+    subject: str
+    body: str
+    is_read: bool
+    sent_at: datetime
+    sender_first_name: Optional[str] = None
+    sender_last_name: Optional[str] = None
+    sender_company: Optional[str] = None
+    sender_photo: Optional[str] = None
+    recipient_first_name: Optional[str] = None
+    recipient_last_name: Optional[str] = None
+    recipient_company: Optional[str] = None
+    recipient_photo: Optional[str] = None

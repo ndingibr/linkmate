@@ -13,10 +13,14 @@ export default defineConfig({
     proxy: {
       // Catch-all: any path that doesn't look like a frontend asset is
       // forwarded to the local FastAPI dev server.
-      '^/(search|request_quote|pay_quote|earnings|register|login|auth|profile|contact)': {
+      '^/(search|request_quote|pay_quote|earnings|register|login|auth|profile|contact|activate|users|messages)': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
     },
+  },
+  build: {
+    outDir: '../backend/app/static',
+    emptyOutDir: true,
   },
 });

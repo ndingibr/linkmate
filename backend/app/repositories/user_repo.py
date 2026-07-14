@@ -9,15 +9,16 @@ def create_user(
     company_name: Optional[str] = None,
     password_hash: Optional[str] = None,
     auth_provider: str = 'email',
-    provider_id: Optional[str] = None
+    provider_id: Optional[str] = None,
+    is_active: bool = False
 ) -> Dict[str, Any]:
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        INSERT INTO users (first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING id, first_name, last_name, email, phone, company_name, auth_provider, created_at, updated_at
-    """, (first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id))
+        INSERT INTO users (first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id, first_name, last_name, email, phone, company_name, auth_provider, is_active, created_at, updated_at, photo
+    """, (first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active))
     user = c.fetchone()
     conn.commit()
     conn.close()
@@ -27,7 +28,7 @@ def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at
+        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at, intent, role, influence, has_budget, budget_min, budget_max, budget_currency, comm_channel, comm_hours, intent_lifespan, location, intent_active, photo
         FROM users
         WHERE email = %s
     """, (email,))
@@ -39,7 +40,7 @@ def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at
+        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at, intent, role, influence, has_budget, budget_min, budget_max, budget_currency, comm_channel, comm_hours, intent_lifespan, location, intent_active, photo
         FROM users
         WHERE id = %s
     """, (user_id,))
@@ -51,7 +52,7 @@ def get_user_by_provider(provider: str, provider_id: str) -> Optional[Dict[str, 
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at
+        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at, intent, role, influence, has_budget, budget_min, budget_max, budget_currency, comm_channel, comm_hours, intent_lifespan, location, intent_active, photo
         FROM users
         WHERE auth_provider = %s AND provider_id = %s
     """, (provider, provider_id))
@@ -84,7 +85,7 @@ def update_user(user_id: int, **fields) -> Optional[Dict[str, Any]]:
         UPDATE users
         SET {', '.join(set_clause)}
         WHERE id = %s
-        RETURNING id, first_name, last_name, email, phone, company_name, auth_provider, created_at, updated_at
+        RETURNING id, first_name, last_name, email, phone, company_name, auth_provider, is_active, created_at, updated_at, intent, role, influence, has_budget, budget_min, budget_max, budget_currency, comm_channel, comm_hours, intent_lifespan, location, intent_active, photo
     """
     
     conn = get_conn()
@@ -94,3 +95,10 @@ def update_user(user_id: int, **fields) -> Optional[Dict[str, Any]]:
     conn.commit()
     conn.close()
     return dict(user) if user else None
+
+def delete_user_by_email(email: str) -> None:
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("DELETE FROM users WHERE email = %s", (email,))
+    conn.commit()
+    conn.close()

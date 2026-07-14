@@ -87,7 +87,7 @@ body {
   justify-content: center;
 }
 
-svg {
+.svg-wrapper svg {
   width: 36px;
   height: 36px;
   fill: #222;
@@ -359,14 +359,20 @@ svg {
 
 /* Responsive Nav Header */
 .main-nav-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  background-color: #f17c13;
   position: sticky;
   top: 0;
   z-index: 1000;
+}
+
+.main-nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
   flex-wrap: wrap;
 }
 
@@ -404,9 +410,8 @@ svg {
 }
 
 @media (max-width: 768px) {
-  .main-nav-header {
+  .main-nav-container {
     padding: 1rem 1rem;
-    position: sticky;
   }
 
   .main-nav-toggle-btn {

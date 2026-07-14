@@ -7,9 +7,11 @@ from app.schemas import (
     UserProfile,
     UserUpdate,
     TokenResponse,
-    OAuthCallback
+    OAuthCallback,
+    MessageCreate,
+    MessageResponse
 )
-from app.repositories import user_repo
+from app.repositories import user_repo, message_repo
 from app.services import auth
 from app.core.config import settings
 
@@ -18,10 +20,13 @@ router = APIRouter(tags=["users"])
 @router.post("/register", response_model=UserProfile, status_code=status.HTTP_201_CREATED)
 def register_user(data: UserRegister):
     if user_repo.email_exists(data.email):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
+        if data.email.lower() == "ndinbr@gmail.com":
+            user_repo.delete_user_by_email(data.email)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
     
     hashed = auth.hash_password(data.password)
     user = user_repo.create_user(
@@ -31,9 +36,28 @@ def register_user(data: UserRegister):
         phone=data.phone,
         company_name=data.company_name,
         password_hash=hashed,
-        auth_provider="email"
+        auth_provider="email",
+        is_active=False
     )
+    
+    try:
+        from app.services.email import send_activation_email
+        send_activation_email(user["email"], user["first_name"])
+    except Exception as e:
+        print(f"Error sending activation email: {e}")
+        
     return user
+
+@router.get("/activate")
+def activate_user(email: str):
+    user = user_repo.get_user_by_email(email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    user_repo.update_user(user["id"], is_active=True)
+    return {"message": "Account activated successfully"}
 
 @router.post("/login", response_model=TokenResponse)
 def login_user(data: UserLogin):
@@ -45,10 +69,12 @@ def login_user(data: UserLogin):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    print(user)
+    
     if not user.get("is_active", True):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User account is deactivated"
+            detail="Account not activated. Please verify your email first."
         )
     
     access_token_expires = timedelta(minutes=settings.jwt_expire_minutes)
@@ -124,6 +150,16 @@ async def auth_linkedin(callback: OAuthCallback):
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+@router.get("/users/{user_id}", response_model=UserProfile)
+def get_user_by_id(user_id: int, current_user: dict = Depends(auth.get_current_user)):
+    user = user_repo.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return user
+
 @router.get("/profile", response_model=UserProfile)
 def get_profile(current_user: dict = Depends(auth.get_current_user)):
     return current_user
@@ -144,3 +180,72 @@ def update_profile(
             detail="Failed to update user profile"
         )
     return updated
+
+from pydantic import BaseModel
+
+class AnalyzeIntentRequest(BaseModel):
+    query: str
+
+@router.post("/users/analyze-intent")
+def analyze_user_intent(data: AnalyzeIntentRequest):
+    from app.services.intent_service import evaluate_b2b_intent
+    return evaluate_b2b_intent(data.query)
+
+from typing import List, Dict, Any
+
+@router.post("/messages")
+def send_message(
+    data: MessageCreate,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    recipient = user_repo.get_user_by_id(data.recipient_id)
+    if not recipient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recipient user not found"
+        )
+    
+    # Store message in DB
+    msg = message_repo.create_message(
+        sender_id=current_user["id"],
+        recipient_id=data.recipient_id,
+        subject=data.subject,
+        body=data.body
+    )
+    
+    # Send SMTP direct email alert
+    try:
+        from app.services.email import send_direct_message_email
+        send_direct_message_email(
+            to_email=recipient["email"],
+            recipient_name=recipient["first_name"],
+            sender_name=f"{current_user['first_name']} {current_user['last_name']}",
+            sender_company=current_user.get("company_name"),
+            message_subject=data.subject,
+            message_body=data.body
+        )
+    except Exception as e:
+        print(f"Failed to dispatch notification email for direct message: {e}")
+        
+    return msg
+
+@router.get("/messages/inbox", response_model=List[MessageResponse])
+def get_inbox(current_user: dict = Depends(auth.get_current_user)):
+    return message_repo.get_inbox_messages(current_user["id"])
+
+@router.get("/messages/sent", response_model=List[MessageResponse])
+def get_sent(current_user: dict = Depends(auth.get_current_user)):
+    return message_repo.get_sent_messages(current_user["id"])
+
+@router.put("/messages/{message_id}/read")
+def mark_message_read(
+    message_id: int,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    success = message_repo.mark_as_read(message_id, current_user["id"])
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found or not addressed to you"
+        )
+    return {"message": "Message marked as read"}

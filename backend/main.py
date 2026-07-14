@@ -14,7 +14,6 @@ import asyncio
 from app.api import api_router
 from app.core.config import settings
 from app.log import init_db
-from app.services.scheduler import start_scheduler
 
 
 @asynccontextmanager
@@ -22,8 +21,6 @@ async def lifespan(app: FastAPI):
     # Ensure tables exist before serving. (For real schema management, migrate
     # to Alembic rather than creating tables at startup.)
     init_db()
-    # Start the background Trade-Caching Scheduler Task
-    asyncio.create_task(start_scheduler())
     yield
 
 

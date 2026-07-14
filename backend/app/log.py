@@ -12,19 +12,6 @@ def init_db():
     conn = get_conn()
     c = conn.cursor()
 
-    # Search logs
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS search_logs (
-        id SERIAL PRIMARY KEY,
-        query TEXT NOT NULL,
-        classification JSONB,
-        attributes JSONB,
-        common_items JSONB,
-        client_info JSONB,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
     # Users
     c.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -36,51 +23,21 @@ def init_db():
         company_name TEXT,
         password_hash TEXT,
         auth_provider TEXT DEFAULT 'email',
-        provider_id TEXT,
-        is_active BOOLEAN DEFAULT TRUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        provider_id TEXT
     )
     """)
 
-    # Original quote requests (header)
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS quotes_requests (
-        id SERIAL PRIMARY KEY,
-        first_name TEXT NOT NULL,
-        last_name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        phone TEXT,
-        delivery_address TEXT NOT NULL,
-        client_info JSONB,
-        quote_no TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # Original quote items (lines)
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS quote_items_requests (
-        id SERIAL PRIMARY KEY,
-        quote_request_id INTEGER NOT NULL REFERENCES quotes_requests(id),
-        item_name TEXT NOT NULL,
-        item_attributes JSONB,
-        quantity INTEGER NOT NULL,
-        log_id INTEGER NOT NULL REFERENCES search_logs(id),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # Sent quotes header
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS quotes_sent (
-        id SERIAL PRIMARY KEY,
-        quote_id INTEGER REFERENCES quotes_requests(id),
-        quote_number TEXT,
-        paid BOOLEAN DEFAULT FALSE,
-        price NUMERIC DEFAULT 0
-    )
-    """)
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS intent TEXT")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS influence TEXT")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS has_budget BOOLEAN DEFAULT FALSE")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS budget_min NUMERIC")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS budget_max NUMERIC")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS budget_currency TEXT DEFAULT 'ZAR'")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS comm_channel TEXT")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS comm_hours TEXT")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS intent_lifespan TEXT")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS photo TEXT")
 
     # Contact form submissions
     c.execute("""
@@ -95,34 +52,29 @@ def init_db():
     )
     """)
 
-    # Earnings rally predictions (LLM optimizer)
+    # Sent Emails log table
     c.execute("""
-    CREATE TABLE IF NOT EXISTS earnings_rally_predictions (
+    CREATE TABLE IF NOT EXISTS sent_emails (
         id SERIAL PRIMARY KEY,
-        symbol TEXT NOT NULL,
-        company_name TEXT,
-        earnings_date DATE NOT NULL,
-        predicted_trajectory JSONB NOT NULL,
-        optimal_entry_day INTEGER NOT NULL,
-        optimal_exit_day INTEGER NOT NULL,
-        expected_return_pct NUMERIC NOT NULL,
-        rally_probability NUMERIC NOT NULL,
-        llm_reasoning TEXT NOT NULL,
-        actual_trajectory JSONB,
-        actual_return_pct NUMERIC,
-        status TEXT DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(symbol, earnings_date)
+        recipient TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        body TEXT NOT NULL,
+        status TEXT NOT NULL,
+        error_message TEXT,
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
-    # Screened Candidates daily cache table
+    # User Messages (inbox/outbox)
     c.execute("""
-    CREATE TABLE IF NOT EXISTS earnings_screened_candidates (
+    CREATE TABLE IF NOT EXISTS user_messages (
         id SERIAL PRIMARY KEY,
-        screen_date DATE NOT NULL UNIQUE,
-        candidates JSONB NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        sender_id INT REFERENCES users(id) ON DELETE CASCADE,
+        recipient_id INT REFERENCES users(id) ON DELETE CASCADE,
+        subject TEXT NOT NULL,
+        body TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT FALSE,
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 

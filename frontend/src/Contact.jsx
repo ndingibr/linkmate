@@ -307,9 +307,9 @@ export default function ContactSection() {
       {/* LEFT COLUMN: CONTACT INFO */}
       <div className="contact-info-col">
         <div className="contact-intro">
-          <h3>Let's build something exceptional together</h3>
+          <h3>Let's establish trust-based B2B connections</h3>
           <p>
-            Whether you want to launch a brand new AI-powered platform, scale an existing product, or consult on a strategic vision, we're ready to partner with you.
+            Whether you want to source key capabilities, list your supply offerings, or configure automated match alerts, our support desk is ready to partner with you.
           </p>
         </div>
 
