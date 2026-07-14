@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logoImg from "./img/ventureai_logo.jpg";
 import heroBg from "./img/ventureai_hero.jpg";
+import b2bMatchSketch from "./img/b2b_match_sketch.jpg";
 import HowItWorks from "./components/HowItWorks";
 import ContactSection from "./Contact";
 import Footer from "./components/Footer";
@@ -141,110 +142,44 @@ export default function Main() {
               </span>
             </div>
 
-            {/* Right Column — B2B Intro Matching Diagram */}
+            {/* Right Column — B2B Intro Matching Sketch Diagram */}
             <div className="col-lg-5">
               <div style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--background-color, #ffffff)",
                 borderRadius: "24px",
                 border: "1px solid #f3e8df",
                 boxShadow: "rgba(92, 75, 54, 0.05) 0px 20px 40px",
-                padding: "32px 30px",
+                padding: "30px 28px",
                 textAlign: "center"
               }}>
-                <span style={{ fontSize: "0.72rem", fontWeight: "800", color: "#f17c13", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "24px" }}>
-                  B2B Matchmaking Flow
+                <span style={{ fontSize: "0.72rem", fontWeight: "800", color: "#f17c13", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "20px" }}>
+                  B2B Matchmaking Diagram
                 </span>
 
-                {/* Diagram Flow Container */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", padding: "10px 0 20px" }}>
-                  {/* Background Connection Line */}
-                  <div style={{
-                    position: "absolute",
-                    top: "35px",
-                    left: "40px",
-                    right: "40px",
-                    height: "2px",
-                    background: "linear-gradient(90deg, #eddcd2 0%, #f17c13 50%, #eddcd2 100%)",
-                    zIndex: 1
-                  }}></div>
-
-                  {/* Step 1 Node: You */}
-                  <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", width: "70px" }}>
-                    <div style={{
-                      width: "50px",
-                      height: "50px",
-                      borderRadius: "50%",
-                      backgroundColor: "#ffffff",
-                      border: "2px solid #eddcd2",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#4b5563",
-                      boxShadow: "0 4px 10px rgba(0,0,0,0.02)"
-                    }}>
-                      <Building size={20} />
-                    </div>
-                    <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#111827", marginTop: "8px", whiteSpace: "nowrap" }}>
-                      1. You
-                    </span>
-                    <span style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "2px", whiteSpace: "nowrap" }}>
-                      Declare intent
-                    </span>
-                  </div>
-
-                  {/* Step 2 Node: AI Matchmaker */}
-                  <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", width: "70px" }}>
-                    <div style={{
-                      width: "56px",
-                      height: "56px",
-                      borderRadius: "50%",
-                      backgroundColor: "#f17c13",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#ffffff",
-                      boxShadow: "0 8px 20px rgba(241,124,19,0.3)"
-                    }}>
-                      <Zap size={22} className="sim-pulsate" />
-                    </div>
-                    <span style={{ fontSize: "0.75rem", fontWeight: "800", color: "#f17c13", marginTop: "8px", whiteSpace: "nowrap" }}>
-                      2. Semantic AI
-                    </span>
-                    <span style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "2px", whiteSpace: "nowrap" }}>
-                      Scans alignments
-                    </span>
-                  </div>
-
-                  {/* Step 3 Node: Verified Partner */}
-                  <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", width: "70px" }}>
-                    <div style={{
-                      width: "50px",
-                      height: "50px",
-                      borderRadius: "50%",
-                      backgroundColor: "#ffffff",
-                      border: "2px solid #eddcd2",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#4b5563",
-                      boxShadow: "0 4px 10px rgba(0,0,0,0.02)"
-                    }}>
-                      <CheckCircle size={20} />
-                    </div>
-                    <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#111827", marginTop: "8px", whiteSpace: "nowrap" }}>
-                      3. Match
-                    </span>
-                    <span style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "2px", whiteSpace: "nowrap" }}>
-                      Warm intro sent
-                    </span>
-                  </div>
+                {/* Sketch Image Illustration */}
+                <div style={{
+                  borderRadius: "16px",
+                  overflow: "hidden",
+                  border: "1px solid #f3e8df",
+                  marginBottom: "20px",
+                  backgroundColor: "#fffbf8"
+                }}>
+                  <img
+                    src={b2bMatchSketch}
+                    alt="B2B Matchmaking Sketch Diagram"
+                    style={{
+                      width: "100%",
+                      height: "auto",
+                      display: "block"
+                    }}
+                  />
                 </div>
 
                 {/* One Click Match Action */}
                 <button 
                   onClick={() => navigate("/register")}
                   className="sim-claim-btn"
-                  style={{ marginTop: "24px" }}
+                  style={{ marginTop: "10px" }}
                 >
                   <span>Find B2B Partners</span> <ArrowRight size={16} />
                 </button>
