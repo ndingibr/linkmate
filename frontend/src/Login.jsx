@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { loginUser } from "./api";
-import bookCover from "./img/book-1-removebg-preview.png";
+import { ShieldCheck } from "lucide-react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
@@ -56,109 +56,6 @@ export default function Login() {
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fffcf9", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <Header />
 
-      <style>{`
-        .login-split-container {
-          display: flex;
-          align-items: center;
-          gap: 4rem;
-          max-width: 960px;
-          margin: 0 auto;
-          width: 100%;
-          padding: 0 20px;
-          box-sizing: border-box;
-        }
-
-        .login-left-banner {
-          flex: 1.1;
-          color: #111827;
-          text-align: left;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .login-right-form {
-          flex: 0.9;
-          display: flex;
-          justify-content: flex-end;
-          width: 100%;
-        }
-
-        .form-card-premium {
-          background: #ffffff;
-          border-radius: 24px;
-          padding: 2.5rem;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-          border: 1px solid #e5e7eb;
-          width: 100%;
-          max-width: 440px;
-          color: #1f2937;
-          box-sizing: border-box;
-        }
-
-        .input-group-premium {
-          margin-bottom: 1.25rem;
-        }
-
-        .input-label-premium {
-          display: block;
-          font-size: 0.75rem;
-          font-weight: 700;
-          color: #4b5563;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.5rem;
-        }
-
-        .input-premium {
-          width: 100%;
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          padding: 0.85rem 1rem;
-          color: #111827;
-          font-size: 0.9rem;
-          outline: none;
-          transition: all 0.2s ease;
-          box-sizing: border-box;
-        }
-
-        .input-premium:focus {
-          border-color: #f17c13;
-          background: #ffffff;
-          box-shadow: 0 0 0 3px rgba(241, 124, 19, 0.15);
-        }
-
-        .alert-error-premium {
-          background-color: #fee2e2;
-          color: #991b1b;
-          border: 1px solid #fca5a5;
-          border-radius: 12px;
-          padding: 0.75rem 1rem;
-          margin-bottom: 1.5rem;
-          font-size: 0.85rem;
-          font-weight: 500;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        @media (max-width: 991px) {
-          .login-split-container {
-            flex-direction: column;
-            gap: 3rem;
-          }
-          
-          .login-left-banner {
-            text-align: center;
-            align-items: center;
-          }
-
-          .login-right-form {
-            justify-content: center;
-          }
-        }
-      `}</style>
-
       <div style={{ flex: 1, display: "flex", alignItems: "center", padding: "60px 0" }}>
         <div className="login-split-container">
           {/* LEFT COLUMN: BANNER */}
@@ -191,17 +88,23 @@ export default function Login() {
                 background: "#ffffff",
                 padding: "1.25rem 1.5rem",
                 borderRadius: "16px",
-                border: "1px solid #e5e7eb",
+                border: "1px solid #f3e8df",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.02)",
                 maxWidth: "500px",
                 boxSizing: "border-box",
               }}
             >
-              <img
-                src={bookCover}
-                alt="Book"
-                style={{ height: "64px", objectFit: "contain" }}
-              />
+              <div style={{
+                backgroundColor: "rgba(241, 124, 19, 0.08)",
+                borderRadius: "12px",
+                padding: "12px",
+                color: "#f17c13",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}>
+                <ShieldCheck size={28} />
+              </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "700", color: "#111827" }}>
                   Verified B2B Matchmaking

@@ -494,3 +494,187 @@ body {
     border-radius: 0 0 20px 20px;
   }
 }
+
+/* Redesigned Hero Section (Light Mode) */
+.hero-section-light {
+  background: radial-gradient(120% 120% at 50% 0%, #fffbf8 0%, #ffffff 100%);
+  padding: 85px 0 75px;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.cta-button-glowing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f17c13;
+  color: #ffffff;
+  padding: 16px 36px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(241, 124, 19, 0.25);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+
+.cta-button-glowing:hover {
+  background: #e06b0b;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(241, 124, 19, 0.35);
+}
+
+.intent-option-card {
+  text-align: left;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid #f3e8df;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.01);
+  width: 100%;
+}
+
+.intent-option-card:hover {
+  border-color: #f17c13;
+  background: #fffbf9;
+  transform: translateX(4px);
+  box-shadow: 0 8px 20px rgba(241, 124, 19, 0.05);
+}
+
+.intent-pill-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #f17c13;
+  background: rgba(241, 124, 19, 0.08);
+  padding: 4px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.intent-option-card:hover .intent-pill-badge {
+  background: #f17c13;
+  color: #ffffff;
+}
+
+/* Split Page (Login & Register) Layouts */
+.login-split-container {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.login-left-banner {
+  flex: 1.1;
+  color: #111827;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-right-form {
+  flex: 0.9;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.form-card-premium {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  width: 100%;
+  max-width: 580px;
+  color: #1f2937;
+  box-sizing: border-box;
+}
+
+.input-group-premium {
+  margin-bottom: 1.25rem;
+}
+
+.input-label-premium {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.input-premium {
+  width: 100%;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  color: #111827;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input-premium:focus {
+  border-color: #f17c13;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(241, 124, 19, 0.15);
+}
+
+.alert-error-premium {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-row-premium {
+  display: flex;
+  gap: 1rem;
+}
+
+@media (max-width: 991px) {
+  .login-split-container {
+    flex-direction: column;
+    gap: 3rem;
+  }
+  
+  .login-left-banner {
+    text-align: center;
+    align-items: center;
+  }
+
+  .login-right-form {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .form-row-premium {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
