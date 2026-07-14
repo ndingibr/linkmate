@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logoImg from "./img/ventureai_logo.jpg";
 import heroBg from "./img/ventureai_hero.jpg";
-import handshakeB2bSketch from "./img/handshake_b2b_sketch.jpg";
+import realHandshakeAngled from "./img/real_handshake_angled.jpg";
 import HowItWorks from "./components/HowItWorks";
 import ContactSection from "./Contact";
 import Footer from "./components/Footer";
@@ -81,9 +81,9 @@ export default function Main() {
             zIndex: 2
           }}
         >
-          <div className="row align-items-center justify-content-between">
+          <div className="row align-items-center justify-content-between" style={{ position: "relative" }}>
             {/* Left Column — Value Prop */}
-            <div className="col-lg-6" style={{ textAlign: "left" }}>
+            <div className="col-lg-6" style={{ textAlign: "left", position: "relative", zIndex: 2 }}>
               <span 
                 style={{ 
                   color: "#4b5563", 
@@ -142,18 +142,23 @@ export default function Main() {
               </span>
             </div>
 
-            {/* Right Column — Handshake Sketch (No Card Wrapper & No Text) */}
-            <div className="col-lg-5" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            {/* Right Column — Real Angled Handshake (No Card Wrapper & No Text, Overlapping Behind Letters, Semi-Transparent) */}
+            <div className="col-lg-5" style={{ position: "relative", minHeight: "380px", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
               <img
-                src={handshakeB2bSketch}
-                alt="B2B Matchmaking Sketch"
+                src={realHandshakeAngled}
+                alt="B2B Matchmaking Connection"
                 style={{
-                  width: "100%",
-                  height: "auto",
-                  maxWidth: "400px",
+                  position: "absolute",
+                  right: "-50px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "550px",
+                  maxWidth: "none",
                   display: "block",
-                  borderRadius: "16px",
-                  mixBlendMode: "multiply"
+                  mixBlendMode: "multiply",
+                  pointerEvents: "none",
+                  zIndex: 1,
+                  opacity: 0.65
                 }}
               />
             </div>
