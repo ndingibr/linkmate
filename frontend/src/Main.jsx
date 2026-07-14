@@ -12,7 +12,6 @@ import { Menu, X, ArrowRight, Sparkles, Building, Briefcase, Mail, CheckCircle, 
 export default function Main() {
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState(null);
-  const [selectedSimTab, setSelectedSimTab] = useState("Selling");
 
   const faqItems = [
     {
@@ -142,106 +141,123 @@ export default function Main() {
               </span>
             </div>
 
-            {/* Right Column — Intent Match Showcase (B2B Match Simulator) */}
+            {/* Right Column — B2B Intro Matching Diagram */}
             <div className="col-lg-5">
               <div style={{
                 backgroundColor: "#ffffff",
                 borderRadius: "24px",
                 border: "1px solid #f3e8df",
                 boxShadow: "rgba(92, 75, 54, 0.05) 0px 20px 40px",
-                padding: "30px 28px",
-                textAlign: "left"
+                padding: "32px 30px",
+                textAlign: "center"
               }}>
-                <div style={{ display: "flex", alignItems: "center", justifySpaceBetween: "space-between", justifyContent: "space-between", marginBottom: "16px" }}>
-                  <span style={{ fontSize: "0.75rem", fontWeight: "800", color: "#f17c13", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    B2B MATCHING SIMULATOR
-                  </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span className="pulsate-dot" style={{ display: "inline-block", width: "7px", height: "7px", borderRadius: "50%", backgroundColor: "#10b981" }}></span>
-                    <span style={{ fontSize: "0.68rem", color: "#10b981", fontWeight: "700", textTransform: "uppercase" }}>Live Sim</span>
-                  </div>
-                </div>
+                <span style={{ fontSize: "0.72rem", fontWeight: "800", color: "#f17c13", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "24px" }}>
+                  B2B Matchmaking Flow
+                </span>
 
-                {/* Simulation Mode Tabs */}
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button 
-                    onClick={() => setSelectedSimTab("Selling")}
-                    className={`sim-tab-btn ${selectedSimTab === "Selling" ? "active" : ""}`}
-                  >
-                    I Want to Sell
-                  </button>
-                  <button 
-                    onClick={() => setSelectedSimTab("Buying")}
-                    className={`sim-tab-btn ${selectedSimTab === "Buying" ? "active" : ""}`}
-                  >
-                    I Want to Buy
-                  </button>
-                  <button 
-                    onClick={() => setSelectedSimTab("Connecting")}
-                    className={`sim-tab-btn ${selectedSimTab === "Connecting" ? "active" : ""}`}
-                  >
-                    I Want to Connect
-                  </button>
-                </div>
+                {/* Diagram Flow Container */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", padding: "10px 0 20px" }}>
+                  {/* Background Connection Line */}
+                  <div style={{
+                    position: "absolute",
+                    top: "35px",
+                    left: "40px",
+                    right: "40px",
+                    height: "2px",
+                    background: "linear-gradient(90deg, #eddcd2 0%, #f17c13 50%, #eddcd2 100%)",
+                    zIndex: 1
+                  }}></div>
 
-                {/* Simulated Match Result Card */}
-                <div className="sim-result-container">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f3e8df", paddingBottom: "10px", marginBottom: "10px" }}>
-                    <div>
-                      <span style={{ fontSize: "0.68rem", fontWeight: "800", color: "#f17c13", textTransform: "uppercase" }}>
-                        Suggested Match
-                      </span>
-                      <h4 style={{ margin: "2px 0 0", fontSize: "0.95rem", fontWeight: "800", color: "#111827" }}>
-                        {selectedSimTab === "Selling" ? "Modise Contractors (Pty) Ltd" : selectedSimTab === "Buying" ? "Vaal Logistics Ltd" : "GreenTech Innovations SA"}
-                      </h4>
-                    </div>
-                    <span style={{
-                      fontSize: "0.72rem",
-                      fontWeight: "800",
-                      color: "#10b981",
-                      backgroundColor: "rgba(16, 185, 129, 0.08)",
-                      padding: "4px 8px",
-                      borderRadius: "8px"
+                  {/* Step 1 Node: You */}
+                  <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", width: "70px" }}>
+                    <div style={{
+                      width: "50px",
+                      height: "50px",
+                      borderRadius: "50%",
+                      backgroundColor: "#ffffff",
+                      border: "2px solid #eddcd2",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#4b5563",
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.02)"
                     }}>
-                      {selectedSimTab === "Selling" ? "96% Match" : selectedSimTab === "Buying" ? "94% Match" : "98% Match"}
+                      <Building size={20} />
+                    </div>
+                    <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#111827", marginTop: "8px", whiteSpace: "nowrap" }}>
+                      1. You
+                    </span>
+                    <span style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "2px", whiteSpace: "nowrap" }}>
+                      Declare intent
                     </span>
                   </div>
 
-                  <div style={{ fontSize: "0.74rem", color: "#4b5563", textTransform: "uppercase", fontWeight: "800", letterSpacing: "0.02em" }}>
-                    Verified Partner Intent:
+                  {/* Step 2 Node: AI Matchmaker */}
+                  <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", width: "70px" }}>
+                    <div style={{
+                      width: "56px",
+                      height: "56px",
+                      borderRadius: "50%",
+                      backgroundColor: "#f17c13",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#ffffff",
+                      boxShadow: "0 8px 20px rgba(241,124,19,0.3)"
+                    }}>
+                      <Zap size={22} className="sim-pulsate" />
+                    </div>
+                    <span style={{ fontSize: "0.75rem", fontWeight: "800", color: "#f17c13", marginTop: "8px", whiteSpace: "nowrap" }}>
+                      2. Semantic AI
+                    </span>
+                    <span style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "2px", whiteSpace: "nowrap" }}>
+                      Scans alignments
+                    </span>
                   </div>
-                  <p style={{ margin: "6px 0 0 0", fontSize: "0.82rem", color: "#6b7280", lineHeight: "1.5", fontStyle: "italic" }}>
-                    "{selectedSimTab === "Selling" 
-                      ? "Looking for reliable tool manufacturers and steel suppliers for municipal infrastructure developments in Gauteng." 
-                      : selectedSimTab === "Buying" 
-                      ? "Providing verified refrigerated trucks, containerized freight, and general commercial logistics throughout SA." 
-                      : "Looking to partner with local manufacturers for circular waste sorting and sustainable packaging distribution."}"
-                  </p>
+
+                  {/* Step 3 Node: Verified Partner */}
+                  <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", width: "70px" }}>
+                    <div style={{
+                      width: "50px",
+                      height: "50px",
+                      borderRadius: "50%",
+                      backgroundColor: "#ffffff",
+                      border: "2px solid #eddcd2",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#4b5563",
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.02)"
+                    }}>
+                      <CheckCircle size={20} />
+                    </div>
+                    <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#111827", marginTop: "8px", whiteSpace: "nowrap" }}>
+                      3. Match
+                    </span>
+                    <span style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "2px", whiteSpace: "nowrap" }}>
+                      Warm intro sent
+                    </span>
+                  </div>
                 </div>
 
-                {/* Claim Intro Action */}
+                {/* One Click Match Action */}
                 <button 
-                  onClick={() => {
-                    const idx = selectedSimTab === "Selling" ? 0 : selectedSimTab === "Buying" ? 1 : 2;
-                    handleDriverSelect(drivers[idx]);
-                  }}
+                  onClick={() => navigate("/register")}
                   className="sim-claim-btn"
+                  style={{ marginTop: "24px" }}
                 >
-                  <span>Claim This Introduction</span> <ArrowRight size={16} />
+                  <span>Find B2B Partners</span> <ArrowRight size={16} />
                 </button>
 
                 <div style={{
-                  marginTop: "16px",
+                  marginTop: "18px",
                   paddingTop: "12px",
                   borderTop: "1px solid #f9fafb",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between"
+                  justifyContent: "center"
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "0.72rem", color: "#4b5563", fontWeight: "600" }}>AI Semantic Engine Active</span>
-                  </div>
-                  <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>384 matches today</span>
+                  <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>✦ Fast & Free Matchmaking</span>
                 </div>
 
               </div>
