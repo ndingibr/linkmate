@@ -19,7 +19,8 @@ def get_inbox_messages(recipient_id: int) -> List[Dict[str, Any]]:
     c = conn.cursor()
     c.execute("""
         SELECT m.id, m.sender_id, m.recipient_id, m.subject, m.body, m.is_read, m.sent_at,
-               u.first_name as sender_first_name, u.last_name as sender_last_name, u.company_name as sender_company, u.photo as sender_photo
+               u.first_name as sender_first_name, u.last_name as sender_last_name, u.company_name as sender_company, u.photo as sender_photo,
+               u.role as sender_role, u.phone as sender_phone
         FROM user_messages m
         JOIN users u ON m.sender_id = u.id
         WHERE m.recipient_id = %s
@@ -34,7 +35,8 @@ def get_sent_messages(sender_id: int) -> List[Dict[str, Any]]:
     c = conn.cursor()
     c.execute("""
         SELECT m.id, m.sender_id, m.recipient_id, m.subject, m.body, m.is_read, m.sent_at,
-               u.first_name as recipient_first_name, u.last_name as recipient_last_name, u.company_name as recipient_company, u.photo as recipient_photo
+               u.first_name as recipient_first_name, u.last_name as recipient_last_name, u.company_name as recipient_company, u.photo as recipient_photo,
+               u.role as recipient_role, u.phone as recipient_phone
         FROM user_messages m
         JOIN users u ON m.recipient_id = u.id
         WHERE m.sender_id = %s

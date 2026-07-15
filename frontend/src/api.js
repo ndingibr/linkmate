@@ -187,4 +187,28 @@ export async function markMessageRead(messageId) {
     throw error;
   }
 }
+
+export async function getMatches() {
+  try {
+    const response = await axios.get("/users/matches", {
+      headers: getAuthHeader(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Fetching matches failed:", error);
+    throw error;
+  }
+}
+
+export async function updateMatchStatus(matchId, action) {
+  try {
+    const response = await axios.put(`/users/matches/${matchId}/action`, { action }, {
+      headers: getAuthHeader(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Updating match ${matchId} failed:`, error);
+    throw error;
+  }
+}
 

@@ -123,3 +123,93 @@ Return JSON ONLY with:
                 "suggestions": ["Ensure target budget and decision influence are up-to-date in your settings."],
                 "strength_metrics": metrics
             }
+
+
+def extract_intent_segments(intent_text: str) -> list:
+    if not intent_text or not intent_text.strip():
+        return []
+        
+    prompt = f"""
+Analyze the following B2B matchmaking intention text:
+"{intent_text}"
+
+Identify and extract all relevant business segments (Industry, Sub-industry, and Type) the user is targeting or offering.
+A single description can map to multiple industries/sub-industries (for example, if someone is looking for software dev in insurance, they belong to "Telecommunications & IT" -> "Software Development" and "Financial Services & Banking" -> "Insurance").
+
+Standard high-level industries in South Africa:
+- Financial Services & Banking
+- Mining & Resources
+- Agriculture & Agro-processing
+- Manufacturing & Automotive
+- Retail, Wholesale & Logistics
+- Telecommunications & IT
+- Tourism & Hospitality
+- Healthcare & Pharmaceuticals
+- Energy & Utilities
+- Construction & Infrastructure
+- Business Services & Consulting
+
+For each identified segment, extract:
+1. industry: The high-level industry category (prefer matching the standard ones listed above, or generate a suitable one if none fit).
+2. sub_industry: The specific sub-category (e.g. "Software Development", "Insurance", "Lead Generation", "Solar & Renewable Energy", etc.).
+3. type: Either "buy" (if they are seeking, looking for, needing, buying) or "give" (if they are offering, selling, providing, developing).
+4. intention: The specific text portion of the description that relates to this segment.
+
+Return JSON ONLY as a list of objects under a "segments" key. Each object should have keys:
+- "industry" (string)
+- "sub_industry" (string)
+- "type" (string: "buy" or "give")
+- "intention" (string)
+"""
+    try:
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            response_format={"type": "json_object"}
+        )
+        raw_content = response.choices[0].message.content
+        result = parse_json_response(raw_content)
+        
+        # The result might be a dictionary with a list key, e.g., {"segments": [...]} or directly a list.
+        if isinstance(result, dict) and "segments" in result:
+            segments = result["segments"]
+        elif isinstance(result, dict) and isinstance(result.get("data"), list):
+            segments = result["data"]
+        elif isinstance(result, list):
+            segments = result
+        elif isinstance(result, dict):
+            list_keys = [k for k, v in result.items() if isinstance(v, list)]
+            if list_keys:
+                segments = result[list_keys[0]]
+            else:
+                segments = [result]
+        else:
+            segments = []
+            
+        # Standardize and validate keys
+        standardized = []
+        for s in segments:
+            if not isinstance(s, dict):
+                continue
+            ind = s.get("industry", "").strip()
+            sub = s.get("sub_industry", "").strip()
+            itype = s.get("type", "buy").strip().lower()
+            intent = s.get("intention", "").strip()
+            
+            if not ind or not sub or not intent:
+                continue
+            if itype not in ["buy", "give"]:
+                itype = "buy"
+                
+            standardized.append({
+                "industry": ind,
+                "sub_industry": sub,
+                "type": itype,
+                "intention": intent
+            })
+        return standardized
+    except Exception as e:
+        print(f"Error extracting intent segments: {e}")
+        # Return a simple fallback segment if OpenAI call fails
+        return []

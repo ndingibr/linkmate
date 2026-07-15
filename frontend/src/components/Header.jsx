@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { isAuthenticated, logout, getUserProfile, getInboxMessages } from "../api";
-import logoImg from "../img/ventureai_logo.jpg";
-import { Menu, X, MessageSquare } from "lucide-react";
+import { Home, Briefcase, MessageSquare, LogOut } from "lucide-react";
 
 export default function Header({ profileOverride }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [auth, setAuth] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -17,8 +15,20 @@ export default function Header({ profileOverride }) {
     setAuth(checkAuth);
     if (checkAuth) {
       if (!profileOverride) {
+        const cachedProfile = sessionStorage.getItem("linkmate_profile");
+        if (cachedProfile) {
+          try {
+            setProfile(JSON.parse(cachedProfile));
+          } catch (e) {
+            console.error("Failed to parse cached profile:", e);
+          }
+        }
+
         getUserProfile()
-          .then((data) => setProfile(data))
+          .then((data) => {
+            setProfile(data);
+            sessionStorage.setItem("linkmate_profile", JSON.stringify(data));
+          })
           .catch((err) => console.error("Header profile fetch failed:", err));
       }
       // Fetch inbox messages to count unread ones
@@ -40,114 +50,141 @@ export default function Header({ profileOverride }) {
   const handleLogout = () => {
     logout();
     setAuth(false);
-    setMenuOpen(false);
     navigate("/login");
   };
 
+  const currentPath = location.pathname;
+  const isHome = currentPath === "/";
+  const isMessages = currentPath === "/messages";
+  const isProfile = currentPath.startsWith("/profile");
+
+  const navLinkStyle = (isActive) => ({
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    color: isActive ? "#f17c13" : "#666666",
+    borderBottom: isActive ? "2px solid #f17c13" : "2px solid transparent",
+    padding: "4px 8px",
+    textDecoration: "none",
+    fontSize: "0.74rem",
+    fontWeight: "600",
+    transition: "all 0.15s ease",
+    minWidth: "64px",
+    gap: "3px",
+    boxSizing: "border-box",
+    height: "56px",
+    position: "relative"
+  });
+
   return (
-    <nav className="main-nav-header">
-      <div className="main-nav-container">
-      {/* Logo */}
-      <div onClick={() => navigate("/")} className="main-nav-logo" style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}>
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: "2px" }}>
-          <circle cx="19" cy="24" r="11" stroke="#f17c13" strokeWidth="3" fill="none" />
-          <circle cx="29" cy="24" r="11" stroke="#f17c13" strokeWidth="3" fill="none" />
-        </svg>
-        <span style={{ color: "#f17c13", fontWeight: "800", fontSize: "1.9rem", letterSpacing: "-0.03em" }}>
-          link<span style={{ color: "#111827" }}>mate</span>
-        </span>
-      </div>
+    <nav style={{
+      position: "sticky",
+      top: 0,
+      zIndex: 1000,
+      background: "#ffffff",
+      borderBottom: "1px solid #e5e7eb",
+      boxShadow: "0 1px 4px rgba(0, 0, 0, 0.03)",
+      height: "56px"
+    }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        maxWidth: "1060px",
+        margin: "0 auto",
+        height: "100%",
+        padding: "0 24px",
+        boxSizing: "border-box"
+      }}>
+        {/* Logo left-aligned */}
+        <div onClick={() => navigate("/")} style={{ display: "grid", gridTemplateColumns: "auto auto", gridTemplateRows: "1fr 1fr", alignItems: "center", gap: "2px 6px", cursor: "pointer" }}>
+          {/* Column 1, spanning both rows */}
+          <div style={{ gridColumn: "1", gridRow: "1 / span 2" }}>
+            <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
+              <circle cx="18" cy="18" r="11" stroke="#f17c13" strokeWidth="3" fill="none" />
+              <circle cx="30" cy="30" r="11" stroke="#f17c13" strokeWidth="3" fill="none" />
+            </svg>
+          </div>
+          {/* Column 2, Row 1 */}
+          <div style={{ gridColumn: "2", gridRow: "1", alignSelf: "end", lineHeight: "1" }}>
+            <span style={{ color: "#f17c13", fontWeight: "900", fontSize: "1.25rem", letterSpacing: "-0.03em" }}>
+              small
+            </span>
+          </div>
+          {/* Column 2, Row 2 */}
+          <div style={{ gridColumn: "2", gridRow: "2", alignSelf: "start", lineHeight: "1", marginLeft: "14px" }}>
+            <span style={{ color: "#111827", fontWeight: "900", fontSize: "1.25rem", letterSpacing: "-0.03em" }}>
+              circles
+            </span>
+          </div>
+        </div>
 
-      {/* Mobile Hamburger Toggle */}
-      <button className="main-nav-toggle-btn" style={{ color: "#4b5563" }} onClick={() => setMenuOpen(!menuOpen)}>
-        {menuOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+        {/* Navigation Items (Right-aligned, stacked style like LinkedIn) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "100%" }}>
+          <div style={navLinkStyle(isHome)} onClick={() => navigate("/")}>
+            <Home size={20} />
+            <span>Home</span>
+          </div>
 
-      {/* Navigation Links */}
-      <div className={`main-nav-items-wrapper ${menuOpen ? "open" : ""}`}>
-        <span
-          onClick={() => {
-            navigate("/");
-            setMenuOpen(false);
-          }}
-          style={{
-            cursor: "pointer",
-            color: "#4b5563",
-            fontWeight: "600",
-            fontSize: "0.95rem",
-            transition: "color 0.2s"
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
-          onMouseLeave={(e) => e.currentTarget.style.color = "#4b5563"}
-        >
-          Home
-        </span>
-
-        <a
-          href="#how-it-works-section"
-          onClick={() => setMenuOpen(false)}
-          style={{
-            textDecoration: "none",
-            color: "#4b5563",
-            fontWeight: "600",
-            fontSize: "0.95rem",
-            transition: "color 0.2s"
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
-          onMouseLeave={(e) => e.currentTarget.style.color = "#4b5563"}
-        >
-          About Us
-        </a>
-
-        {auth && (
-          <span
-            onClick={() => {
-              navigate("/messages");
-              setMenuOpen(false);
-            }}
-            style={{
-              cursor: "pointer",
-              color: "#4b5563",
-              fontWeight: "600",
-              fontSize: "0.95rem",
-              transition: "color 0.2s",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px"
-            }}
-            title="Messages"
-            onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
-            onMouseLeave={(e) => e.currentTarget.style.color = "#4b5563"}
-          >
-            <MessageSquare size={20} />
-            {unreadCount > 0 && (
-              <span style={{
-                fontSize: "0.7rem",
-                backgroundColor: "#f17c13",
-                color: "#ffffff",
-                padding: "2px 6px",
-                borderRadius: "10px",
-                lineHeight: 1,
-                fontWeight: "700"
-              }}>
-                {unreadCount}
-              </span>
-            )}
-          </span>
-        )}
-
-        <div className="main-nav-auth-group">
           {auth ? (
             <>
-              {/* Circular Avatar Icon containing initial or photo */}
-              <div
+              {/* Matches (briefcase icon) */}
+              <div 
+                style={navLinkStyle(isMessages && sessionStorage.getItem("activeSidebarTab") === "matches")} 
                 onClick={() => {
-                  navigate("/profile");
-                  setMenuOpen(false);
+                  sessionStorage.setItem("activeSidebarTab", "matches");
+                  navigate("/messages");
+                  if (currentPath === "/messages") {
+                    window.dispatchEvent(new CustomEvent("tabChange", { detail: "matches" }));
+                    window.location.reload();
+                  }
                 }}
-                style={{
-                  width: "38px",
-                  height: "38px",
+              >
+                <Briefcase size={20} />
+                <span>Matches</span>
+              </div>
+
+              {/* Messaging */}
+              <div 
+                style={navLinkStyle(isMessages && sessionStorage.getItem("activeSidebarTab") !== "matches")} 
+                onClick={() => {
+                  sessionStorage.setItem("activeSidebarTab", "messages");
+                  navigate("/messages");
+                  if (currentPath === "/messages") {
+                    window.dispatchEvent(new CustomEvent("tabChange", { detail: "messages" }));
+                    window.location.reload();
+                  }
+                }}
+              >
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <MessageSquare size={20} />
+                  {unreadCount > 0 && (
+                    <span style={{
+                      position: "absolute",
+                      top: "-6px",
+                      right: "-6px",
+                      fontSize: "0.65rem",
+                      backgroundColor: "#ef4444",
+                      color: "#ffffff",
+                      padding: "1px 5px",
+                      borderRadius: "8px",
+                      lineHeight: 1.2,
+                      fontWeight: "800"
+                    }}>
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+                <span>Messaging</span>
+              </div>
+
+              {/* Profile ("Me") */}
+              <div style={navLinkStyle(isProfile)} onClick={() => navigate("/profile")}>
+                <div style={{
+                  width: "22px",
+                  height: "22px",
                   borderRadius: "50%",
                   backgroundColor: "#f17c13",
                   color: "#ffffff",
@@ -155,109 +192,83 @@ export default function Header({ profileOverride }) {
                   alignItems: "center",
                   justifyContent: "center",
                   fontWeight: "800",
-                  fontSize: "1.05rem",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(241,124,19,0.25)",
-                  border: "2px solid #f17c13",
-                  transition: "transform 0.15s ease",
-                  overflow: "hidden"
-                }}
-                title="View Profile"
-                onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-                onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-              >
-                {currentPhoto ? (
-                  <img
-                    src={currentPhoto}
-                    alt="User Avatar"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover"
-                    }}
-                  />
-                ) : (
-                  initial
-                )}
+                  fontSize: "0.7rem",
+                  overflow: "hidden",
+                  border: "1.5px solid #e5e7eb"
+                }}>
+                  {currentPhoto ? (
+                    <img src={currentPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    initial
+                  )}
+                </div>
+                <span>Me ▾</span>
               </div>
 
-              <button
-                onClick={handleLogout}
-                style={{
-                  backgroundColor: "rgba(241, 124, 19, 0.1)",
-                  color: "#f17c13",
-                  border: "none",
-                  padding: "0.5rem 1.2rem",
-                  borderRadius: "20px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  fontSize: "0.9rem",
-                  marginLeft: "8px",
-                  transition: "background-color 0.2s"
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(241, 124, 19, 0.15)"}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(241, 124, 19, 0.1)"}
-              >
-                Logout
-              </button>
+              {/* Divider */}
+              <div style={{ width: "1px", height: "32px", backgroundColor: "#e5e7eb", margin: "0 8px" }} />
+
+              {/* Logout */}
+              <div style={navLinkStyle(false)} onClick={handleLogout}>
+                <LogOut size={20} style={{ color: "#ef4444" }} />
+                <span style={{ color: "#ef4444" }}>Sign Out</span>
+              </div>
             </>
           ) : (
             <>
               <button
-                onClick={() => {
-                  navigate("/login");
-                  setMenuOpen(false);
-                }}
+                onClick={() => navigate("/register")}
                 style={{
                   backgroundColor: "transparent",
-                  color: "#4b5563",
-                  border: "1px solid #d1d5db",
-                  padding: "0.5rem 1.2rem",
-                  borderRadius: "20px",
+                  color: "#5e5e5e",
+                  border: "none",
+                  padding: "6px 16px",
                   fontWeight: "600",
                   cursor: "pointer",
                   fontSize: "0.9rem",
-                  transition: "all 0.2s"
+                  borderRadius: "20px",
+                  transition: "all 0.15s"
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f9fafb";
-                  e.currentTarget.style.borderColor = "#9ca3af";
-                  e.currentTarget.style.color = "#111827";
+                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.04)";
+                  e.currentTarget.style.color = "#000000";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.borderColor = "#d1d5db";
-                  e.currentTarget.style.color = "#4b5563";
+                  e.currentTarget.style.color = "#5e5e5e";
                 }}
               >
-                Login
+                Join now
               </button>
               <button
-                onClick={() => {
-                  navigate("/register");
-                  setMenuOpen(false);
-                }}
+                onClick={() => navigate("/login")}
                 style={{
-                  backgroundColor: "#f17c13",
-                  color: "#ffffff",
-                  border: "none",
-                  padding: "0.5rem 1.2rem",
-                  borderRadius: "20px",
+                  backgroundColor: "transparent",
+                  color: "#f17c13",
+                  border: "1px solid #f17c13",
+                  padding: "6px 18px",
                   fontWeight: "600",
                   cursor: "pointer",
                   fontSize: "0.9rem",
-                  marginLeft: "8px",
-                  transition: "background-color 0.2s"
+                  borderRadius: "20px",
+                  transition: "all 0.15s"
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#d96a0a"}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#f17c13"}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(241, 124, 19, 0.04)";
+                  e.currentTarget.style.borderWidth = "2px";
+                  e.currentTarget.style.padding = "5px 17px";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.borderWidth = "1px";
+                  e.currentTarget.style.padding = "6px 18px";
+                }}
               >
-                Register
+                Sign in
               </button>
             </>
           )}
         </div>
-      </div>
       </div>
     </nav>
   );

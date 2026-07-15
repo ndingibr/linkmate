@@ -139,7 +139,7 @@ export default function Main() {
                   }}
                   className="cta-button-glowing"
                 >
-                  Declare B2B Intent — Free
+                  Declare B2B Intent - Free
                 </button>
               </div>
 

@@ -12,6 +12,9 @@ def init_db():
     conn = get_conn()
     c = conn.cursor()
 
+    # Ensure pgvector extension exists
+    c.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+
     # Users
     c.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -38,6 +41,101 @@ def init_db():
     c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS comm_hours TEXT")
     c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS intent_lifespan TEXT")
     c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS photo TEXT")
+    c.execute("ALTER TABLE users DROP COLUMN IF EXISTS intent_vector")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS intent_vector vector(768)")
+
+    # 1. Create Industry-related Tables
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS industries (
+        id SERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL
+    )
+    """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS sub_industries (
+        id SERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL
+    )
+    """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS industry_sub_industries (
+        industry_id INT REFERENCES industries(id) ON DELETE CASCADE,
+        sub_industry_id INT REFERENCES sub_industries(id) ON DELETE CASCADE,
+        PRIMARY KEY (industry_id, sub_industry_id)
+    )
+    """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS user_intents (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        industry_id INT REFERENCES industries(id) ON DELETE RESTRICT,
+        sub_industry_id INT REFERENCES sub_industries(id) ON DELETE RESTRICT,
+        type TEXT NOT NULL CHECK (type IN ('buy', 'give')),
+        intention TEXT NOT NULL,
+        intent_vector vector(768),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # 2. Seed Industries and Sub-Industries if empty
+    c.execute("SELECT COUNT(*) FROM industries")
+    if c.fetchone()["count"] == 0:
+        seeds = {
+            "Financial Services & Banking": [
+                "Retail Banking", "Investment Banking", "Fintech", "Asset Management", "Insurance"
+            ],
+            "Mining & Resources": [
+                "Coal Mining", "Platinum & Gold Mining", "Mineral Processing", "Mining Equipment"
+            ],
+            "Agriculture & Agro-processing": [
+                "Wine & Viticulture", "Citrus & Fruit Farming", "Grain & Maize", "Livestock", "Forestry & Timber"
+            ],
+            "Manufacturing & Automotive": [
+                "Automotive Assembly", "Component Manufacturing", "Steel & Metal Fabrication", "Chemicals", "Textiles & Apparel"
+            ],
+            "Retail, Wholesale & Logistics": [
+                "E-commerce", "FMCG (Fast-Moving Consumer Goods)", "Warehousing", "Road Freight", "Supply Chain Management"
+            ],
+            "Telecommunications & IT": [
+                "Mobile Networks & ISP", "Software Development", "SaaS", "Cybersecurity", "IT Consulting & Support"
+            ],
+            "Tourism & Hospitality": [
+                "Hotel & Lodging", "Travel Agencies", "Ecotourism", "Catering & Events"
+            ],
+            "Healthcare & Pharmaceuticals": [
+                "Medical Devices", "Private Healthcare Services", "Pharmaceutical Manufacturing", "Health Insurance (Medical Aid)"
+            ],
+            "Energy & Utilities": [
+                "Solar & Renewable Energy", "Electrical Engineering", "Water Management", "Waste Management"
+            ],
+            "Construction & Infrastructure": [
+                "Civil Engineering", "Commercial Property Development", "Residential Construction", "Building Materials"
+            ],
+            "Business Services & Consulting": [
+                "Legal Services", "Accounting & Tax", "Recruitment & HR", "Marketing & Advertising", "Security Services"
+            ]
+        }
+        for ind_name, sub_list in seeds.items():
+            c.execute("INSERT INTO industries (name) VALUES (%s) RETURNING id", (ind_name,))
+            ind_id = c.fetchone()["id"]
+            for sub_name in sub_list:
+                # Check if sub-industry already exists to handle many-to-many duplicates (e.g. Sales)
+                c.execute("SELECT id FROM sub_industries WHERE name = %s", (sub_name,))
+                sub_row = c.fetchone()
+                if sub_row:
+                    sub_id = sub_row["id"]
+                else:
+                    c.execute("INSERT INTO sub_industries (name) VALUES (%s) RETURNING id", (sub_name,))
+                    sub_id = c.fetchone()["id"]
+                
+                c.execute("""
+                    INSERT INTO industry_sub_industries (industry_id, sub_industry_id) 
+                    VALUES (%s, %s) ON CONFLICT DO NOTHING
+                """, (ind_id, sub_id))
 
     # Contact form submissions
     c.execute("""
@@ -75,6 +173,21 @@ def init_db():
         body TEXT NOT NULL,
         is_read BOOLEAN DEFAULT FALSE,
         sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # Matches (B2B intent matches)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS matches (
+        id SERIAL PRIMARY KEY,
+        user_id_1 INT REFERENCES users(id) ON DELETE CASCADE,
+        user_id_2 INT REFERENCES users(id) ON DELETE CASCADE,
+        score NUMERIC NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        match_reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT unique_user_pair UNIQUE (user_id_1, user_id_2)
     )
     """)
 

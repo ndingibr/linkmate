@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { getUserProfile, updateUserProfile, logout, analyzeIntent, isAuthenticated, getOtherUserProfile, getInboxMessages, getSentMessages, sendMessage, markMessageRead } from "./api";
+import { getUserProfile, updateUserProfile, logout, analyzeIntent, isAuthenticated, getOtherUserProfile, getInboxMessages, getSentMessages, sendMessage, markMessageRead, getMatches } from "./api";
 import logoImg from "./img/ventureai_logo.jpg";
 import { Menu, X, Mail, Send, Inbox, MessageSquare, Reply } from "lucide-react";
 import Footer from "./components/Footer";
@@ -12,6 +12,7 @@ export default function Profile() {
   const isReadOnly = !!id;
   const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState("intent");
+  const [matches, setMatches] = useState([]);
   const location = useLocation();
 
   // Read tab parameter on load/change
@@ -116,6 +117,12 @@ export default function Profile() {
         }
       })
       .finally(() => setLoading(false));
+
+    if (isReadOnly && isAuthenticated()) {
+      getMatches()
+        .then(setMatches)
+        .catch(err => console.error("Failed to load matches on Profile:", err));
+    }
   }, [navigate, id, isReadOnly]);
 
   const triggerAiAnalysis = async (queryText) => {
@@ -537,17 +544,49 @@ export default function Profile() {
                 Profile
               </button>
             </div>
-            {isReadOnly ? (
-              <button 
-                type="button" 
-                className="ps-btn-primary" 
-                style={{ padding: "8px 16px", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "6px", borderRadius: "8px" }}
-                onClick={() => navigate("/messages", { state: { partnerId: id } })}
-              >
-                <MessageSquare size={14} />
-                Message Partner
-              </button>
-            ) : (
+            {isReadOnly ? (() => {
+              const isStaff = (profile?.email && profile.email.endsWith("@linkmate.co.za"));
+              const isConnected = isStaff || matches.some(m => m.partner.id === Number(id) && m.status === 'connected');
+              
+              if (isConnected) {
+                return (
+                  <button 
+                    type="button" 
+                    className="ps-btn-primary" 
+                    style={{ padding: "8px 16px", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "6px", borderRadius: "8px" }}
+                    onClick={() => navigate("/messages", { state: { partnerId: id } })}
+                  >
+                    <MessageSquare size={14} />
+                    Message Partner
+                  </button>
+                );
+              } else {
+                return (
+                  <button 
+                    type="button" 
+                    className="ps-btn-secondary" 
+                    style={{ 
+                      padding: "8px 16px", 
+                      fontSize: "0.85rem", 
+                      display: "inline-flex", 
+                      alignItems: "center", 
+                      gap: "6px", 
+                      borderRadius: "8px", 
+                      opacity: 0.6, 
+                      cursor: "not-allowed",
+                      border: "1px solid #d1d5db",
+                      backgroundColor: "#f3f4f6",
+                      color: "#9ca3af"
+                    }}
+                    disabled
+                    title="You must mutually connect from the Matches tab before messaging."
+                  >
+                    <MessageSquare size={14} />
+                    Message Locked
+                  </button>
+                );
+              }
+            })() : (
               <button 
                 type="button" 
                 className="ps-btn-secondary" 

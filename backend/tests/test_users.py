@@ -34,10 +34,23 @@ def test_user_flow():
         assert reg_data["company_name"] == "Acme Inc."
         print("Registration successful!")
     elif reg_response.status_code == 400:
-        print("User already registered, proceeding to login.")
+        print("User already registered, resetting profile details for test.")
+        # Reset profile details to make tests repeatable across runs
+        from app.core.db import get_conn
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute(
+            "UPDATE users SET first_name = 'Test', company_name = 'Acme Inc.' WHERE email = %s",
+            ("test_user_profile@example.com",)
+        )
+        conn.commit()
+        conn.close()
     else:
         raise AssertionError(f"Unexpected registration response: {reg_response.text}")
         
+    # Unconditionally activate user to clear any stale state
+    client.get(f"/activate?email={register_payload['email']}")
+
     # 3. Login
     login_payload = {
         "email": "test_user_profile@example.com",

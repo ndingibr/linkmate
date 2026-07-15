@@ -40,6 +40,25 @@ class UserLogin(BaseModel):
     password: str
 
 
+class UserIntentSchema(BaseModel):
+    id: int
+    industry_id: int
+    industry_name: str
+    sub_industry_id: int
+    sub_industry_name: str
+    type: str
+    intention: str
+
+
+class UserIntentCreate(BaseModel):
+    industry_id: Optional[int] = None
+    industry_name: Optional[str] = None
+    sub_industry_id: Optional[int] = None
+    sub_industry_name: Optional[str] = None
+    type: str
+    intention: str
+
+
 class UserProfile(BaseModel):
     id: int
     first_name: str
@@ -63,6 +82,7 @@ class UserProfile(BaseModel):
     location: Optional[str] = None
     intent_active: Optional[bool] = True
     photo: Optional[str] = None
+    intents: Optional[List[UserIntentSchema]] = None
 
 
 class UserUpdate(BaseModel):
