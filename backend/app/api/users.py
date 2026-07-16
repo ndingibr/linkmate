@@ -590,7 +590,7 @@ def update_match_status(
             u_intent = current_user.get("intent") or ""
             
             intro_body = (
-                f"Hi {current_user['first_name']}! We've just matched on LinkMate ({match_data['score']}% compatibility).\n\n"
+                f"Hi {current_user['first_name']}! We've just matched on SmallCircles ({match_data['score']}% compatibility).\n\n"
                 f"Here are our complementary goals:\n"
                 f"• My goal ({p_comp}): \"{p_intent}\"\n"
                 f"• Your goal: \"{u_intent}\"\n\n"

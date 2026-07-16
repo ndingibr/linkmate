@@ -89,19 +89,19 @@ def send_direct_message_email(
     message_subject: str,
     message_body: str
 ):
-    subject = f"New LinkMate Message: {message_subject}"
+    subject = f"New SmallCircles Message: {message_subject}"
     
     # Create message container
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
-    msg['From'] = f"LinkMate Messenger <{SMTP_USER}>"
+    msg['From'] = f"SmallCircles Messenger <{SMTP_USER}>"
     msg['To'] = to_email
 
     sender_info = f"{sender_name} from {sender_company}" if sender_company else sender_name
 
     text = f"""Hi {recipient_name},
 
-You have received a new B2B message on LinkMate from {sender_info}.
+You have received a new B2B message on SmallCircles from {sender_info}.
 
 Subject: {message_subject}
 
@@ -110,11 +110,11 @@ Message:
 {message_body}
 ----------------------------------------
 
-To read or reply to this message, please log in to your LinkMate dashboard:
+To read or reply to this message, please log in to your SmallCircles dashboard:
 http://localhost:5173/profile
 
 Regards,
-LinkMate Team
+SmallCircles Team
 """
 
     html = f"""<html>
@@ -122,13 +122,13 @@ LinkMate Team
         <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
           <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
             <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
-              link<span style="color: #f17c13;">mate</span>
+              small<span style="color: #f17c13;">circles</span>
             </span>
           </div>
           <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
             <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {recipient_name},</p>
             <p>
-              You have received a new B2B message on LinkMate from <strong>{sender_info}</strong>.
+              You have received a new B2B message on SmallCircles from <strong>{sender_info}</strong>.
             </p>
             
             <div style="background-color: #f9fafb; border-left: 4px solid #f17c13; padding: 16px; margin: 24px 0; border-radius: 4px;">
@@ -138,7 +138,7 @@ LinkMate Team
             
             <div style="margin: 30px 0; text-align: left;">
               <a href="http://localhost:5173/profile" style="background-color: #f17c13; color: #ffffff; padding: 12px 28px; border-radius: 30px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 4px 10px rgba(241, 124, 19, 0.25);">
-                Reply on LinkMate
+                Reply on SmallCircles
               </a>
             </div>
             
@@ -242,14 +242,14 @@ LinkMate Team
 def send_activation_otp_email(to_email: str, first_name: str, otp_code: str):
     # Create message container
     msg = MIMEMultipart('alternative')
-    msg['Subject'] = f"{otp_code} is your LinkMate Verification Code"
-    msg['From'] = f"LinkMate Team <{SMTP_USER}>"
+    msg['Subject'] = f"{otp_code} is your SmallCircles Verification Code"
+    msg['From'] = f"SmallCircles Team <{SMTP_USER}>"
     msg['To'] = to_email
 
     # Plain text version
     text = f"""Hi {first_name},
 
-Thank you for creating an account on LinkMate.
+Thank you for creating an account on SmallCircles.
 
 Please verify your email address using the following 6-digit One-Time Password (OTP):
 
@@ -258,22 +258,22 @@ Verification Code: {otp_code}
 This code is valid for 15 minutes. Once verified, your account will be activated.
 
 Regards,
-LinkMate Team
+SmallCircles Team
 """
 
-    # HTML version with LinkMate branding
+    # HTML version with SmallCircles branding
     html = f"""<html>
       <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
         <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
           <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
             <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
-              link<span style="color: #f17c13;">mate</span>
+              small<span style="color: #f17c13;">circles</span>
             </span>
           </div>
           <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
             <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
             <p>
-              Thank you for creating an account on <strong>LinkMate</strong>. We map actual, current business intentions across South African hubs to help B2B partners find each other.
+              Thank you for creating an account on <strong>SmallCircles</strong>. We map actual, current business intentions across South African hubs to help B2B partners find each other.
             </p>
             <p>
               Please verify your email address using the following 6-digit One-Time Password (OTP):
@@ -313,14 +313,14 @@ LinkMate Team
 def send_password_reset_otp_email(to_email: str, first_name: str, otp_code: str):
     # Create message container
     msg = MIMEMultipart('alternative')
-    msg['Subject'] = f"{otp_code} is your LinkMate Password Reset Code"
-    msg['From'] = f"LinkMate Team <{SMTP_USER}>"
+    msg['Subject'] = f"{otp_code} is your SmallCircles Password Reset Code"
+    msg['From'] = f"SmallCircles Team <{SMTP_USER}>"
     msg['To'] = to_email
 
     # Plain text version
     text = f"""Hi {first_name},
 
-We received a request to reset your LinkMate account password.
+We received a request to reset your SmallCircles account password.
 
 Please verify this request using the following 6-digit One-Time Password (OTP):
 
@@ -329,22 +329,22 @@ Password Reset Code: {otp_code}
 This code is valid for 15 minutes. If you did not request a password reset, you can safely ignore this email.
 
 Regards,
-LinkMate Team
+SmallCircles Team
 """
 
-    # HTML version with LinkMate branding
+    # HTML version with SmallCircles branding
     html = f"""<html>
       <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
         <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
           <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
             <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
-              link<span style="color: #f17c13;">mate</span>
+              small<span style="color: #f17c13;">circles</span>
             </span>
           </div>
           <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
             <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
             <p>
-              We received a request to reset your <strong>LinkMate</strong> account password.
+              We received a request to reset your <strong>SmallCircles</strong> account password.
             </p>
             <p>
               Please verify this request using the following 6-digit One-Time Password (OTP):

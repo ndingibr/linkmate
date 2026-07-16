@@ -815,7 +815,7 @@ export default function Profile() {
               <>
                 <div className="ps-card">
                   <h2 className="ps-card-title">Profile Information</h2>
-                  <p className="ps-card-sub">Manage your personal information and how it appears on LinkMate.</p>
+                  <p className="ps-card-sub">Manage your personal information and how it appears on SmallCircles.</p>
                   <hr className="ps-divider" />
 
                   {/* Photo Row */}
@@ -909,7 +909,7 @@ export default function Profile() {
                     </div>
                     <div className="ps-field">
                       <label className="ps-label">Company</label>
-                      <input type="text" name="company_name" className="ps-input" placeholder="LinkMate" value={form.company_name} onChange={handleChange} />
+                      <input type="text" name="company_name" className="ps-input" placeholder="Small Circles" value={form.company_name} onChange={handleChange} />
                     </div>
                     <div className="ps-field ps-span-2" style={{ position: "relative" }}>
                       <label className="ps-label">Location</label>

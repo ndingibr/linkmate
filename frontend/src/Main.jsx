@@ -16,7 +16,7 @@ export default function Main() {
 
   const faqItems = [
     {
-      q: "How does LinkMate match my B2B intention statement?",
+      q: "How does SmallCircles match my B2B intention statement?",
       a: "Our advanced AI semantic engine analyzes your natural language statement, identifying your business needs, strengths, industry vertical, and targets. It then scans complementary statements from other verified organizations to identify high-compatibility B2B alignments."
     },
     {
@@ -32,7 +32,7 @@ export default function Main() {
       a: "Once a complementary intention alignment is verified and meets our compatibility thresholds, we compile a detailed B2B match report and dispatch it directly to your registered email address."
     },
     {
-      q: "Is LinkMate free to use?",
+      q: "Is SmallCircles free to use?",
       a: "Creating your profile, declaring your B2B intent, and running match simulations is completely free. We offer premium verification and automated introduction lead packages as you scale your sourcing operations."
     }
   ];
@@ -125,7 +125,7 @@ export default function Main() {
                   margin: "0 0 2.2rem 0"
                 }}
               >
-                LinkMate maps actual current B2B goals. Declare what you offer or need, and let our AI match complementary intentions to introduce you directly to active business leads.
+                SmallCircles maps actual current B2B goals. Declare what you offer or need, and let our AI match complementary intentions to introduce you directly to active business leads.
               </p>
 
               <div style={{ marginBottom: "1rem" }}>
@@ -220,7 +220,7 @@ export default function Main() {
               Frequently Asked Questions
             </h2>
             <p style={{ color: "#5c4b36", fontSize: "0.95rem", margin: "8px 0 0" }}>
-              Learn more about how LinkMate connects complementary B2B intentions.
+              Learn more about how SmallCircles connects complementary B2B intentions.
             </p>
           </div>
 

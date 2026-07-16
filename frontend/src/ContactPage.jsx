@@ -50,7 +50,7 @@ export default function ContactPage() {
               Contact Us
             </h2>
             <p style={{ color: "#9ca3af", maxWidth: "520px", margin: "0 auto" }}>
-              Have questions about integrating LinkMate into your workflow? Contact our partnership desk.
+              Have questions about integrating SmallCircles into your workflow? Contact our partnership desk.
             </p>
           </div>
           <ContactSection />

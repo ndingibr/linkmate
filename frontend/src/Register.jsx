@@ -91,7 +91,7 @@ export default function Register() {
               Join Us
             </span>
             <h1 style={{ color: "#111827", fontSize: "2.4rem", fontWeight: "800", lineHeight: "1.2", margin: "0 0 1rem 0" }}>
-              Grow a verified network of strategic business partners.
+              Build a network of business people who get it.
             </h1>
             <p
               className="book-description"
@@ -103,7 +103,7 @@ export default function Register() {
                 maxWidth: "500px",
               }}
             >
-              Register, define your primary objectives, and get introduced to leaders with the exact complementary skills you need. No awkward mixers—just direct, verified connections built on mutual intent.
+              State your business goals when you register. Our AI matches you with verified professionals whose skills and needs complement yours.
             </p>
 
             {/* Inline Graphic Card */}
@@ -134,7 +134,7 @@ export default function Register() {
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "700", color: "#111827" }}>
-                  Strategic Partnerships
+                  Verified Matchmaking
                 </h4>
                 <p
                   style={{
@@ -144,7 +144,7 @@ export default function Register() {
                     lineHeight: "1.4",
                   }}
                 >
-                  Connect directly with verified professionals who align with your goals and have complementary skill sets.
+                  Connect with verified professionals who align with your goals and complement your expertise.
                 </p>
               </div>
             </div>
@@ -196,7 +196,7 @@ export default function Register() {
                       Create Your Account
                     </h3>
                     <p style={{ margin: 0, fontSize: "0.85rem", color: "#4b5563" }}>
-                      Join LinkMate to connect with verified partners matching your business intent.
+                      Join SmallCircles to connect with verified partners matching your business intent.
                     </p>
                   </div>
                 )}
