@@ -91,7 +91,7 @@ export default function Register() {
               Join Us
             </span>
             <h1 style={{ color: "#111827", fontSize: "2.4rem", fontWeight: "800", lineHeight: "1.2", margin: "0 0 1rem 0" }}>
-              Start developing your circle of business friends.
+              Grow a verified network of strategic business partners.
             </h1>
             <p
               className="book-description"
@@ -103,7 +103,7 @@ export default function Register() {
                 maxWidth: "500px",
               }}
             >
-              When you register you can declare your goal of friendship. You will meet people with complementary skills and goals - verified.
+              Register, define your primary objectives, and get introduced to leaders with the exact complementary skills you need. No awkward mixers—just direct, verified connections built on mutual intent.
             </p>
 
             {/* Inline Graphic Card */}
@@ -134,7 +134,7 @@ export default function Register() {
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "700", color: "#111827" }}>
-                  Verified Circle Growing
+                  Strategic Partnerships
                 </h4>
                 <p
                   style={{
@@ -144,7 +144,7 @@ export default function Register() {
                     lineHeight: "1.4",
                   }}
                 >
-                  Meet and match with professional business partners having complementary skills, goals, and verified intentions.
+                  Connect directly with verified professionals who align with your goals and have complementary skill sets.
                 </p>
               </div>
             </div>
