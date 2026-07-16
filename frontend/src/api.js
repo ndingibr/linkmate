@@ -30,9 +30,9 @@ export async function registerUser(payload) {
   }
 }
 
-export async function activateUser(email) {
+export async function activateUser(email, otp_code) {
   try {
-    const response = await axios.get(`/activate?email=${encodeURIComponent(email)}`);
+    const response = await axios.post("/activate", { email, otp_code });
     return response.data;
   } catch (error) {
     console.error("Activation failed:", error);
@@ -75,6 +75,26 @@ export async function linkedinLogin(code) {
     return response.data;
   } catch (error) {
     console.error("LinkedIn login failed:", error);
+    throw error;
+  }
+}
+
+export async function forgotPassword(email) {
+  try {
+    const response = await axios.post("/forgot-password", { email });
+    return response.data;
+  } catch (error) {
+    console.error("Forgot password request failed:", error);
+    throw error;
+  }
+}
+
+export async function resetPassword(payload) {
+  try {
+    const response = await axios.post("/reset-password", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Reset password failed:", error);
     throw error;
   }
 }

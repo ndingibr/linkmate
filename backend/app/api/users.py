@@ -11,7 +11,10 @@ from app.schemas import (
     MessageCreate,
     MessageResponse,
     UserIntentCreate,
-    UserIntentSchema
+    UserIntentSchema,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    UserActivateRequest
 )
 from app.repositories import user_repo, message_repo
 from app.services import auth
@@ -43,22 +46,36 @@ def register_user(data: UserRegister):
     )
     
     try:
-        from app.services.email import send_activation_email
-        send_activation_email(user["email"], user["first_name"])
+        import random
+        otp_code = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        user_repo.create_otp(user["email"], otp_code, "activation")
+        
+        from app.services.email import send_activation_otp_email
+        send_activation_otp_email(user["email"], user["first_name"], otp_code)
     except Exception as e:
-        print(f"Error sending activation email: {e}")
+        print(f"Error sending activation OTP email: {e}")
         
     return user
 
-@router.get("/activate")
-def activate_user(email: str):
-    user = user_repo.get_user_by_email(email)
+
+@router.post("/activate")
+def activate_user(data: UserActivateRequest):
+    user = user_repo.get_user_by_email(data.email)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
+    
+    is_valid = user_repo.verify_otp(data.email, data.otp_code, "activation")
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification code"
+        )
+        
     user_repo.update_user(user["id"], is_active=True)
+    user_repo.delete_otp(data.email, "activation")
     return {"message": "Account activated successfully"}
 
 @router.post("/login", response_model=TokenResponse)
@@ -85,6 +102,43 @@ def login_user(data: UserLogin):
         expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+    
+
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordRequest):
+    user = user_repo.get_user_by_email(data.email)
+    if user:
+        import random
+        otp_code = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        user_repo.create_otp(user["email"], otp_code, "reset")
+        try:
+            from app.services.email import send_password_reset_otp_email
+            send_password_reset_otp_email(
+                to_email=user["email"],
+                first_name=user["first_name"],
+                otp_code=otp_code
+            )
+        except Exception as e:
+            print(f"Failed to send reset OTP email: {e}")
+            
+    return {"message": "If an account matches that email, a 6-digit verification code has been sent."}
+
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest):
+    is_valid = user_repo.verify_otp(data.email, data.otp_code, "reset")
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+        
+    user = user_repo.get_user_by_email(data.email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    new_hash = auth.hash_password(data.password)
+    user_repo.update_user(user["id"], password_hash=new_hash, is_active=True)
+    user_repo.delete_otp(data.email, "reset")
+    return {"message": "Password reset successful. You can now log in with your new password."}
+
 
 @router.post("/auth/google", response_model=TokenResponse)
 async def auth_google(callback: OAuthCallback):

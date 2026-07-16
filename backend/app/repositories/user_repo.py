@@ -102,3 +102,40 @@ def delete_user_by_email(email: str) -> None:
     c.execute("DELETE FROM users WHERE email = %s", (email,))
     conn.commit()
     conn.close()
+
+
+def create_otp(email: str, code: str, purpose: str) -> None:
+    from datetime import datetime, timedelta
+    conn = get_conn()
+    c = conn.cursor()
+    # Delete older OTPs for same email & purpose
+    c.execute("DELETE FROM user_otps WHERE email = %s AND purpose = %s", (email, purpose))
+    
+    expires_at = datetime.utcnow() + timedelta(minutes=15)
+    c.execute("""
+        INSERT INTO user_otps (email, otp_code, purpose, expires_at)
+        VALUES (%s, %s, %s, %s)
+    """, (email, code, purpose, expires_at))
+    conn.commit()
+    conn.close()
+
+
+def verify_otp(email: str, code: str, purpose: str) -> bool:
+    from datetime import datetime
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("""
+        SELECT 1 FROM user_otps
+        WHERE email = %s AND otp_code = %s AND purpose = %s AND expires_at > %s
+    """, (email, code, purpose, datetime.utcnow()))
+    valid = c.fetchone() is not None
+    conn.close()
+    return valid
+
+
+def delete_otp(email: str, purpose: str) -> None:
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("DELETE FROM user_otps WHERE email = %s AND purpose = %s", (email, purpose))
+    conn.commit()
+    conn.close()

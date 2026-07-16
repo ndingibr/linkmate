@@ -145,3 +145,18 @@ class MessageResponse(BaseModel):
     recipient_last_name: Optional[str] = None
     recipient_company: Optional[str] = None
     recipient_photo: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp_code: str
+    password: str
+
+
+class UserActivateRequest(BaseModel):
+    email: EmailStr
+    otp_code: str

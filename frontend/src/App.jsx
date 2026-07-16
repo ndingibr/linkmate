@@ -7,6 +7,7 @@ import Login from "./Login";
 import Register from "./Register";
 import Profile from "./Profile";
 import Messages from "./Messages";
+import ForgotPassword from "./ForgotPassword";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
       <Route path="/profile" element={<Profile />} />
       <Route path="/profile/:id" element={<Profile />} />
       <Route path="/messages" element={<Messages />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
     </Routes>
   );
 }

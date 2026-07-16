@@ -573,15 +573,15 @@ body {
   display: flex;
   align-items: center;
   gap: 4rem;
-  max-width: 960px;
+  max-width: 1060px;
   margin: 0 auto;
   width: 100%;
-  padding: 0 20px;
+  padding: 0 24px;
   box-sizing: border-box;
 }
 
 .login-left-banner {
-  flex: 1.1;
+  flex: 1;
   color: #111827;
   text-align: left;
   display: flex;
@@ -589,7 +589,7 @@ body {
 }
 
 .login-right-form {
-  flex: 0.9;
+  flex: 1;
   display: flex;
   justify-content: flex-end;
   width: 100%;
@@ -602,7 +602,7 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   border: 1px solid #e5e7eb;
   width: 100%;
-  max-width: 580px;
+  max-width: 600px;
   color: #1f2937;
   box-sizing: border-box;
 }

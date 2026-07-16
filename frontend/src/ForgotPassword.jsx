@@ -1,67 +1,68 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { loginUser } from "./api";
-import { ShieldCheck } from "lucide-react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { forgotPassword, resetPassword } from "./api";
+import { ShieldCheck, ArrowLeft } from "lucide-react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
-export default function Login() {
+export default function ForgotPassword() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+
+  // Step state
+  const [showOtpScreen, setShowOtpScreen] = useState(false);
+
+  // Form states
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [successInfo, setSuccessInfo] = useState("");
-  const [showActivationOtp, setShowActivationOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const activateEmail = searchParams.get("activate_email");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  useEffect(() => {
-    if (activateEmail) {
-      setEmail(activateEmail);
-      setShowActivationOtp(true);
-      setSuccessInfo(`Please enter the 6-digit verification code sent to ${activateEmail} to activate your account.`);
-    }
-  }, [activateEmail]);
-
-  const handleSubmit = async (e) => {
+  const handleForgotSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
     setLoading(true);
     try {
-      await loginUser({ email, password });
-      navigate("/profile");
+      const res = await forgotPassword(email);
+      setSuccessMessage(res?.message || "If an account matches that email, a 6-digit verification code has been sent.");
+      setShowOtpScreen(true);
     } catch (err) {
-      setError(
-        err.response?.data?.detail ||
-          "Login failed. Please check your credentials."
-      );
+      setError(err.response?.data?.detail || "Request failed. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyActivationOtp = async (e) => {
+  const handleResetSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccessInfo("");
+    setSuccessMessage("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
     try {
-      const api = await import("./api");
-      await api.activateUser(email, otpCode);
-      setSuccessInfo("✅ Account activated successfully! You can now sign in.");
-      setShowActivationOtp(false);
+      const res = await resetPassword({ email, otp_code: otpCode, password });
+      setSuccessMessage(res?.message || "Password reset successful! You can now log in.");
+      setPassword("");
+      setConfirmPassword("");
       setOtpCode("");
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
     } catch (err) {
-      setError("❌ Activation failed: " + (err.response?.data?.detail || err.message));
+      setError(err.response?.data?.detail || "Reset failed. The code may be invalid or expired.");
     } finally {
       setLoading(false);
     }
   };
-
-
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fffcf9", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
@@ -72,10 +73,10 @@ export default function Login() {
           {/* LEFT COLUMN: BANNER */}
           <div className="login-left-banner book-hero-content">
             <span className="book-genre" style={{ color: "#f17c13", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "0.85rem", marginBottom: "0.5rem" }}>
-              Welcome Back
+              Secure Recovery
             </span>
             <h1 style={{ color: "#111827", fontSize: "2.4rem", fontWeight: "800", lineHeight: "1.2", margin: "0 0 1rem 0" }}>
-              Partnering to build B2B connections.
+              {showOtpScreen ? "Enter your verification code." : "Recover your account."}
             </h1>
             <p
               className="book-description"
@@ -87,7 +88,10 @@ export default function Login() {
                 maxWidth: "500px",
               }}
             >
-              Sign in to declare your B2B intention, configure automated match alerts, and manage your profile preferences.
+              {showOtpScreen 
+                ? "Please check your inbox. Enter the 6-digit verification code along with your new password below."
+                : "Enter your email address, and we'll dispatch a secure, 6-digit verification code to reset your account password."
+              }
             </p>
 
             {/* Inline Graphic Card */}
@@ -118,7 +122,7 @@ export default function Login() {
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "700", color: "#111827" }}>
-                  Verified B2B Matchmaking
+                  Robust Security Protocols
                 </h4>
                 <p
                   style={{
@@ -128,13 +132,13 @@ export default function Login() {
                     lineHeight: "1.4",
                   }}
                 >
-                  We securely analyze organization intent to dispatch warm introductions directly to your inbox.
+                  We verify One-Time Passwords (OTP) on our backend using tight expiry windows to ensure absolute safety.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: LOGIN FORM CARD */}
+          {/* RIGHT COLUMN: RECOVERY FORM CARD */}
           <div className="login-right-form">
             <div className="form-card-premium">
               <h2
@@ -145,7 +149,7 @@ export default function Login() {
                   margin: "0 0 0.5rem 0",
                 }}
               >
-                Sign In
+                {showOtpScreen ? "Verify Reset Code" : "Forgot Password?"}
               </h2>
               <p
                 style={{
@@ -154,7 +158,10 @@ export default function Login() {
                   margin: "0 0 2rem 0",
                 }}
               >
-                Enter your credentials to manage your B2B intention.
+                {showOtpScreen 
+                  ? "Enter the 6-digit code and choose a new password." 
+                  : "We'll send verification code instructions directly to you."
+                }
               </p>
 
               {error && (
@@ -164,7 +171,7 @@ export default function Login() {
                 </div>
               )}
 
-              {successInfo && (
+              {successMessage && (
                 <div className="alert-success-premium" style={{
                   backgroundColor: "#ecfdf5",
                   color: "#065f46",
@@ -179,13 +186,14 @@ export default function Login() {
                   gap: "0.5rem"
                 }}>
                   <span>✅</span>
-                  <span>{successInfo}</span>
+                  <span>{successMessage}</span>
                 </div>
               )}
 
-              {!showActivationOtp ? (
-                <form onSubmit={handleSubmit}>
-                  <div className="input-group-premium">
+              {!showOtpScreen ? (
+                /* FORGOT PASSWORD REQUEST FORM (STEP 1) */
+                <form onSubmit={handleForgotSubmit}>
+                  <div className="input-group-premium" style={{ marginBottom: "1.75rem" }}>
                     <label className="input-label-premium">Email Address</label>
                     <input
                       type="email"
@@ -193,70 +201,6 @@ export default function Login() {
                       placeholder="name@company.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="input-group-premium" style={{ marginBottom: "1.75rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
-                      <label className="input-label-premium" style={{ margin: 0 }}>Password</label>
-                      <span 
-                        style={{ color: "#f17c13", cursor: "pointer", fontSize: "0.8rem", fontWeight: "600" }}
-                        onClick={() => navigate("/forgot-password")}
-                      >
-                        Forgot password?
-                      </span>
-                    </div>
-                    <input
-                      type="password"
-                      className="input-premium"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    style={{
-                      background: "linear-gradient(135deg, #f17c13 0%, #d96a0a 100%)",
-                      color: "#ffffff",
-                      padding: "0.875rem",
-                      borderRadius: "12px",
-                      fontWeight: "700",
-                      fontSize: "0.9rem",
-                      width: "100%",
-                      border: "none",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 15px rgba(241, 124, 19, 0.2)",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.boxShadow =
-                        "0 6px 20px rgba(241, 124, 19, 0.35)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.boxShadow =
-                        "0 4px 15px rgba(241, 124, 19, 0.2)";
-                    }}
-                  >
-                    {loading ? "Signing in..." : "Sign In"}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleVerifyActivationOtp}>
-                  <div className="input-group-premium" style={{ marginBottom: "1.75rem" }}>
-                    <label className="input-label-premium">6-Digit Verification Code</label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      className="input-premium"
-                      placeholder="123456"
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                      style={{ letterSpacing: "0.25em", textAlign: "center", fontSize: "1.25rem", fontWeight: "800" }}
                       required
                     />
                   </div>
@@ -279,48 +223,111 @@ export default function Login() {
                       marginBottom: "1.5rem"
                     }}
                   >
-                    {loading ? "Verifying..." : "Verify Activation Code"}
+                    {loading ? "Sending OTP..." : "Send Verification Code"}
                   </button>
+                </form>
+              ) : (
+                /* RESET PASSWORD CONFIRM FORM (STEP 2) */
+                <form onSubmit={handleResetSubmit}>
+                  <div className="input-group-premium">
+                    <label className="input-label-premium">Email Address</label>
+                    <input
+                      type="email"
+                      className="input-premium"
+                      value={email}
+                      disabled
+                      style={{ backgroundColor: "#fafafa", cursor: "not-allowed" }}
+                    />
+                  </div>
 
-                  <div 
-                    onClick={() => {
-                      setShowActivationOtp(false);
-                      setSuccessInfo("");
-                      setError("");
-                    }}
+                  <div className="input-group-premium">
+                    <label className="input-label-premium">6-Digit Verification Code</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      className="input-premium"
+                      placeholder="123456"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                      style={{ letterSpacing: "0.25em", textAlign: "center", fontSize: "1.1rem", fontWeight: "800" }}
+                      required
+                    />
+                  </div>
+
+                  <div className="input-group-premium">
+                    <label className="input-label-premium">New Password</label>
+                    <input
+                      type="password"
+                      className="input-premium"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="input-group-premium" style={{ marginBottom: "1.75rem" }}>
+                    <label className="input-label-premium">Confirm Password</label>
+                    <input
+                      type="password"
+                      className="input-premium"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
                     style={{
-                      textAlign: "center",
-                      fontSize: "0.85rem",
-                      color: "#f17c13",
+                      background: "linear-gradient(135deg, #f17c13 0%, #d96a0a 100%)",
+                      color: "#ffffff",
+                      padding: "0.875rem",
+                      borderRadius: "12px",
+                      fontWeight: "700",
+                      fontSize: "0.9rem",
+                      width: "100%",
+                      border: "none",
                       cursor: "pointer",
-                      fontWeight: "600"
+                      boxShadow: "0 4px 15px rgba(241, 124, 19, 0.2)",
+                      transition: "all 0.2s ease",
+                      marginBottom: "1.5rem"
                     }}
                   >
-                    Cancel & Back to Sign In
-                  </div>
+                    {loading ? "Saving Password..." : "Save Password"}
+                  </button>
                 </form>
               )}
 
-              <p
-                style={{
-                  margin: "1.5rem 0 0 0",
-                  textAlign: "center",
+              <div 
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center", 
+                  gap: "0.25rem",
                   fontSize: "0.85rem",
                   color: "#6b7280",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  transition: "color 0.15s"
                 }}
+                onClick={() => {
+                  if (showOtpScreen) {
+                    setShowOtpScreen(false);
+                    setError("");
+                    setSuccessMessage("");
+                  } else {
+                    navigate("/login");
+                  }
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
+                onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
               >
-                Don't have an account yet?{" "}
-                <span
-                  style={{
-                    color: "#f17c13",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                  }}
-                  onClick={() => navigate("/register")}
-                >
-                  Register here
-                </span>
-              </p>
+                <ArrowLeft size={16} />
+                {showOtpScreen ? "Change Email" : "Back to Sign In"}
+              </div>
             </div>
           </div>
         </div>

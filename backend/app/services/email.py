@@ -165,3 +165,218 @@ LinkMate Team
         email_repo.log_sent_email(to_email, subject, html, "failed", str(e))
         print(f"SMTP send failed for B2B message notification: {e}")
 
+
+def send_password_reset_email(to_email: str, first_name: str, token: str):
+    reset_link = f"http://localhost:5173/forgot-password?token={token}"
+    
+    # Create message container
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = "Reset your LinkMate Account Password"
+    msg['From'] = f"LinkMate Team <{SMTP_USER}>"
+    msg['To'] = to_email
+
+    # Plain text version for compatibility
+    text = f"""Hi {first_name},
+
+We received a request to reset your LinkMate account password.
+
+To reset your password, please click the link below:
+
+Reset Password: {reset_link}
+
+If you did not request a password reset, please ignore this email.
+
+Regards,
+LinkMate Team
+"""
+
+    # HTML version with LinkMate branding
+    html = f"""<html>
+      <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
+        <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
+            <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
+              link<span style="color: #f17c13;">mate</span>
+            </span>
+          </div>
+          <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
+            <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
+            <p>
+              We received a request to reset your <strong>LinkMate</strong> account password.
+            </p>
+            <p>
+              To reset your password, please click the button below:
+            </p>
+            <div style="margin: 30px 0; text-align: left;">
+              <a href="{reset_link}" style="background-color: #f17c13; color: #ffffff; padding: 12px 28px; border-radius: 30px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 4px 10px rgba(241, 124, 19, 0.25);">
+                Reset Password
+              </a>
+            </div>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 24px;">
+              If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.
+            </p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+              This is an automated message. Please do not reply directly.
+            </p>
+          </div>
+        </div>
+      </body>
+    </html>"""
+
+    msg.attach(MIMEText(text, 'plain'))
+    msg.attach(MIMEText(html, 'html'))
+
+    from app.repositories import email_repo
+    try:
+        server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.quit()
+        email_repo.log_sent_email(to_email, msg['Subject'], html, "sent")
+    except Exception as e:
+        email_repo.log_sent_email(to_email, msg['Subject'], html, "failed", str(e))
+        raise e
+
+
+def send_activation_otp_email(to_email: str, first_name: str, otp_code: str):
+    # Create message container
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = f"{otp_code} is your LinkMate Verification Code"
+    msg['From'] = f"LinkMate Team <{SMTP_USER}>"
+    msg['To'] = to_email
+
+    # Plain text version
+    text = f"""Hi {first_name},
+
+Thank you for creating an account on LinkMate.
+
+Please verify your email address using the following 6-digit One-Time Password (OTP):
+
+Verification Code: {otp_code}
+
+This code is valid for 15 minutes. Once verified, your account will be activated.
+
+Regards,
+LinkMate Team
+"""
+
+    # HTML version with LinkMate branding
+    html = f"""<html>
+      <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
+        <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
+            <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
+              link<span style="color: #f17c13;">mate</span>
+            </span>
+          </div>
+          <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
+            <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
+            <p>
+              Thank you for creating an account on <strong>LinkMate</strong>. We map actual, current business intentions across South African hubs to help B2B partners find each other.
+            </p>
+            <p>
+              Please verify your email address using the following 6-digit One-Time Password (OTP):
+            </p>
+            <div style="margin: 30px 0; text-align: left;">
+              <span style="display: inline-block; background-color: #fdfaf6; border: 2px dashed #f17c13; color: #f17c13; font-size: 24px; font-weight: 800; letter-spacing: 0.25em; padding: 12px 32px; border-radius: 12px;">
+                {otp_code}
+              </span>
+            </div>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 24px;">
+              This code is valid for 15 minutes. Once verified, your account will be activated.
+            </p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+              This is an automated message. Please do not reply directly.
+            </p>
+          </div>
+        </div>
+      </body>
+    </html>"""
+
+    msg.attach(MIMEText(text, 'plain'))
+    msg.attach(MIMEText(html, 'html'))
+
+    from app.repositories import email_repo
+    try:
+        server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.quit()
+        email_repo.log_sent_email(to_email, msg['Subject'], html, "sent")
+    except Exception as e:
+        email_repo.log_sent_email(to_email, msg['Subject'], html, "failed", str(e))
+        raise e
+
+
+def send_password_reset_otp_email(to_email: str, first_name: str, otp_code: str):
+    # Create message container
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = f"{otp_code} is your LinkMate Password Reset Code"
+    msg['From'] = f"LinkMate Team <{SMTP_USER}>"
+    msg['To'] = to_email
+
+    # Plain text version
+    text = f"""Hi {first_name},
+
+We received a request to reset your LinkMate account password.
+
+Please verify this request using the following 6-digit One-Time Password (OTP):
+
+Password Reset Code: {otp_code}
+
+This code is valid for 15 minutes. If you did not request a password reset, you can safely ignore this email.
+
+Regards,
+LinkMate Team
+"""
+
+    # HTML version with LinkMate branding
+    html = f"""<html>
+      <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
+        <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
+            <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
+              link<span style="color: #f17c13;">mate</span>
+            </span>
+          </div>
+          <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
+            <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
+            <p>
+              We received a request to reset your <strong>LinkMate</strong> account password.
+            </p>
+            <p>
+              Please verify this request using the following 6-digit One-Time Password (OTP):
+            </p>
+            <div style="margin: 30px 0; text-align: left;">
+              <span style="display: inline-block; background-color: #fdfaf6; border: 2px dashed #f17c13; color: #f17c13; font-size: 24px; font-weight: 800; letter-spacing: 0.25em; padding: 12px 32px; border-radius: 12px;">
+                {otp_code}
+              </span>
+            </div>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 24px;">
+              This code is valid for 15 minutes. If you did not request a password reset, you can safely ignore this email.
+            </p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+              This is an automated message. Please do not reply directly.
+            </p>
+          </div>
+        </div>
+      </body>
+    </html>"""
+
+    msg.attach(MIMEText(text, 'plain'))
+    msg.attach(MIMEText(html, 'html'))
+
+    from app.repositories import email_repo
+    try:
+        server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.quit()
+        email_repo.log_sent_email(to_email, msg['Subject'], html, "sent")
+    except Exception as e:
+        email_repo.log_sent_email(to_email, msg['Subject'], html, "failed", str(e))
+        raise e
+

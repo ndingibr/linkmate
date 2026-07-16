@@ -191,6 +191,18 @@ def init_db():
     )
     """)
 
+    # User OTPs for activation and forgot password verification
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS user_otps (
+        id SERIAL PRIMARY KEY,
+        email TEXT NOT NULL,
+        otp_code TEXT NOT NULL,
+        purpose TEXT NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     conn.commit()
     conn.close()
 

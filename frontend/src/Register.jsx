@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { registerUser } from "./api";
+import { registerUser, activateUser } from "./api";
 import { MessageSquare, Zap, ArrowRight, CheckCircle, ShieldCheck } from "lucide-react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -22,6 +22,8 @@ export default function Register() {
   const [userIntent, setUserIntent] = useState("");
   const [preselectedDriver, setPreselectedDriver] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showOtpScreen, setShowOtpScreen] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
 
   // Check if a driver was selected on the home page to associate it with their profile
   useEffect(() => {
@@ -46,15 +48,30 @@ export default function Register() {
       // Save intent to localStorage so user can access it in their dashboard once registered
       localStorage.setItem("pending_intent", userIntent);
       await registerUser(form);
-      setSuccessMessage("Registration successful! A verification email has been sent to ndingibr@gmail.com. Please confirm to activate your intent. Redirecting to login...");
-      setTimeout(() => {
-        navigate("/login");
-      }, 4000);
+      setSuccessMessage(`Registration successful! We've sent a 6-digit verification code to ${form.email}.`);
+      setShowOtpScreen(true);
     } catch (err) {
       setError(
         err.response?.data?.detail ||
           "Registration failed. Try a different email."
       );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await activateUser(form.email, otpCode);
+      setSuccessMessage("✅ Account activated successfully! Redirecting you to login...");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2500);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Invalid or expired verification code.");
     } finally {
       setLoading(false);
     }
@@ -206,6 +223,7 @@ export default function Register() {
                   </div>
                 )}
 
+              {!showOtpScreen ? (
                 <form onSubmit={handleSubmit}>
                   <div className="form-row-premium">
                     <div className="input-group-premium" style={{ flex: 1 }}>
@@ -313,6 +331,44 @@ export default function Register() {
                     {loading ? "Registering & Claiming Leads..." : "Register & Claim Leads"}
                   </button>
                 </form>
+              ) : (
+                <form onSubmit={handleVerifyOtp}>
+                  <div className="input-group-premium" style={{ marginBottom: "1.75rem" }}>
+                    <label className="input-label-premium">6-Digit Verification Code</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      className="input-premium"
+                      placeholder="123456"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                      style={{ letterSpacing: "0.25em", textAlign: "center", fontSize: "1.25rem", fontWeight: "800" }}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                      background: "linear-gradient(135deg, #f17c13 0%, #d96a0a 100%)",
+                      color: "#ffffff",
+                      padding: "0.85rem",
+                      borderRadius: "12px",
+                      fontWeight: "700",
+                      fontSize: "0.9rem",
+                      width: "100%",
+                      border: "none",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 15px rgba(241, 124, 19, 0.2)",
+                      transition: "all 0.2s ease",
+                      marginBottom: "1.5rem"
+                    }}
+                  >
+                    {loading ? "Verifying..." : "Verify Code"}
+                  </button>
+                </form>
+              )}
               </div>
 
               <p

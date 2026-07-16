@@ -27,6 +27,13 @@ export default function Messages() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageSuccess, setMessageSuccess] = useState("");
   const [error, setError] = useState("");
+  const [connectingMatchId, setConnectingMatchId] = useState(null);
+  const [connectMessage, setConnectMessage] = useState(null);
+  
+  useEffect(() => {
+    setConnectMessage(null);
+  }, [selectedMatch]);
+
   const [currentUserPhoto, setCurrentUserPhoto] = useState(null);
   const [currentUserInitial, setCurrentUserInitial] = useState("Y");
   const [currentUserPhone, setCurrentUserPhone] = useState("");
@@ -1505,8 +1512,27 @@ export default function Messages() {
                       </div>
                     </div>
 
+                    {/* Connection Status Message Banner */}
+                    {connectMessage && (
+                      <div style={{
+                        marginTop: "16px",
+                        padding: "12px 18px",
+                        borderRadius: "8px",
+                        fontSize: "0.9rem",
+                        fontWeight: "600",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        background: connectMessage.type === "success" ? "#ecfdf5" : "#fdfaf6",
+                        border: connectMessage.type === "success" ? "1px solid #a7f3d0" : "1px solid #eddcd2",
+                        color: connectMessage.type === "success" ? "#047857" : "#d97706"
+                      }}>
+                        {connectMessage.text}
+                      </div>
+                    )}
+
                     {/* Actions */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "16px" }}>
                       {hasAccepted ? (
                         <div style={{
                           background: "#fdfaf6",
@@ -1528,24 +1554,53 @@ export default function Messages() {
                           type="button" 
                           className="ps-btn-primary" 
                           style={{ padding: "12px 28px", borderRadius: "12px", width: "auto" }}
+                          disabled={connectingMatchId === selectedMatch.id}
                           onClick={() => {
+                            setConnectingMatchId(selectedMatch.id);
+                            setConnectMessage(null);
+                            
                             updateMatchStatus(selectedMatch.id, "accept")
                               .then((res) => {
-                                loadMessages(selectedMatch.partner.id);
-                                getMatches().then(setMatches);
-                                setSelectedMatch(null);
-                                setActiveSidebarTab("messages");
+                                getMatches().then((latestMatches) => {
+                                  setMatches(latestMatches);
+                                  const status = res.status;
+                                  
+                                  if (status === "connected") {
+                                    setConnectMessage({ type: "success", text: "🎉 It's a Match! You are now connected." });
+                                    loadMessages(selectedMatch.partner.id);
+                                    
+                                    // Navigate to next unconnected match after 2.5 seconds
+                                    setTimeout(() => {
+                                      const remaining = latestMatches.filter(m => m.id !== selectedMatch.id && m.status !== 'connected' && m.status !== 'rejected');
+                                      const next = remaining[0] || null;
+                                      setSelectedMatch(next);
+                                      setConnectingMatchId(null);
+                                      setConnectMessage(null);
+                                    }, 2500);
+                                  } else {
+                                    setConnectMessage({ type: "info", text: "Awaiting partner authorization..." });
+                                    const updated = latestMatches.find(m => m.id === selectedMatch.id);
+                                    if (updated) {
+                                      setSelectedMatch(updated);
+                                    }
+                                    setConnectingMatchId(null);
+                                  }
+                                });
                               })
-                              .catch(err => console.error("Error accepting match:", err));
+                              .catch(err => {
+                                console.error("Error accepting match:", err);
+                                setConnectingMatchId(null);
+                              });
                           }}
                         >
-                          Connect & start chatting!
+                          {connectingMatchId === selectedMatch.id ? "Connecting..." : "Connect"}
                         </button>
                       )}
                       <button 
                         type="button" 
                         className="ps-btn-secondary" 
                         style={{ padding: "12px 24px", borderRadius: "12px", width: "auto", color: "#ef4444", borderColor: "#fecaca" }}
+                        disabled={connectingMatchId === selectedMatch.id}
                         onClick={() => {
                           if (window.confirm("Are you sure you want to ignore this lead match?")) {
                             updateMatchStatus(selectedMatch.id, "reject")
@@ -1583,7 +1638,7 @@ export default function Messages() {
                 </div>
                 <div className="contacts-items">
                   {(() => {
-                    const pendingMatches = matches.filter(m => m.status !== 'rejected' && m.status !== 'converted');
+                    const pendingMatches = matches.filter(m => m.status !== 'rejected' && m.status !== 'converted' && m.status !== 'connected');
                     return pendingMatches.length === 0 ? (
                       <div style={{ 
                         margin: "20px 16px",
