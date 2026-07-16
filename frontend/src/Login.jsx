@@ -75,7 +75,7 @@ export default function Login() {
               Welcome Back
             </span>
             <h1 style={{ color: "#111827", fontSize: "2.4rem", fontWeight: "800", lineHeight: "1.2", margin: "0 0 1rem 0" }}>
-              Partnering to build B2B connections.
+              Start developing your circle of business friends.
             </h1>
             <p
               className="book-description"
@@ -87,7 +87,7 @@ export default function Login() {
                 maxWidth: "500px",
               }}
             >
-              Sign in to declare your B2B intention, configure automated match alerts, and manage your profile preferences.
+              When you register you can declare your goal of friendship. You will meet people with complementary skills and goals - verified.
             </p>
 
             {/* Inline Graphic Card */}
@@ -118,7 +118,7 @@ export default function Login() {
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "700", color: "#111827" }}>
-                  Verified B2B Matchmaking
+                  Verified Circle Growing
                 </h4>
                 <p
                   style={{
@@ -128,7 +128,7 @@ export default function Login() {
                     lineHeight: "1.4",
                   }}
                 >
-                  We securely analyze organization intent to dispatch warm introductions directly to your inbox.
+                  Meet and match with professional business partners having complementary skills, goals, and verified intentions.
                 </p>
               </div>
             </div>

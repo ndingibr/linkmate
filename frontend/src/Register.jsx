@@ -91,7 +91,7 @@ export default function Register() {
               Join Us
             </span>
             <h1 style={{ color: "#111827", fontSize: "2.4rem", fontWeight: "800", lineHeight: "1.2", margin: "0 0 1rem 0" }}>
-              Start building the future with custom B2B matches.
+              Start developing your circle of business friends.
             </h1>
             <p
               className="book-description"
@@ -103,7 +103,7 @@ export default function Register() {
                 maxWidth: "500px",
               }}
             >
-              Register to manage your B2B intentions, configure match data filters, and connect directly with complementary verified partners.
+              When you register you can declare your goal of friendship. You will meet people with complementary skills and goals - verified.
             </p>
 
             {/* Inline Graphic Card */}
@@ -134,7 +134,7 @@ export default function Register() {
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "700", color: "#111827" }}>
-                  AI-Powered B2B Matching
+                  Verified Circle Growing
                 </h4>
                 <p
                   style={{
@@ -144,7 +144,7 @@ export default function Register() {
                     lineHeight: "1.4",
                   }}
                 >
-                  We map complementary business needs and dispatch verified lead reports directly to you.
+                  Meet and match with professional business partners having complementary skills, goals, and verified intentions.
                 </p>
               </div>
             </div>
