@@ -1,15 +1,55 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { isAuthenticated, logout, getUserProfile, getInboxMessages } from "../api";
-import { Home, Briefcase, MessageSquare, LogOut } from "lucide-react";
+import { isAuthenticated, logout, getUserProfile, getInboxMessages, getMatches } from "../api";
+import { Search, HelpCircle, LogOut, Home, Briefcase, MessageSquare, User, Menu, X } from "lucide-react";
 
 export default function Header({ profileOverride }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [auth, setAuth] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(() => {
+    return Number(sessionStorage.getItem("linkmate_unread_count") || 0);
+  });
+  const [pendingMatchesCount, setPendingMatchesCount] = useState(() => {
+    return Number(sessionStorage.getItem("linkmate_pending_matches_count") || 0);
+  });
   const [meMenuOpen, setMeMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const refreshCounts = () => {
+    if (isAuthenticated()) {
+      getInboxMessages()
+        .then((msgs) => {
+          if (Array.isArray(msgs)) {
+            const count = msgs.filter(m => !m.is_read).length;
+            setUnreadCount(count);
+            sessionStorage.setItem("linkmate_unread_count", count);
+          }
+        })
+        .catch((err) => console.error("Header inbox fetch failed:", err));
+
+      getMatches()
+        .then((mList) => {
+          if (Array.isArray(mList)) {
+            getUserProfile().then((usr) => {
+              const pendingMatches = mList.filter(m => {
+                const hasActioned = (m.status === "connected") || 
+                                    (m.status === "rejected") || 
+                                    (m.status === "converted") ||
+                                    (usr.id === m.user_id_1 && m.status === "accepted_1") ||
+                                    (usr.id === m.user_id_2 && m.status === "accepted_2");
+                return !hasActioned;
+              });
+              setPendingMatchesCount(pendingMatches.length);
+              sessionStorage.setItem("linkmate_pending_matches_count", pendingMatches.length);
+            }).catch(() => {});
+          }
+        })
+        .catch((err) => console.error("Header matches fetch failed:", err));
+    }
+  };
 
   useEffect(() => {
     const checkAuth = isAuthenticated();
@@ -32,28 +72,33 @@ export default function Header({ profileOverride }) {
           })
           .catch((err) => console.error("Header profile fetch failed:", err));
       }
-      // Fetch inbox messages to count unread ones
-      getInboxMessages()
-        .then((msgs) => {
-          if (Array.isArray(msgs)) {
-            const count = msgs.filter(m => !m.is_read).length;
-            setUnreadCount(count);
-          }
-        })
-        .catch((err) => console.error("Header inbox fetch failed:", err));
+      refreshCounts();
     }
-  }, [profileOverride]);
+  }, [profileOverride, location.pathname]);
 
-  // Close dropdown on outside click
+  useEffect(() => {
+    window.addEventListener("refreshHeaderCounts", refreshCounts);
+    return () => window.removeEventListener("refreshHeaderCounts", refreshCounts);
+  }, []);
+
   useEffect(() => {
     const handleOutsideClick = () => setMeMenuOpen(false);
     window.addEventListener("click", handleOutsideClick);
     return () => window.removeEventListener("click", handleOutsideClick);
   }, []);
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const currentProfile = profileOverride || profile;
   const currentPhoto = currentProfile?.photo;
   const initial = currentProfile?.first_name ? currentProfile.first_name[0].toUpperCase() : "?";
+
+  const handleMeClick = (e) => {
+    e.stopPropagation();
+    setMeMenuOpen(!meMenuOpen);
+  };
 
   const handleLogout = () => {
     logout();
@@ -61,398 +106,490 @@ export default function Header({ profileOverride }) {
     navigate("/login");
   };
 
-  const handleMeClick = (e) => {
-    e.stopPropagation();
-    setMeMenuOpen(!meMenuOpen);
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Simulate search or go to profiles search filter
+      navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   const currentPath = location.pathname;
   const isHome = currentPath === "/";
   const isMessages = currentPath === "/messages";
+  const isMatches = currentPath === "/matches";
   const isProfile = currentPath.startsWith("/profile");
-
-  const navLinkStyle = (isActive) => ({
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    color: isActive ? "#f17c13" : "#666666",
-    borderBottom: isActive ? "2px solid #f17c13" : "2px solid transparent",
-    padding: "4px 8px",
-    textDecoration: "none",
-    fontSize: "0.74rem",
-    fontWeight: "600",
-    transition: "all 0.15s ease",
-    minWidth: "64px",
-    gap: "3px",
-    boxSizing: "border-box",
-    height: "56px",
-    position: "relative"
-  });
-
-  const renderMeDropdown = () => {
-    if (!auth) return null;
-    return (
-      <div style={{ position: "relative" }}>
-        {/* Me Avatar trigger */}
-        <div 
-          onClick={handleMeClick}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            color: isProfile || meMenuOpen ? "#f17c13" : "#666666",
-            padding: "4px 8px",
-            fontSize: "0.74rem",
-            fontWeight: "600",
-            minWidth: "64px",
-            height: "56px",
-            boxSizing: "border-box",
-            gap: "3px"
-          }}
-        >
-          <div style={{
-            width: "22px",
-            height: "22px",
-            borderRadius: "50%",
-            backgroundColor: "#f17c13",
-            color: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "800",
-            fontSize: "0.7rem",
-            overflow: "hidden",
-            border: (isProfile || meMenuOpen) ? "1.5px solid #f17c13" : "1.5px solid #e5e7eb"
-          }}>
-            {currentPhoto ? (
-              <img src={currentPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              initial
-            )}
-          </div>
-          <span>Me ▾</span>
-        </div>
-
-        {/* Dropdown Menu */}
-        {meMenuOpen && (
-          <div style={{
-            position: "absolute",
-            top: "52px",
-            right: "4px",
-            backgroundColor: "#ffffff",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-            minWidth: "130px",
-            display: "flex",
-            flexDirection: "column",
-            padding: "4px 0",
-            zIndex: 1100
-          }}>
-            <div 
-              onClick={() => {
-                setMeMenuOpen(false);
-                navigate("/profile");
-              }}
-              style={{
-                padding: "10px 16px",
-                cursor: "pointer",
-                fontSize: "0.85rem",
-                color: "#374151",
-                fontWeight: "600",
-                transition: "background-color 0.15s"
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f3f4f6"}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-            >
-              View Profile
-            </div>
-            <div 
-              onClick={() => {
-                setMeMenuOpen(false);
-                handleLogout();
-              }}
-              style={{
-                padding: "10px 16px",
-                cursor: "pointer",
-                fontSize: "0.85rem",
-                color: "#ef4444",
-                fontWeight: "600",
-                borderTop: "1px solid #f3f4f6",
-                transition: "background-color 0.15s"
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f3f4f6"}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-            >
-              Sign Out
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <>
-      {/* Top Header Bar */}
-      <nav className="top-nav-bar" style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 1000,
-        background: "#ffffff",
-        borderBottom: "1px solid #e5e7eb",
-        boxShadow: "0 1px 4px rgba(0, 0, 0, 0.03)",
-        height: "56px"
-      }}>
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          maxWidth: "1060px",
-          margin: "0 auto",
-          height: "100%",
-          padding: "0 24px",
-          boxSizing: "border-box"
-        }}>
-          {/* Logo left-aligned */}
-          <div onClick={() => navigate("/")} style={{ display: "grid", gridTemplateColumns: "auto auto", gridTemplateRows: "1fr 1fr", alignItems: "center", gap: "2px 6px", cursor: "pointer" }}>
-            {/* Column 1, spanning both rows */}
-            <div style={{ gridColumn: "1", gridRow: "1 / span 2" }}>
-              <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
-                <circle cx="18" cy="18" r="11" stroke="#f17c13" strokeWidth="3" fill="none" />
-                <circle cx="30" cy="30" r="11" stroke="#f17c13" strokeWidth="3" fill="none" />
-              </svg>
-            </div>
-            {/* Column 2, Row 1 */}
-            <div style={{ gridColumn: "2", gridRow: "1", alignSelf: "end", lineHeight: "1" }}>
-              <span style={{ color: "#f17c13", fontWeight: "900", fontSize: "1.25rem", letterSpacing: "-0.03em" }}>
-                small
-              </span>
-            </div>
-            {/* Column 2, Row 2 */}
-            <div style={{ gridColumn: "2", gridRow: "2", alignSelf: "start", lineHeight: "1", marginLeft: "14px" }}>
-              <span style={{ color: "#111827", fontWeight: "900", fontSize: "1.25rem", letterSpacing: "-0.03em" }}>
-                circles
-              </span>
-            </div>
-          </div>
-
-          {/* Desktop/Wider Screens Navigation Items Wrapper */}
-          <div className="desktop-nav-items" style={{ display: "flex", alignItems: "center", gap: "4px", height: "100%" }}>
-            <div style={navLinkStyle(isHome)} onClick={() => navigate("/")}>
-              <Home size={20} />
-              <span>Home</span>
-            </div>
-
-            {auth ? (
-              <>
-                {/* Matches (briefcase icon) */}
-                <div 
-                  style={navLinkStyle(isMessages && sessionStorage.getItem("activeSidebarTab") === "matches")} 
-                  onClick={() => {
-                    sessionStorage.setItem("activeSidebarTab", "matches");
-                    navigate("/messages");
-                    if (currentPath === "/messages") {
-                      window.dispatchEvent(new CustomEvent("tabChange", { detail: "matches" }));
-                      window.location.reload();
-                    }
-                  }}
-                >
-                  <Briefcase size={20} />
-                  <span>Matches</span>
-                </div>
-
-                {/* Messaging */}
-                <div 
-                  style={navLinkStyle(isMessages && sessionStorage.getItem("activeSidebarTab") !== "matches")} 
-                  onClick={() => {
-                    sessionStorage.setItem("activeSidebarTab", "messages");
-                    navigate("/messages");
-                    if (currentPath === "/messages") {
-                      window.dispatchEvent(new CustomEvent("tabChange", { detail: "messages" }));
-                      window.location.reload();
-                    }
-                  }}
-                >
-                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                    <MessageSquare size={20} />
-                    {unreadCount > 0 && (
-                      <span style={{
-                        position: "absolute",
-                        top: "-6px",
-                        right: "-6px",
-                        fontSize: "0.65rem",
-                        backgroundColor: "#ef4444",
-                        color: "#ffffff",
-                        padding: "1px 5px",
-                        borderRadius: "8px",
-                        lineHeight: 1.2,
-                        fontWeight: "800"
-                      }}>
-                        {unreadCount}
-                      </span>
-                    )}
-                  </div>
-                  <span>Messaging</span>
-                </div>
-
-                {renderMeDropdown()}
-              </>
-            ) : (
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <button
-                  onClick={() => navigate("/register")}
-                  style={{
-                    backgroundColor: "transparent",
-                    color: "#5e5e5e",
-                    border: "none",
-                    padding: "6px 16px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    fontSize: "0.9rem",
-                    borderRadius: "20px",
-                    transition: "all 0.15s"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.04)";
-                    e.currentTarget.style.color = "#000000";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "#5e5e5e";
-                  }}
-                >
-                  Join now
-                </button>
-                <button
-                  onClick={() => navigate("/login")}
-                  style={{
-                    backgroundColor: "transparent",
-                    color: "#f17c13",
-                    border: "1px solid #f17c13",
-                    padding: "6px 18px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    fontSize: "0.9rem",
-                    borderRadius: "20px",
-                    transition: "all 0.15s"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(241, 124, 19, 0.04)";
-                    e.currentTarget.style.borderWidth = "2px";
-                    e.currentTarget.style.padding = "5px 17px";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.borderWidth = "1px";
-                    e.currentTarget.style.padding = "6px 18px";
-                  }}
-                >
-                  Sign in
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile-Only Me Dropdown in the top header */}
-          <div className="mobile-me-container" style={{ display: "none" }}>
-            {renderMeDropdown()}
-          </div>
-        </div>
-      </nav>
-
-      {/* Mobile Bottom Navigation Bar (Home, Matches, Messaging only) */}
-      {auth && (
-        <nav className="mobile-bottom-nav-bar" style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1000,
-          background: "#ffffff",
-          borderTop: "1px solid #e5e7eb",
-          boxShadow: "0 -2px 8px rgba(0, 0, 0, 0.06)",
-          height: "56px",
-          display: "none",
-          justifyContent: "space-around",
-          alignItems: "center"
-        }}>
-          <div style={navLinkStyle(isHome)} onClick={() => navigate("/")}>
-            <Home size={20} />
-            <span>Home</span>
-          </div>
-
-          <div 
-            style={navLinkStyle(isMessages && sessionStorage.getItem("activeSidebarTab") === "matches")} 
-            onClick={() => {
-              sessionStorage.setItem("activeSidebarTab", "matches");
-              navigate("/messages");
-              if (currentPath === "/messages") {
-                window.dispatchEvent(new CustomEvent("tabChange", { detail: "matches" }));
-                window.location.reload();
-              }
-            }}
-          >
-            <Briefcase size={20} />
-            <span>Matches</span>
-          </div>
-
-          <div 
-            style={navLinkStyle(isMessages && sessionStorage.getItem("activeSidebarTab") !== "matches")} 
-            onClick={() => {
-              sessionStorage.setItem("activeSidebarTab", "messages");
-              navigate("/messages");
-              if (currentPath === "/messages") {
-                window.dispatchEvent(new CustomEvent("tabChange", { detail: "messages" }));
-                window.location.reload();
-              }
-            }}
-          >
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <MessageSquare size={20} />
-              {unreadCount > 0 && (
-                <span style={{
-                  position: "absolute",
-                  top: "-6px",
-                  right: "-6px",
-                  fontSize: "0.65rem",
-                  backgroundColor: "#ef4444",
-                  color: "#ffffff",
-                  padding: "1px 5px",
-                  borderRadius: "8px",
-                  lineHeight: 1.2,
-                  fontWeight: "800"
-                }}>
-                  {unreadCount}
-                </span>
-              )}
-            </div>
-            <span>Messaging</span>
-          </div>
-        </nav>
-      )}
-
-      {/* Responsive media overrides */}
       <style>{`
+        /* Header Container Styles */
+        .professional-header {
+          position: sticky;
+          top: 0;
+          background: #f3f4f6;
+          border-bottom: 1px solid #d1d5db;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          width: 100%;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+          z-index: 1000;
+        }
+
+        .header-top-row {
+          width: 100%;
+          max-width: 1060px;
+          margin: 0 auto;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px 24px;
+          box-sizing: border-box;
+        }
+
+        .logo-container {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .logo-text {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          line-height: 1;
+        }
+
+        .logo-text-small {
+          color: #35453f;
+          font-size: 1.1rem;
+          font-weight: 550;
+          letter-spacing: -0.02em;
+        }
+
+        .logo-text-circles {
+          color: #35453f;
+          font-size: 1.1rem;
+          font-weight: 550;
+          letter-spacing: -0.02em;
+        }
+
+        /* Search input bar */
+        .search-bar-form {
+          display: flex;
+          align-items: center;
+          position: relative;
+          width: 280px;
+          margin-left: 20px;
+          margin-right: auto;
+        }
+
+        .search-input {
+          width: 100%;
+          padding: 8px 12px 8px 36px;
+          border-radius: 20px;
+          border: 1px solid #d1d5db;
+          background: #ffffff;
+          font-size: 0.85rem;
+          color: #374151;
+          outline: none;
+          transition: all 0.15s ease;
+        }
+
+        .search-input:focus {
+          border-color: #d0533c;
+          box-shadow: 0 0 0 2px rgba(208, 83, 60, 0.1);
+        }
+
+        .search-icon-wrapper {
+          position: absolute;
+          left: 12px;
+          color: #9ca3af;
+          display: flex;
+          align-items: center;
+          pointer-events: none;
+        }
+
+        /* ProfileDropdown */
+        .profile-trigger-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: #ffffff;
+          border: 1px solid #d1d5db;
+          padding: 6px 14px;
+          border-radius: 20px;
+          cursor: pointer;
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: #374151;
+          transition: all 0.15s ease;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+        }
+
+        .profile-trigger-btn:hover {
+          background: #f9fafb;
+          border-color: #b9bec5;
+        }
+
+        .profile-avatar-circle {
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          overflow: hidden;
+          background: #ec5e3b;
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 800;
+          font-size: 0.8rem;
+          border: 1px solid #e5e7eb;
+        }
+
+        .profile-avatar-circle img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        /* Bottom Row Menu */
+        .header-bottom-row {
+          border-top: 1px solid #e5e7eb;
+          background: #f9fafb;
+        }
+
+        .bottom-row-content {
+          width: 100%;
+          max-width: 1060px;
+          margin: 0 auto;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 0 24px;
+          box-sizing: border-box;
+          height: 42px;
+          position: relative;
+        }
+
+        .nav-links-list {
+          display: flex;
+          align-items: center;
+          height: 100%;
+        }
+
+        .nav-divider-pipe {
+          width: 1px;
+          height: 14px;
+          background-color: #d1d5db;
+          margin: 0 4px;
+        }
+
+        .nav-tab-item {
+          color: #4b5563;
+          font-size: 0.85rem;
+          font-weight: 600;
+          text-decoration: none;
+          padding: 8px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.15s ease;
+          position: relative;
+        }
+
+        .nav-tab-item:hover {
+          color: #ec5e3b;
+          background: rgba(236, 94, 59, 0.05);
+        }
+
+        .nav-tab-item.active {
+          color: #ec5e3b;
+          font-weight: 750;
+        }
+
+        .right-helper-links {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          position: absolute;
+          right: 24px;
+          width: 200px;
+          justify-content: flex-start;
+        }
+
+        .helper-link-btn {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: #4b5563;
+          text-decoration: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          transition: color 0.15s;
+          background: none;
+          border: none;
+          padding: 0;
+        }
+
+        .helper-link-btn:hover {
+          color: #ec5e3b;
+        }
+
+        /* Unread Badge Counter */
+        .tab-badge-counter {
+          background-color: #ef4444;
+          color: #ffffff;
+          font-size: 0.65rem;
+          font-weight: 800;
+          padding: 1px 5px;
+          border-radius: 8px;
+          line-height: 1.2;
+          margin-left: 2px;
+        }
+
+        /* Dropdown Menu block */
+        .me-dropdown-menu {
+          position: absolute;
+          top: 42px;
+          left: 0;
+          background: #ffffff;
+          border: 1px solid #d1d5db;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+          min-width: 140px;
+          display: flex;
+          flex-direction: column;
+          padding: 4px 0;
+          z-index: 1100;
+        }
+
+        .dropdown-item-link {
+          padding: 10px 16px;
+          cursor: pointer;
+          font-size: 0.85rem;
+          color: #374151;
+          font-weight: 600;
+          transition: background-color 0.15s;
+          text-align: left;
+        }
+
+        .dropdown-item-link:hover {
+          background-color: #f3f4f6;
+        }
+
+        .dropdown-item-link.sign-out {
+          color: #ef4444;
+          border-top: 1px solid #f3f4f6;
+        }
+
+        .profile-trigger-wrapper {
+          display: flex;
+          justify-content: flex-start;
+          width: 200px;
+          position: relative;
+        }
+
+        /* Mobile Styles */
         @media (max-width: 768px) {
-          .desktop-nav-items {
-            display: none !important;
+          .profile-trigger-wrapper {
+            width: auto !important;
           }
-          .mobile-me-container {
-            display: block !important;
-          }
-          .mobile-bottom-nav-bar {
+          .mobile-menu-toggle {
             display: flex !important;
           }
-          body {
-            padding-bottom: 56px !important;
+          .search-bar-form {
+            display: none;
+          }
+          .header-bottom-row {
+            display: none;
+            width: 100%;
+            background: #ffffff;
+            border-top: 1px solid #e5e7eb;
+          }
+          .header-bottom-row.mobile-open {
+            display: block !important;
+          }
+          .bottom-row-content {
+            flex-direction: column !important;
+            height: auto !important;
+            padding: 12px 24px !important;
+            align-items: stretch !important;
+          }
+          .nav-links-list {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            width: 100%;
+            height: auto !important;
+          }
+          .nav-divider-pipe {
+            display: none !important;
+          }
+          .nav-tab-item {
+            padding: 10px 16px !important;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            font-size: 0.95rem !important;
+          }
+          .right-helper-links {
+            position: static !important;
+            width: 100% !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            border-top: 1px solid #f3f4f6;
+            margin-top: 8px;
+            padding-top: 12px;
+            gap: 4px !important;
+          }
+          .helper-link-btn {
+            padding: 10px 16px !important;
+            font-size: 0.95rem !important;
+            width: 100%;
+          }
+          .mobile-bottom-nav-bar {
+            display: none !important;
           }
         }
       `}</style>
+
+      <header className="professional-header">
+        <div className="header-top-row">
+          {/* Logo with interlinked circles */}
+          <div className="logo-container" onClick={() => navigate("/")}>
+            <svg width="40" height="40" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Three overlapping circles (Venn diagram layout) */}
+              <circle cx="25" cy="18" r="11" stroke="#b0a296" strokeWidth="2.5" fill="none" />
+              <circle cx="17" cy="31" r="11" stroke="#b0a296" strokeWidth="2.5" fill="none" />
+              <circle cx="33" cy="31" r="11" stroke="#b0a296" strokeWidth="2.5" fill="none" />
+            </svg>
+            <div className="logo-text">
+              <span className="logo-text-small">small</span>
+              <span className="logo-text-circles">circles</span>
+            </div>
+          </div>
+
+
+
+          {/* User profile / dropdown */}
+          {auth ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="profile-trigger-wrapper">
+                <div className="profile-trigger-btn" onClick={handleMeClick}>
+                  <div className="profile-avatar-circle">
+                    {currentPhoto ? (
+                      <img src={currentPhoto} alt="" />
+                    ) : (
+                      initial
+                    )}
+                  </div>
+                  <span>My Network ▾</span>
+                </div>
+                
+                {meMenuOpen && (
+                  <div className="me-dropdown-menu">
+                    <div className="dropdown-item-link" onClick={() => navigate("/profile")}>
+                      View Profile
+                    </div>
+                    <div className="dropdown-item-link" onClick={() => navigate("/matches")}>
+                      My Matches
+                    </div>
+                    <div className="dropdown-item-link sign-out" onClick={handleLogout}>
+                      Sign Out
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Hamburger Menu Toggle */}
+              <button 
+                className="mobile-menu-toggle"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#35453f",
+                  cursor: "pointer",
+                  display: "none",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "6px"
+                }}
+              >
+                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <button
+                onClick={() => navigate("/login")}
+                style={{
+                  background: "transparent",
+                  color: "#ec5e3b",
+                  border: "1px solid #ec5e3b",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  fontWeight: "700",
+                  fontSize: "0.85rem",
+                  cursor: "pointer"
+                }}
+              >
+                Sign In
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom row navigation items */}
+        {auth && (
+          <div className={`header-bottom-row ${mobileMenuOpen ? "mobile-open" : ""}`}>
+            <div className="bottom-row-content">
+              <nav className="nav-links-list">
+                <div className={`nav-tab-item ${isMatches ? "active" : ""}`} onClick={() => navigate("/matches")}>
+                  Matches
+                  {pendingMatchesCount > 0 && (
+                    <span className="tab-badge-counter">{pendingMatchesCount}</span>
+                  )}
+                </div>
+                
+                <div className="nav-divider-pipe"></div>
+
+                <div className={`nav-tab-item ${isMessages ? "active" : ""}`} onClick={() => navigate("/messages")}>
+                  Connections
+                </div>
+
+                <div className="nav-divider-pipe"></div>
+
+                <div className={`nav-tab-item ${isMessages ? "active" : ""}`} onClick={() => navigate("/messages")}>
+                  Messages
+                  {unreadCount > 0 && (
+                    <span className="tab-badge-counter">{unreadCount}</span>
+                  )}
+                </div>
+
+                <div className="nav-divider-pipe"></div>
+
+                <div className={`nav-tab-item ${isProfile ? "active" : ""}`} onClick={() => navigate("/profile")}>
+                  Account
+                </div>
+              </nav>
+
+              <div className="right-helper-links">
+                <button className="helper-link-btn" onClick={() => navigate("/contact")}>
+                  <HelpCircle size={15} />
+                  <span>Help</span>
+                </button>
+                <button className="helper-link-btn" onClick={handleLogout}>
+                  <span>Log Out</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </header>
     </>
   );
 }

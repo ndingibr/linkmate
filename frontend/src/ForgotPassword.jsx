@@ -68,26 +68,27 @@ export default function ForgotPassword() {
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fffcf9", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <Header />
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", padding: "60px 0" }}>
+      <div className="split-page-section">
         <div className="login-split-container">
           {/* LEFT COLUMN: BANNER */}
-          <div className="login-left-banner book-hero-content">
-            <span className="book-genre" style={{ color: "#f17c13", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "0.85rem", marginBottom: "0.5rem" }}>
+          <div className="login-left-banner circles-content">
+            <span className="left-banner-tag">
               Secure Recovery
             </span>
-            <h1 style={{ color: "#111827", fontSize: "2.4rem", fontWeight: "800", lineHeight: "1.2", margin: "0 0 1rem 0" }}>
-              {showOtpScreen ? "Enter your verification code." : "Recover your account."}
+            <h1 className="left-banner-title">
+              {showOtpScreen ? (
+                <>
+                  Verify your <br />
+                  <span style={{ color: "#f17c13" }}>business friends account.</span>
+                </>
+              ) : (
+                <>
+                  Recover your <br />
+                  <span style={{ color: "#f17c13" }}>business friends account.</span>
+                </>
+              )}
             </h1>
-            <p
-              className="book-description"
-              style={{
-                fontSize: "1.05rem",
-                color: "#4b5563",
-                lineHeight: "1.6",
-                margin: "0 0 2.5rem 0",
-                maxWidth: "500px",
-              }}
-            >
+            <p className="left-banner-desc">
               {showOtpScreen 
                 ? "Please check your inbox. Enter the 6-digit verification code along with your new password below."
                 : "Enter your email address, and we'll dispatch a secure, 6-digit verification code to reset your account password."
@@ -95,43 +96,15 @@ export default function ForgotPassword() {
             </p>
 
             {/* Inline Graphic Card */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "1.25rem",
-                background: "#ffffff",
-                padding: "1.25rem 1.5rem",
-                borderRadius: "16px",
-                border: "1px solid #f3e8df",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.02)",
-                maxWidth: "500px",
-                boxSizing: "border-box",
-              }}
-            >
-              <div style={{
-                backgroundColor: "rgba(241, 124, 19, 0.08)",
-                borderRadius: "12px",
-                padding: "12px",
-                color: "#f17c13",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}>
+            <div className="left-banner-badge-card">
+              <div className="left-banner-badge-icon">
                 <ShieldCheck size={28} />
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "700", color: "#111827" }}>
+                <h4 className="left-banner-badge-title">
                   Robust Security Protocols
                 </h4>
-                <p
-                  style={{
-                    margin: "0.25rem 0 0 0",
-                    fontSize: "0.85rem",
-                    color: "#4b5563",
-                    lineHeight: "1.4",
-                  }}
-                >
+                <p className="left-banner-badge-desc">
                   We verify One-Time Passwords (OTP) on our backend using tight expiry windows to ensure absolute safety.
                 </p>
               </div>
@@ -141,28 +114,17 @@ export default function ForgotPassword() {
           {/* RIGHT COLUMN: RECOVERY FORM CARD */}
           <div className="login-right-form">
             <div className="form-card-premium">
-              <h2
-                style={{
-                  fontSize: "1.75rem",
-                  fontWeight: "800",
-                  color: "#111827",
-                  margin: "0 0 0.5rem 0",
-                }}
-              >
-                {showOtpScreen ? "Verify Reset Code" : "Forgot Password?"}
-              </h2>
-              <p
-                style={{
-                  color: "#6b7280",
-                  fontSize: "0.9rem",
-                  margin: "0 0 2rem 0",
-                }}
-              >
-                {showOtpScreen 
-                  ? "Enter the 6-digit code and choose a new password." 
-                  : "We'll send verification code instructions directly to you."
-                }
-              </p>
+              <div className="form-card-header">
+                <h3 className="form-card-header-title">
+                  {showOtpScreen ? "Verify Reset Code" : "Forgot Password?"}
+                </h3>
+                <p className="form-card-header-desc">
+                  {showOtpScreen 
+                    ? "Enter the 6-digit code and choose a new password." 
+                    : "We'll send verification code instructions directly to you."
+                  }
+                </p>
+              </div>
 
               {error && (
                 <div className="alert-error-premium">
@@ -172,19 +134,7 @@ export default function ForgotPassword() {
               )}
 
               {successMessage && (
-                <div className="alert-success-premium" style={{
-                  backgroundColor: "#ecfdf5",
-                  color: "#065f46",
-                  border: "1px solid #a7f3d0",
-                  borderRadius: "12px",
-                  padding: "0.75rem 1rem",
-                  marginBottom: "1.5rem",
-                  fontSize: "0.85rem",
-                  fontWeight: "500",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem"
-                }}>
+                <div className="alert-success-premium">
                   <span>✅</span>
                   <span>{successMessage}</span>
                 </div>
@@ -193,7 +143,7 @@ export default function ForgotPassword() {
               {!showOtpScreen ? (
                 /* FORGOT PASSWORD REQUEST FORM (STEP 1) */
                 <form onSubmit={handleForgotSubmit}>
-                  <div className="input-group-premium" style={{ marginBottom: "1.75rem" }}>
+                  <div className="input-group-premium mb-1-75">
                     <label className="input-label-premium">Email Address</label>
                     <input
                       type="email"
@@ -208,20 +158,7 @@ export default function ForgotPassword() {
                   <button
                     type="submit"
                     disabled={loading}
-                    style={{
-                      background: "linear-gradient(135deg, #f17c13 0%, #d96a0a 100%)",
-                      color: "#ffffff",
-                      padding: "0.875rem",
-                      borderRadius: "12px",
-                      fontWeight: "700",
-                      fontSize: "0.9rem",
-                      width: "100%",
-                      border: "none",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 15px rgba(241, 124, 19, 0.2)",
-                      transition: "all 0.2s ease",
-                      marginBottom: "1.5rem"
-                    }}
+                    className="form-submit-btn-premium mb-1-5"
                   >
                     {loading ? "Sending OTP..." : "Send Verification Code"}
                   </button>
@@ -245,11 +182,10 @@ export default function ForgotPassword() {
                     <input
                       type="text"
                       maxLength={6}
-                      className="input-premium"
+                      className="input-premium otp-input-premium"
                       placeholder="123456"
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                      style={{ letterSpacing: "0.25em", textAlign: "center", fontSize: "1.1rem", fontWeight: "800" }}
                       required
                     />
                   </div>
@@ -266,7 +202,7 @@ export default function ForgotPassword() {
                     />
                   </div>
 
-                  <div className="input-group-premium" style={{ marginBottom: "1.75rem" }}>
+                  <div className="input-group-premium mb-1-75">
                     <label className="input-label-premium">Confirm Password</label>
                     <input
                       type="password"
@@ -281,20 +217,7 @@ export default function ForgotPassword() {
                   <button
                     type="submit"
                     disabled={loading}
-                    style={{
-                      background: "linear-gradient(135deg, #f17c13 0%, #d96a0a 100%)",
-                      color: "#ffffff",
-                      padding: "0.875rem",
-                      borderRadius: "12px",
-                      fontWeight: "700",
-                      fontSize: "0.9rem",
-                      width: "100%",
-                      border: "none",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 15px rgba(241, 124, 19, 0.2)",
-                      transition: "all 0.2s ease",
-                      marginBottom: "1.5rem"
-                    }}
+                    className="form-submit-btn-premium mb-1-5"
                   >
                     {loading ? "Saving Password..." : "Save Password"}
                   </button>
@@ -302,17 +225,7 @@ export default function ForgotPassword() {
               )}
 
               <div 
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
-                  justifyContent: "center", 
-                  gap: "0.25rem",
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  transition: "color 0.15s"
-                }}
+                className="login-switch-footer"
                 onClick={() => {
                   if (showOtpScreen) {
                     setShowOtpScreen(false);
@@ -322,11 +235,10 @@ export default function ForgotPassword() {
                     navigate("/login");
                   }
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
-                onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
               >
-                <ArrowLeft size={16} />
-                {showOtpScreen ? "Change Email" : "Back to Sign In"}
+                <span>
+                  Change Email or Go Back
+                </span>
               </div>
             </div>
           </div>

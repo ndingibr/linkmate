@@ -300,3 +300,128 @@ def run_matching_cycle():
                     conn.close()
                     
     logger.info(f"Ollama B2B segment matching complete. Added {matches_added} new match records.")
+
+
+def run_matching_for_user(user_id: int):
+    """
+    Runs matching immediately for a specific user after they update their profile.
+    """
+    logger.info(f"Running immediate matching cycle for user {user_id}...")
+    
+    # 0. Automatically check/pull missing Ollama models
+    ensure_ollama_models()
+    
+    conn = get_conn()
+    c = conn.cursor()
+    
+    # 1. Ensure the user's intents have embeddings
+    c.execute("""
+        SELECT ui.id, ui.intention 
+        FROM user_intents ui
+        WHERE ui.user_id = %s AND ui.intention IS NOT NULL AND ui.intention != '' AND ui.intent_vector IS NULL
+    """, (user_id,))
+    unembedded = [dict(row) for row in c.fetchall()]
+    for ui in unembedded:
+        emb = generate_embedding(ui["intention"])
+        if emb:
+            c.execute("UPDATE user_intents SET intent_vector = %s WHERE id = %s", (emb, ui["id"]))
+    conn.commit()
+    
+    # 2. Get existing matches to avoid duplicate evaluation
+    c.execute("SELECT user_id_1, user_id_2 FROM matches WHERE user_id_1 = %s OR user_id_2 = %s", (user_id, user_id))
+    existing_pairs = {(row["user_id_1"], row["user_id_2"]) for row in c.fetchall()}
+    
+    # 3. Fetch candidate matching pairs where user_id matches one of the sides, sub_industry matches, and type is opposite
+    c.execute("""
+        SELECT
+            ui1.user_id as u1_id,
+            ui2.user_id as u2_id,
+            ui1.intention as u1_intention,
+            ui2.intention as u2_intention,
+            ui1.type as u1_type,
+            ui2.type as u2_type,
+            i.name as industry_name,
+            s.name as sub_industry_name,
+            (ui1.intent_vector <=> ui2.intent_vector) as distance
+        FROM user_intents ui1
+        JOIN user_intents ui2 ON ui1.sub_industry_id = ui2.sub_industry_id
+        JOIN industries i ON ui1.industry_id = i.id
+        JOIN sub_industries s ON ui1.sub_industry_id = s.id
+        JOIN users u1 ON ui1.user_id = u1.id
+        JOIN users u2 ON ui2.user_id = u2.id
+        WHERE (ui1.user_id = %s OR ui2.user_id = %s)
+          AND ui1.user_id != ui2.user_id
+          AND (
+            (ui1.type = 'buy' AND ui2.type = 'give') OR
+            (ui1.type = 'give' AND ui2.type = 'buy')
+          )
+          AND u1.intent_active = TRUE AND u2.intent_active = TRUE
+          AND ui1.intent_vector IS NOT NULL AND ui2.intent_vector IS NOT NULL
+        ORDER BY distance ASC
+        LIMIT 10
+    """, (user_id, user_id, user_id, user_id))
+    candidates = [dict(row) for row in c.fetchall()]
+    conn.close()
+    
+    if not candidates:
+        logger.info(f"No immediate candidates found for user {user_id}.")
+        return
+        
+    logger.info(f"Evaluating {len(candidates)} potential immediate B2B match pairs for user {user_id} using Llama 3.1.")
+    
+    matches_added = 0
+    evaluated_pairs = set()
+    
+    for cand in candidates:
+        u1_id = cand["u1_id"]
+        u2_id = cand["u2_id"]
+        pair = (min(u1_id, u2_id), max(u1_id, u2_id))
+        
+        if pair in existing_pairs or pair in evaluated_pairs:
+            continue
+            
+        evaluated_pairs.add(pair)
+        
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT id, first_name, last_name, company_name, role, intent FROM users WHERE id = %s", (u1_id,))
+        user_a = c.fetchone()
+        c.execute("SELECT id, first_name, last_name, company_name, role, intent FROM users WHERE id = %s", (u2_id,))
+        user_b = c.fetchone()
+        conn.close()
+        
+        if not user_a or not user_b:
+            continue
+            
+        intent_a_text = cand["u1_intention"]
+        intent_b_text = cand["u2_intention"]
+        
+        eval_res = evaluate_intent_match(
+            dict(user_a), dict(user_b), 
+            intent_a_text, intent_b_text, 
+            cand["industry_name"], cand["sub_industry_name"]
+        )
+        
+        if eval_res["is_match"] and eval_res["score"] > 0:
+            ups_a = get_user_performance_score(u1_id)
+            ups_b = get_user_performance_score(u2_id)
+            
+            adjusted_score = eval_res["score"] * ups_a * ups_b
+            final_score = min(100.0, round(adjusted_score, 1))
+            
+            if final_score >= 50.0:
+                conn = get_conn()
+                c = conn.cursor()
+                try:
+                    c.execute("""
+                        INSERT INTO matches (user_id_1, user_id_2, score, status, match_reason)
+                        VALUES (%s, %s, %s, 'pending', %s)
+                        ON CONFLICT (user_id_1, user_id_2) DO NOTHING
+                    """, (pair[0], pair[1], final_score, eval_res["reason"]))
+                    conn.commit()
+                    matches_added += 1
+                    logger.info(f"Ollama Segment Match recorded for user {user_id}: User {pair[0]} <-> User {pair[1]} at {final_score}% Match.")
+                except Exception as ex:
+                    logger.error(f"Error inserting immediate match: {ex}")
+                finally:
+                    conn.close()

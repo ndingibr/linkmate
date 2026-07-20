@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logoImg from "./img/ventureai_logo.jpg";
+import logoImg from "./img/small_circles.jpg";
 import { Menu, X } from "lucide-react";
 import { isAuthenticated, logout } from "./api";
 import ContactSection from "./Contact";
@@ -50,7 +50,7 @@ export default function ContactPage() {
               Contact Us
             </h2>
             <p style={{ color: "#9ca3af", maxWidth: "520px", margin: "0 auto" }}>
-              Have questions about integrating SmallCircles into your workflow? Contact our partnership desk.
+              Have questions about integrating Small Circles into your workflow? Contact our partnership desk.
             </p>
           </div>
           <ContactSection />

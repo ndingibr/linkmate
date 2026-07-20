@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { getUserProfile, updateUserProfile, logout, analyzeIntent, isAuthenticated, getOtherUserProfile, getInboxMessages, getSentMessages, sendMessage, markMessageRead, getMatches } from "./api";
-import logoImg from "./img/ventureai_logo.jpg";
+import logoImg from "./img/small_circles.jpg";
 import { Menu, X, Mail, Send, Inbox, MessageSquare, Reply } from "lucide-react";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
@@ -140,7 +140,7 @@ export default function Profile() {
       const words = cleanText.split(/\s+/).filter(w => w.length > 0);
       const wordCount = words.length;
 
-      let domain = "B2B General";
+      let domain = "General Business";
       if (["plumber","plumbing","pipe","leak","drain","geyser"].some(k => cleanText.includes(k))) domain = "Plumbing Service";
       else if (["car","vehicle","auto","truck","suv","motor"].some(k => cleanText.includes(k))) domain = "Automotive / Vehicle";
       else if (["software","developer","dev","app","programming","code","web","database","tech","engineer"].some(k => cleanText.includes(k))) domain = "Software / IT";
@@ -212,7 +212,7 @@ export default function Profile() {
       else if (score >= 45) clarity = "Moderate";
 
       const suggestions = [];
-      if (wordCount < 300) suggestions.push(`Your statement is too short (${wordCount}/300 words). Expand to at least 300 words for optimal B2B matchmaking.`);
+      if (wordCount < 300) suggestions.push(`Your statement is too short (${wordCount}/300 words). Expand to at least 300 words for optimal matchmaking.`);
       if (domain === "Plumbing Service") {
         if (!["leak","clog","burst","geyser","drain","toilet","repair","install","problem","sink","pipes"].some(k => cleanText.includes(k))) suggestions.push("Specify the plumbing problem details (e.g. geyser replacement, drain clog, toilet repair).");
         if (!hasBackgroundDetails) suggestions.push("State the plumber experience required (e.g., Senior trade-tested plumber, 5+ years).");
@@ -256,7 +256,45 @@ export default function Profile() {
 
   const handleUpdate = async (e) => {
     if (e) e.preventDefault();
-    setError(""); setSuccess(""); setSaving(true);
+    setError(""); setSuccess("");
+    
+    // Validate Location
+    const loc = form.location;
+    if (!loc || !loc.trim()) {
+      setError("Location is mandatory.");
+      return;
+    }
+    
+    const clean = loc.toLowerCase().trim();
+    let isSA = false;
+    
+    if (clean.includes("south africa") || clean.includes(" rsa") || clean.includes("rsa ") || clean.includes(", rsa") || clean.includes(", za") || clean.includes(" za ") || clean.endsWith(" za") || clean === "rsa" || clean === "za") {
+      isSA = true;
+    }
+    
+    const zipRegex = /\b\d{4}\b/;
+    if (zipRegex.test(clean)) {
+      isSA = true;
+    }
+
+    const saKeywords = [
+      "gauteng", "western cape", "kwazulu-natal", "kzn", "eastern cape", "free state", "limpopo", "mpumalanga", "north west", "northern cape",
+      "johannesburg", "joburg", "sandton", "randburg", "midrand", "roodepoort", "soweto", "kempton park", "benoni", "boksburg", "germiston", "alberton", "centurion", "pretoria", "tshwane",
+      "cape town", "bellville", "stellenbosch", "somerset west", "paarl", "durban", "umhlanga", "pinetown", "pietermaritzburg", "gqeberha", "port elizabeth", "pe", "east london",
+      "bloemfontein", "polokwane", "nelspruit", "mbembela", "rustenburg", "george", "knysna", "mossel bay", "hermanus", "parys", "welkom", "kimberley", "upington", "mafikeng", "potchefstroom",
+      "klerksdorp", "witbank", "emalahleni", "middelburg", "secunda", "sasolburg", "vereeniging", "vanderbijlpark"
+    ];
+    
+    if (saKeywords.some(keyword => clean.includes(keyword))) {
+      isSA = true;
+    }
+    
+    if (!isSA) {
+      setError("Please specify a location within South Africa (e.g., zip code, suburb, city, or add 'South Africa').");
+      return;
+    }
+
+    setSaving(true);
     try {
       const updated = await updateUserProfile(form);
       setProfile(updated);
@@ -528,10 +566,10 @@ export default function Profile() {
         {/* Content */}
         <div className="ps-content">
           <h1 className="ps-page-title">
-            {isReadOnly ? `${form.first_name || "Partner"}'s B2B Intent` : "Intent | Profile"}
+            {isReadOnly ? `${form.first_name || "Partner"}'s Business Intent` : "Intent | Profile"}
           </h1>
           <p className="ps-page-sub">
-            {isReadOnly ? `View B2B intention and parameters for ${form.first_name} ${form.last_name || ""}.` : "Manage your profile, intent, and preferences."}
+            {isReadOnly ? `View business intention and parameters for ${form.first_name} ${form.last_name || ""}.` : "Manage your profile, intent, and preferences."}
           </p>
 
           {/* Tabs */}
@@ -623,14 +661,14 @@ export default function Profile() {
               <>
                 <div className="ps-card">
                   <h2 className="ps-card-title">Matchmaker Intent</h2>
-                  <p className="ps-card-sub">Manage your B2B matchmaking intention statement and parameters.</p>
+                  <p className="ps-card-sub">Manage your matchmaking intention statement and parameters.</p>
                   <hr className="ps-divider" />
 
                   <div className="ps-grid-2">
 
                     {/* Intent Textarea */}
                     <div className="ps-field ps-span-2">
-                      <label className="ps-label">B2B Matchmaking Intention</label>
+                      <label className="ps-label">Matchmaking Intention</label>
                       <textarea
                         name="intent" rows={5}
                         className="ps-textarea"
@@ -735,6 +773,30 @@ export default function Profile() {
                       </div>
                     </div>
 
+                    <div className="ps-field ps-span-2" style={{ position: "relative" }}>
+                      <label className="ps-label">Location <span style={{ color: "#f17c13" }}>*</span></label>
+                      <input type="text" name="location" className="ps-input"
+                        placeholder="e.g. Sandton, Centurion, Stellenbosch, or Zip Code..."
+                        value={form.location}
+                        onChange={e => handleLocationChange(e.target.value)}
+                        onFocus={() => { if (form.location.trim()) { setLocationSuggestions(COMMON_LOCATIONS.filter(l => l.toLowerCase().includes(form.location.toLowerCase()))); setShowSuggestions(true); } }}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                        required
+                      />
+                      {showSuggestions && locationSuggestions.length > 0 && locationDropdown(locationSuggestions)}
+                    </div>
+
+                    {/* Map */}
+                    <div className="ps-span-2" style={{ marginBottom: "1rem" }}>
+                      <div style={{ position: "relative", height: 220, borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", background: "#f3f4f6" }}>
+                        <iframe title="Intent Location Map" width="100%" height="100%" style={{ border: 0 }} loading="lazy" allowFullScreen
+                          src={`https://maps.google.com/maps?q=${encodeURIComponent(form.location || "South Africa")}&t=&z=13&ie=UTF8&iwloc=&output=embed`} />
+                        <div style={{ position: "absolute", bottom: 10, left: 10, background: "rgba(17,24,39,0.85)", color: "white", padding: "5px 12px", borderRadius: 14, fontSize: "0.75rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                          📍 {form.location ? `Location: ${form.location}` : "Default: South Africa"}
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Decision Influence */}
                     <div className="ps-field">
                       <label className="ps-label">Decision Influence</label>
@@ -815,7 +877,7 @@ export default function Profile() {
               <>
                 <div className="ps-card">
                   <h2 className="ps-card-title">Profile Information</h2>
-                  <p className="ps-card-sub">Manage your personal information and how it appears on SmallCircles.</p>
+                  <p className="ps-card-sub">Manage your personal information and how it appears on Small Circles.</p>
                   <hr className="ps-divider" />
 
                   {/* Photo Row */}
@@ -912,7 +974,7 @@ export default function Profile() {
                       <input type="text" name="company_name" className="ps-input" placeholder="Small Circles" value={form.company_name} onChange={handleChange} />
                     </div>
                     <div className="ps-field ps-span-2" style={{ position: "relative" }}>
-                      <label className="ps-label">Location</label>
+                      <label className="ps-label">Location <span style={{ color: "#f17c13" }}>*</span></label>
                       <input type="text" name="location" className="ps-input"
                         placeholder="e.g. Sandton, Centurion, Stellenbosch..."
                         value={form.location}

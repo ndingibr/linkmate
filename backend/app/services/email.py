@@ -12,40 +12,40 @@ def send_activation_email(to_email: str, first_name: str):
     
     # Create message container
     msg = MIMEMultipart('alternative')
-    msg['Subject'] = "Activate your LinkMate Matchmaking Account"
-    msg['From'] = f"LinkMate Team <{SMTP_USER}>"
+    msg['Subject'] = "Activate your Small Circles Matchmaking Account"
+    msg['From'] = f"Small Circles <{SMTP_USER}>"
     msg['To'] = to_email
 
     # Plain text version for compatibility
     text = f"""Hi {first_name},
 
-Thank you for creating an account on LinkMate. We map actual, current business intentions across South African hubs to help B2B partners find each other.
+Thank you for creating an account on Small Circles. We utilise your intention to help you build the right network of business friends around your goals.
 
-To complete your registration and start discovering B2B matches, please confirm your email address:
+To complete your registration and start discovering matches, please confirm your email address:
 
 Confirm & Activate Intention: {activation_link}
 
 Once confirmed, you will be taken to your dashboard to register your first active intent.
 
-Note: We strictly reject spam and low-quality alerts. If we don't identify any B2B partners matching your profile, we won't clutter your inbox.
+Note: We strictly reject spam and low-quality alerts. If we don't identify any business friends matching your profile, we won't clutter your inbox.
 """
 
-    # HTML version with LinkMate branding
+    # HTML version with Small Circles branding and static image logo
     html = f"""<html>
       <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
         <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
-            <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
-              link<span style="color: #f17c13;">mate</span>
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px; text-align: left;">
+            <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
+              small<span style="color: #f17c13;">circles</span>
             </span>
           </div>
           <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
             <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
             <p>
-              Thank you for creating an account on <strong>LinkMate</strong>. We map actual, current business intentions across South African hubs to help B2B partners find each other.
+              Thank you for creating an account on <strong>Small Circles</strong>. We utilise your intention to help you build the right network of business friends around your goals.
             </p>
             <p>
-              To complete your registration and start discovering B2B matches, please confirm your email address:
+              To complete your registration and start discovering matches, please confirm your email address:
             </p>
             <div style="margin: 30px 0; text-align: left;">
               <a href="{activation_link}" style="background-color: #f17c13; color: #ffffff; padding: 12px 28px; border-radius: 30px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 4px 10px rgba(241, 124, 19, 0.25);">
@@ -55,9 +55,9 @@ Note: We strictly reject spam and low-quality alerts. If we don't identify any B
             <p style="font-size: 13px; color: #6b7280; margin-bottom: 24px;">
               Once confirmed, you will be taken to your dashboard to register your first active intent.
             </p>
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <div style="margin: 24px 0; border-top: 1px dashed #e5e7eb;"></div>
             <p style="font-size: 12px; color: #9ca3af; font-style: italic; margin: 0;">
-              Note: We strictly reject spam and low-quality alerts. If we don't identify any high-probability B2B partners matching your profile, we promise not to send updates.
+              Note: We strictly reject spam and low-quality alerts. If we don't identify any high-probability business friends matching your profile, we promise not to send updates.
             </p>
           </div>
         </div>
@@ -89,19 +89,19 @@ def send_direct_message_email(
     message_subject: str,
     message_body: str
 ):
-    subject = f"New SmallCircles Message: {message_subject}"
+    subject = f"New Small Circles Message: {message_subject}"
     
     # Create message container
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
-    msg['From'] = f"SmallCircles Messenger <{SMTP_USER}>"
+    msg['From'] = f"Small Circles <{SMTP_USER}>"
     msg['To'] = to_email
 
     sender_info = f"{sender_name} from {sender_company}" if sender_company else sender_name
 
     text = f"""Hi {recipient_name},
 
-You have received a new B2B message on SmallCircles from {sender_info}.
+You have received a new message on Small Circles from {sender_info}.
 
 Subject: {message_subject}
 
@@ -110,25 +110,25 @@ Message:
 {message_body}
 ----------------------------------------
 
-To read or reply to this message, please log in to your SmallCircles dashboard:
+To read or reply to this message, please log in to your Small Circles dashboard:
 http://localhost:5173/profile
 
 Regards,
-SmallCircles Team
+Small Circles Team
 """
 
     html = f"""<html>
       <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
         <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
-            <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px; text-align: left;">
+            <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
               small<span style="color: #f17c13;">circles</span>
             </span>
           </div>
           <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
             <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {recipient_name},</p>
             <p>
-              You have received a new B2B message on SmallCircles from <strong>{sender_info}</strong>.
+              You have received a new message on Small Circles from <strong>{sender_info}</strong>.
             </p>
             
             <div style="background-color: #f9fafb; border-left: 4px solid #f17c13; padding: 16px; margin: 24px 0; border-radius: 4px;">
@@ -138,11 +138,11 @@ SmallCircles Team
             
             <div style="margin: 30px 0; text-align: left;">
               <a href="http://localhost:5173/profile" style="background-color: #f17c13; color: #ffffff; padding: 12px 28px; border-radius: 30px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 4px 10px rgba(241, 124, 19, 0.25);">
-                Reply on SmallCircles
+                Reply on Small Circles
               </a>
             </div>
             
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <div style="margin: 24px 0; border-top: 1px dashed #e5e7eb;"></div>
             <p style="font-size: 12px; color: #9ca3af; margin: 0;">
               This is an automated notification. To change your communication settings, update your profile options.
             </p>
@@ -163,7 +163,7 @@ SmallCircles Team
         email_repo.log_sent_email(to_email, subject, html, "sent")
     except Exception as e:
         email_repo.log_sent_email(to_email, subject, html, "failed", str(e))
-        print(f"SMTP send failed for B2B message notification: {e}")
+        print(f"SMTP send failed for message notification: {e}")
 
 
 def send_password_reset_email(to_email: str, first_name: str, token: str):
@@ -171,14 +171,14 @@ def send_password_reset_email(to_email: str, first_name: str, token: str):
     
     # Create message container
     msg = MIMEMultipart('alternative')
-    msg['Subject'] = "Reset your LinkMate Account Password"
-    msg['From'] = f"LinkMate Team <{SMTP_USER}>"
+    msg['Subject'] = "Reset your Small Circles Account Password"
+    msg['From'] = f"Small Circles <{SMTP_USER}>"
     msg['To'] = to_email
 
     # Plain text version for compatibility
     text = f"""Hi {first_name},
 
-We received a request to reset your LinkMate account password.
+We received a request to reset your Small Circles account password.
 
 To reset your password, please click the link below:
 
@@ -187,22 +187,22 @@ Reset Password: {reset_link}
 If you did not request a password reset, please ignore this email.
 
 Regards,
-LinkMate Team
+Small Circles Team
 """
 
-    # HTML version with LinkMate branding
+    # HTML version with Small Circles branding and static image logo
     html = f"""<html>
       <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
         <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
-            <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
-              link<span style="color: #f17c13;">mate</span>
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px; text-align: left;">
+            <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
+              small<span style="color: #f17c13;">circles</span>
             </span>
           </div>
           <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
             <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
             <p>
-              We received a request to reset your <strong>LinkMate</strong> account password.
+              We received a request to reset your <strong>Small Circles</strong> account password.
             </p>
             <p>
               To reset your password, please click the button below:
@@ -215,7 +215,7 @@ LinkMate Team
             <p style="font-size: 13px; color: #6b7280; margin-bottom: 24px;">
               If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.
             </p>
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <div style="margin: 24px 0; border-top: 1px dashed #e5e7eb;"></div>
             <p style="font-size: 12px; color: #9ca3af; margin: 0;">
               This is an automated message. Please do not reply directly.
             </p>
@@ -242,14 +242,14 @@ LinkMate Team
 def send_activation_otp_email(to_email: str, first_name: str, otp_code: str):
     # Create message container
     msg = MIMEMultipart('alternative')
-    msg['Subject'] = f"{otp_code} is your SmallCircles Verification Code"
-    msg['From'] = f"SmallCircles Team <{SMTP_USER}>"
+    msg['Subject'] = f"{otp_code} is your Small Circles Verification Code"
+    msg['From'] = f"Small Circles <{SMTP_USER}>"
     msg['To'] = to_email
 
     # Plain text version
     text = f"""Hi {first_name},
 
-Thank you for creating an account on SmallCircles.
+Thank you for creating an account on Small Circles.
 
 Please verify your email address using the following 6-digit One-Time Password (OTP):
 
@@ -258,35 +258,35 @@ Verification Code: {otp_code}
 This code is valid for 15 minutes. Once verified, your account will be activated.
 
 Regards,
-SmallCircles Team
+Small Circles Team
 """
 
-    # HTML version with SmallCircles branding
+    # HTML version with Small Circles branding and static image logo
     html = f"""<html>
       <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
         <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
-            <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px; text-align: left;">
+            <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
               small<span style="color: #f17c13;">circles</span>
             </span>
           </div>
           <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
             <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
             <p>
-              Thank you for creating an account on <strong>SmallCircles</strong>. We map actual, current business intentions across South African hubs to help B2B partners find each other.
+              Thank you for creating an account on <strong>Small Circles</strong>. We utilise your intention to help you build the right network of business friends around your goals.
             </p>
             <p>
               Please verify your email address using the following 6-digit One-Time Password (OTP):
             </p>
             <div style="margin: 30px 0; text-align: left;">
-              <span style="display: inline-block; background-color: #fdfaf6; border: 2px dashed #f17c13; color: #f17c13; font-size: 24px; font-weight: 800; letter-spacing: 0.25em; padding: 12px 32px; border-radius: 12px;">
+              <span style="display: inline-block; background-color: #f9fafb; border: 1px solid #e5e7eb; color: #1f2937; font-size: 22px; font-weight: 700; letter-spacing: 0.15em; padding: 8px 24px; border-radius: 8px;">
                 {otp_code}
               </span>
             </div>
             <p style="font-size: 13px; color: #6b7280; margin-bottom: 24px;">
               This code is valid for 15 minutes. Once verified, your account will be activated.
             </p>
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <div style="margin: 24px 0; border-top: 1px dashed #e5e7eb;"></div>
             <p style="font-size: 12px; color: #9ca3af; margin: 0;">
               This is an automated message. Please do not reply directly.
             </p>
@@ -313,14 +313,14 @@ SmallCircles Team
 def send_password_reset_otp_email(to_email: str, first_name: str, otp_code: str):
     # Create message container
     msg = MIMEMultipart('alternative')
-    msg['Subject'] = f"{otp_code} is your SmallCircles Password Reset Code"
-    msg['From'] = f"SmallCircles Team <{SMTP_USER}>"
+    msg['Subject'] = f"{otp_code} is your Small Circles Password Reset Code"
+    msg['From'] = f"Small Circles <{SMTP_USER}>"
     msg['To'] = to_email
 
     # Plain text version
     text = f"""Hi {first_name},
 
-We received a request to reset your SmallCircles account password.
+We received a request to reset your Small Circles account password.
 
 Please verify this request using the following 6-digit One-Time Password (OTP):
 
@@ -329,35 +329,35 @@ Password Reset Code: {otp_code}
 This code is valid for 15 minutes. If you did not request a password reset, you can safely ignore this email.
 
 Regards,
-SmallCircles Team
+Small Circles Team
 """
 
-    # HTML version with SmallCircles branding
+    # HTML version with Small Circles branding and static image logo
     html = f"""<html>
       <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
         <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px;">
-            <span style="font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px; text-align: left;">
+            <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
               small<span style="color: #f17c13;">circles</span>
             </span>
           </div>
           <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
             <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
             <p>
-              We received a request to reset your <strong>SmallCircles</strong> account password.
+              We received a request to reset your <strong>Small Circles</strong> account password.
             </p>
             <p>
               Please verify this request using the following 6-digit One-Time Password (OTP):
             </p>
             <div style="margin: 30px 0; text-align: left;">
-              <span style="display: inline-block; background-color: #fdfaf6; border: 2px dashed #f17c13; color: #f17c13; font-size: 24px; font-weight: 800; letter-spacing: 0.25em; padding: 12px 32px; border-radius: 12px;">
+              <span style="display: inline-block; background-color: #f9fafb; border: 1px solid #e5e7eb; color: #1f2937; font-size: 22px; font-weight: 700; letter-spacing: 0.15em; padding: 8px 24px; border-radius: 8px;">
                 {otp_code}
               </span>
             </div>
             <p style="font-size: 13px; color: #6b7280; margin-bottom: 24px;">
               This code is valid for 15 minutes. If you did not request a password reset, you can safely ignore this email.
             </p>
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <div style="margin: 24px 0; border-top: 1px dashed #e5e7eb;"></div>
             <p style="font-size: 12px; color: #9ca3af; margin: 0;">
               This is an automated message. Please do not reply directly.
             </p>

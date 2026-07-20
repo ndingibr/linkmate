@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, BackgroundTasks
 from datetime import timedelta
 
 from app.schemas import (
@@ -341,6 +341,7 @@ def get_profile(current_user: dict = Depends(auth.get_current_user)):
 @router.put("/profile", response_model=UserProfile)
 def update_profile(
     data: UserUpdate,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(auth.get_current_user)
 ):
     update_data = data.dict(exclude_unset=True)
@@ -426,6 +427,11 @@ def update_profile(
     
     updated_dict = dict(updated)
     updated_dict["intents"] = [dict(r) for r in rows]
+    
+    if "intent" in update_data and update_data["intent"] is not None:
+        from app.services.matching_service import run_matching_for_user
+        background_tasks.add_task(run_matching_for_user, current_user["id"])
+        
     return updated_dict
 
 from pydantic import BaseModel
@@ -443,6 +449,7 @@ from typing import List, Dict, Any
 @router.post("/messages")
 def send_message(
     data: MessageCreate,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(auth.get_current_user)
 ):
     recipient = user_repo.get_user_by_id(data.recipient_id)
@@ -485,10 +492,11 @@ def send_message(
         body=data.body
     )
     
-    # Send SMTP direct email alert
+    # Send SMTP direct email alert in the background
     try:
         from app.services.email import send_direct_message_email
-        send_direct_message_email(
+        background_tasks.add_task(
+            send_direct_message_email,
             to_email=recipient["email"],
             recipient_name=recipient["first_name"],
             sender_name=f"{current_user['first_name']} {current_user['last_name']}",
@@ -590,7 +598,7 @@ def update_match_status(
             u_intent = current_user.get("intent") or ""
             
             intro_body = (
-                f"Hi {current_user['first_name']}! We've just matched on SmallCircles ({match_data['score']}% compatibility).\n\n"
+                f"Hi {current_user['first_name']}! We've just matched on Small Circles ({match_data['score']}% compatibility).\n\n"
                 f"Here are our complementary goals:\n"
                 f"• My goal ({p_comp}): \"{p_intent}\"\n"
                 f"• Your goal: \"{u_intent}\"\n\n"
@@ -601,7 +609,7 @@ def update_match_status(
             message_repo.create_message(
                 sender_id=partner_id,
                 recipient_id=user_id,
-                subject="B2B Goal Connection Match!",
+                subject="Goal Connection Match!",
                 body=intro_body
             )
             

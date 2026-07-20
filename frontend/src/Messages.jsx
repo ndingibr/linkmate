@@ -8,31 +8,17 @@ import Footer from "./components/Footer";
 export default function Messages() {
   const navigate = useNavigate();
   const [threads, setThreads] = useState([]);
-  const [matches, setMatches] = useState([]);
-  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [mobileShowDetails, setMobileShowDetails] = useState(false);
   const [showCelebrateModal, setShowCelebrateModal] = useState(false);
   const [attachedFile, setAttachedFile] = useState(null);
   const fileInputRef = useRef(null);
   const [activeThreadId, setActiveThreadId] = useState(null);
-  const [activeSidebarTab, setActiveSidebarTab] = useState(() => {
-    return sessionStorage.getItem("activeSidebarTab") || "messages";
-  });
-  
-  useEffect(() => {
-    sessionStorage.setItem("activeSidebarTab", activeSidebarTab);
-  }, [activeSidebarTab]);
 
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageSuccess, setMessageSuccess] = useState("");
   const [error, setError] = useState("");
-  const [connectingMatchId, setConnectingMatchId] = useState(null);
-  const [connectMessage, setConnectMessage] = useState(null);
-  
-  useEffect(() => {
-    setConnectMessage(null);
-  }, [selectedMatch]);
 
   const [currentUserPhoto, setCurrentUserPhoto] = useState(null);
   const [currentUserInitial, setCurrentUserInitial] = useState("Y");
@@ -237,10 +223,6 @@ export default function Messages() {
       return;
     }
 
-    getMatches()
-      .then(setMatches)
-      .catch(err => console.error("Error loading matches:", err));
-
     // Fetch logged-in user profile to get their photo, initials, and phone
     getUserProfile()
       .then((profile) => {
@@ -286,6 +268,7 @@ export default function Messages() {
           }
           return t;
         }));
+        window.dispatchEvent(new CustomEvent("refreshHeaderCounts"));
       })
       .catch(err => console.error("Error marking thread read:", err));
   }, [activeThreadId, threads.length]);
@@ -300,21 +283,30 @@ export default function Messages() {
 
     try {
       const lastMsg = activeThread.messages[activeThread.messages.length - 1];
-      const subject = lastMsg ? (lastMsg.subject.startsWith("Re:") ? lastMsg.subject : `Re: ${lastMsg.subject}`) : "B2B Connection Inquiry";
+      const subject = lastMsg ? (lastMsg.subject.startsWith("Re:") ? lastMsg.subject : `Re: ${lastMsg.subject}`) : "Connection Inquiry";
 
       let finalBody = replyText;
       if (attachedFile) {
         finalBody += `\n\n[Attachment: ${attachedFile.name}]`;
       }
 
-      await sendMessage({
+      const sentMsg = await sendMessage({
         recipient_id: activeThread.partnerId,
         subject: subject,
         body: finalBody
       });
 
-      sessionStorage.removeItem("linkmate_inbox");
-      sessionStorage.removeItem("linkmate_sent");
+      // Optimistically update sent cache
+      const cachedSent = sessionStorage.getItem("linkmate_sent");
+      if (cachedSent) {
+        try {
+          const sentList = JSON.parse(cachedSent);
+          sentList.push(sentMsg);
+          sessionStorage.setItem("linkmate_sent", JSON.stringify(sentList));
+        } catch (e) {
+          console.error("Failed to update sent cache:", e);
+        }
+      }
 
       setReplyText("");
       setAttachedFile(null);
@@ -732,20 +724,74 @@ export default function Messages() {
           overflow: hidden;
           background: #ffffff;
         }
-        .chat-header {
-          padding: 18px 24px;
-          border-bottom: 1px solid #f3f4f6;
-          background: #ffffff;
+        .chat-header-container {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 16px;
+          border-bottom: 1px solid #e5e7eb;
+          padding: 18px 24px;
+          background: #ffffff;
           text-align: left;
         }
-        .chat-partner-name {
-          font-size: 1.1rem;
-          font-weight: 800;
+        .chat-header-left {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          min-width: 0;
+        }
+        .chat-header-avatar {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #f17c13 0%, #ffedd5 100%);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 1.5rem;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        .chat-header-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .chat-header-info {
+          min-width: 0;
+          text-align: left;
+        }
+        .chat-header-info h3 {
+          margin: 0;
+          font-size: 1.2rem;
+          font-weight: 700;
           color: #111827;
-          margin: 0 0 2px 0;
+          line-height: 1.2;
+        }
+        .chat-header-info p {
+          font-size: 0.85rem;
+          color: #4b5563;
+          margin: 4px 0 0 0;
+          line-height: 1.3;
+        }
+        .chat-header-badge {
+          background: #fffbeb;
+          color: #d97706;
+          font-weight: 750;
+          font-size: 0.8rem;
+          padding: 6px 12px;
+          border-radius: 20px;
+          border: 1px solid #fef3c7;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .mobile-only-badge {
+          display: none !important;
+        }
+        .desktop-only-badge {
+          display: block !important;
         }
         .chat-partner-company {
           font-size: 0.8rem;
@@ -965,12 +1011,57 @@ export default function Messages() {
         @media (max-width: 768px) {
           .msg-layout {
             grid-template-columns: 1fr;
-            height: auto;
+            height: 580px;
             min-height: unset;
+            border-radius: 12px;
+          }
+          .mobile-hide {
+            display: none !important;
+          }
+          .mobile-show {
+            display: flex !important;
+            flex-direction: column;
+            height: 100% !important;
           }
           .contacts-panel {
-            border-top: 1px solid #eddcd2;
-            height: 300px;
+            border-top: none;
+            height: 100% !important;
+          }
+          .mobile-back-btn {
+            display: flex !important;
+          }
+          .chat-header-container {
+            padding: 12px 14px;
+            gap: 10px;
+            flex-wrap: nowrap;
+          }
+          .chat-header-left {
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+          }
+          .chat-header-avatar {
+            width: 44px;
+            height: 44px;
+            font-size: 1.1rem;
+          }
+          .chat-header-info h3 {
+            font-size: 0.95rem;
+          }
+          .chat-header-info p {
+            font-size: 0.75rem;
+          }
+          .chat-header-badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+          }
+          .mobile-only-badge {
+            display: inline-block !important;
+            margin-top: 6px;
+            align-self: flex-start;
+          }
+          .desktop-only-badge {
+            display: none !important;
           }
         }
       `}</style>
@@ -984,77 +1075,51 @@ export default function Messages() {
           Manage your messages, conversations, and preferences.
         </p>
 
-        {/* Top-Level Tabs Switcher */}
-        <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb", marginBottom: "24px", gap: "8px" }}>
-          <button 
-            type="button" 
-            className={`contacts-tab ${activeSidebarTab === "messages" ? "active" : ""}`} 
-            onClick={() => {
-              setActiveSidebarTab("messages");
-              setSelectedMatch(null);
-            }}
-            style={{ width: "auto", flex: "none", padding: "12px 24px" }}
-          >
-            Messages
-          </button>
-          <button 
-            type="button" 
-            className={`contacts-tab ${activeSidebarTab === "matches" ? "active" : ""}`} 
-            onClick={() => {
-              setActiveSidebarTab("matches");
-              setActiveThreadId(null);
-            }}
-            style={{ width: "auto", flex: "none", padding: "12px 24px" }}
-          >
-            Matches ({matches.filter(m => m.status !== 'rejected' && m.status !== 'converted').length})
-          </button>
-        </div>
-
         <div className="msg-layout">
-          {activeSidebarTab === "messages" ? (
-            <>
-              {/* LEFT PANEL: ACTIVE CHAT WINDOW */}
-              <div className="chat-panel">
-                {activeThread ? (
-                  <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                    {/* Chat Partner Details Header styled EXACTLY like the Matches header */}
-                    {(() => {
-                      const partnerMatch = matches.find(m => m.partner.id === activeThread.partnerId);
-                      const initial = activeThread.partnerName ? activeThread.partnerName[0].toUpperCase() : "?";
-                      return (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", borderBottom: "1px solid #e5e7eb", padding: "18px 24px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                            <div style={{ 
-                              width: "60px", 
-                              height: "60px", 
-                              borderRadius: "50%", 
-                              background: "linear-gradient(135deg, #f17c13 0%, #ffedd5 100%)", 
-                              color: "white", 
-                              display: "flex", 
-                              alignItems: "center", 
-                              justifyContent: "center", 
-                              fontWeight: "700", 
-                              fontSize: "1.5rem",
-                              overflow: "hidden",
-                              flexShrink: 0
-                            }}>
-                              {activeThread.partnerPhoto ? (
-                                <img src={activeThread.partnerPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                              ) : (
-                                initial
-                              )}
-                            </div>
-                            <div>
-                              <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: "700", color: "#111827", cursor: "pointer" }} onClick={() => navigate(`/profile/${activeThread.partnerId}`)}>
-                                {activeThread.partnerName}
-                              </h3>
-                              <div style={{ fontSize: "0.85rem", color: "#4b5563", marginTop: "2px" }}>
-                                {activeThread.partnerRole || "B2B Partner"} @ <strong>{activeThread.partnerCompany || "N/A"}</strong>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Turn Badge styled like Compatibility Badge */}
+          {/* LEFT PANEL: ACTIVE CHAT WINDOW */}
+          <div className={`chat-panel ${mobileShowDetails ? "mobile-show" : "mobile-hide"}`}>
+            {activeThread ? (
+              <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+                {/* Chat Partner Details Header styled EXACTLY like the Matches header */}
+                {(() => {
+                  const initial = activeThread.partnerName ? activeThread.partnerName[0].toUpperCase() : "?";
+                  return (
+                    <div className="chat-header-container">
+                      <div className="chat-header-left">
+                        {/* Back button visible only on mobile */}
+                        <button
+                          type="button"
+                          className="mobile-back-btn"
+                          onClick={() => setMobileShowDetails(false)}
+                          style={{
+                            display: "none",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            color: "#f17c13",
+                            padding: "4px 4px 4px 0",
+                            marginRight: "4px"
+                          }}
+                        >
+                          <span style={{ fontSize: "1.5rem", fontWeight: "900" }}>←</span>
+                        </button>
+                        <div className="chat-header-avatar">
+                          {activeThread.partnerPhoto ? (
+                            <img src={activeThread.partnerPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : (
+                            initial
+                          )}
+                        </div>
+                        <div className="chat-header-info">
+                          <h3 style={{ cursor: "pointer" }} onClick={() => navigate(`/profile/${activeThread.partnerId}`)}>
+                            {activeThread.partnerName}
+                          </h3>
+                          <p style={{ margin: "2px 0 0 0" }}>
+                            {activeThread.partnerRole || "Business Friend"} @ <strong>{activeThread.partnerCompany || "N/A"}</strong>
+                          </p>
+                          {/* Mobile-only Turn Badge inside info block */}
                           {(() => {
                             const latestMsg = activeThread.messages[activeThread.messages.length - 1];
                             let turnText = "New Connection";
@@ -1066,678 +1131,344 @@ export default function Messages() {
                               }
                             }
                             return (
-                              <div style={{ 
-                                background: "#fffbeb", 
-                                color: "#d97706", 
-                                fontWeight: "750", 
-                                fontSize: "0.8rem", 
-                                padding: "6px 12px", 
-                                borderRadius: "20px", 
-                                border: "1px solid #fef3c7" 
-                              }}>
+                              <div className="chat-header-badge mobile-only-badge">
                                 {turnText}
                               </div>
                             );
                           })()}
                         </div>
-                      );
-                    })()}
-
-                    {/* Timeline of Messages bubbles */}
-                    <div className="chat-timeline">
-                      {activeThread.messages.map((m) => {
-                        const isIncoming = m.direction === "incoming";
-                        const avatarPhoto = isIncoming ? activeThread.partnerPhoto : currentUserPhoto;
-                        const initial = isIncoming 
-                          ? (activeThread.partnerName ? activeThread.partnerName[0].toUpperCase() : "?")
-                          : currentUserInitial;
-
+                      </div>
+                      
+                      {/* Desktop-only Turn Badge styled like Compatibility Badge */}
+                      {(() => {
+                        const latestMsg = activeThread.messages[activeThread.messages.length - 1];
+                        let turnText = "New Connection";
+                        if (latestMsg) {
+                          if (latestMsg.direction === "incoming") {
+                            turnText = "Your Turn";
+                          } else {
+                            turnText = "Awaiting Reply";
+                          }
+                        }
                         return (
-                          <div 
-                            key={m.id} 
-                            style={{
-                              display: "flex",
-                              alignItems: "flex-start",
-                              gap: "12px",
-                              alignSelf: isIncoming ? "flex-start" : "flex-end",
-                              maxWidth: "75%"
-                            }}
-                          >
-                            {/* Avatar on the left for incoming messages */}
-                            {isIncoming && (
-                              <div 
-                                onClick={() => navigate(`/profile/${activeThread.partnerId}`)}
-                                style={{
-                                  width: "36px",
-                                  height: "36px",
-                                  borderRadius: "50%",
-                                  backgroundColor: "#f17c13",
-                                  color: "#ffffff",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontWeight: "800",
-                                  fontSize: "0.85rem",
-                                  overflow: "hidden",
-                                  flexShrink: 0,
-                                  border: "1px solid #eddcd2",
-                                  boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-                                  cursor: "pointer"
-                                }}
-                              >
-                                {avatarPhoto ? (
-                                  <img src={avatarPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                ) : (
-                                  initial
-                                )}
-                              </div>
-                            )}
-
-                            {/* Message Bubble Container */}
-                            <div className={`chat-bubble-row ${isIncoming ? "incoming" : "outgoing"}`}>
-                              {/* Name and Phone metadata ABOVE the bubble */}
-                              <div className="chat-bubble-meta" style={{ marginBottom: "4px", alignSelf: isIncoming ? "flex-start" : "flex-end" }}>
-                                {isIncoming ? (
-                                  <span 
-                                    onClick={() => navigate(`/profile/${activeThread.partnerId}`)}
-                                    style={{ cursor: "pointer", fontWeight: "600", transition: "color 0.15s" }}
-                                    onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
-                                    onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
-                                  >
-                                    {activeThread.partnerName} ({activeThread.partnerPhone || "No Phone"})
-                                  </span>
-                                ) : (
-                                  `You (${currentUserPhone || "No Phone"})`
-                                )}
-                                {" • "}{m.sentAt.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}
-                              </div>
-                              
-                              <div className="chat-bubble">
-                                {m.body.includes("[Attachment:") ? (
-                                  <div>
-                                    <div style={{ whiteSpace: "pre-line" }}>
-                                      {m.body.split("[Attachment:")[0]}
-                                    </div>
-                                    <div 
-                                      style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "10px",
-                                        backgroundColor: isIncoming ? "#ffffff" : "rgba(255, 255, 255, 0.18)",
-                                        padding: "8px 12px",
-                                        borderRadius: "8px",
-                                        marginTop: "8px",
-                                        border: isIncoming ? "1px solid #e5e7eb" : "none"
-                                      }}
-                                    >
-                                      <Paperclip size={14} />
-                                      <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ fontSize: "0.8rem", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                          {m.body.split("[Attachment:")[1].replace("]", "")}
-                                        </div>
-                                        <div style={{ fontSize: "0.68rem", opacity: 0.85 }}>Attached Document</div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  m.body
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Avatar on the right for outgoing messages */}
-                            {!isIncoming && (
-                              <div 
-                                style={{
-                                  width: "36px",
-                                  height: "36px",
-                                  borderRadius: "50%",
-                                  backgroundColor: "#374151",
-                                  color: "#ffffff",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontWeight: "800",
-                                  fontSize: "0.85rem",
-                                  overflow: "hidden",
-                                  flexShrink: 0,
-                                  border: "1px solid #e5e7eb",
-                                  boxShadow: "0 2px 5px rgba(0,0,0,0.05)"
-                                }}
-                              >
-                                {avatarPhoto ? (
-                                  <img src={avatarPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                ) : (
-                                  initial
-                                )}
-                              </div>
-                            )}
+                          <div className="chat-header-badge desktop-only-badge">
+                            {turnText}
                           </div>
                         );
-                      })}
+                      })()}
                     </div>
+                  );
+                })()}
 
-                    {/* Reply Compose Area */}
-                    <div className="chat-input-area">
-                      <form onSubmit={handleReplySubmit} className="chat-form">
-                        <textarea
-                          required
-                          placeholder={`Send a message to ${activeThread.partnerName}...`}
-                          className="chat-textarea"
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleReplySubmit(e);
-                            }
-                          }}
-                        />
-                        {attachedFile && (
+                {/* Timeline of Messages bubbles */}
+                <div className="chat-timeline">
+                  {activeThread.messages.map((m) => {
+                    const isIncoming = m.direction === "incoming";
+                    const avatarPhoto = isIncoming ? activeThread.partnerPhoto : currentUserPhoto;
+                    const initial = isIncoming 
+                      ? (activeThread.partnerName ? activeThread.partnerName[0].toUpperCase() : "?")
+                      : currentUserInitial;
+
+                    return (
+                      <div 
+                        key={m.id} 
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: "12px",
+                          alignSelf: isIncoming ? "flex-start" : "flex-end",
+                          width: "100%",
+                          maxWidth: "90%"
+                        }}
+                      >
+                        {/* Avatar on the left for incoming messages */}
+                        {isIncoming && (
                           <div 
+                            onClick={() => navigate(`/profile/${activeThread.partnerId}`)}
                             style={{
-                              display: "inline-flex",
+                              width: "36px",
+                              height: "36px",
+                              borderRadius: "50%",
+                              backgroundColor: "#f17c13",
+                              color: "#ffffff",
+                              display: "flex",
                               alignItems: "center",
-                              gap: "8px",
-                              backgroundColor: "#f3f4f6",
-                              padding: "6px 12px",
-                              borderRadius: "8px",
-                              fontSize: "0.8rem",
-                              fontWeight: "600",
-                              color: "#374151",
-                              marginBottom: "10px"
+                              justifyContent: "center",
+                              fontWeight: "800",
+                              fontSize: "0.85rem",
+                              overflow: "hidden",
+                              flexShrink: 0,
+                              border: "1px solid #eddcd2",
+                              boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
+                              cursor: "pointer"
                             }}
                           >
-                            <Paperclip size={12} />
-                            <span>{attachedFile.name} ({attachedFile.size})</span>
-                            <button 
-                              type="button" 
-                              style={{ border: "none", background: "transparent", color: "#ef4444", cursor: "pointer", fontWeight: "800", marginLeft: "4px" }}
-                              onClick={() => setAttachedFile(null)}
-                            >
-                              ✕
-                            </button>
+                            {avatarPhoto ? (
+                              <img src={avatarPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : (
+                              initial
+                            )}
                           </div>
                         )}
 
-                        <div className="chat-action-bar">
-                          <div style={{ display: "flex", alignItems: "center", gap: "16px", color: "#4b5563" }}>
-                            <input 
-                              type="file" 
-                              ref={fileInputRef} 
-                              style={{ display: "none" }} 
-                              onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (file) {
-                                  setAttachedFile({ name: file.name, size: (file.size / 1024).toFixed(1) + " KB" });
-                                }
-                              }}
-                            />
-                            
-                            <button 
-                              type="button" 
-                              title="Attach an image"
-                              style={{ border: "none", background: "none", cursor: "pointer", color: "#4b5563", padding: 0 }}
-                              onClick={() => fileInputRef.current.click()}
-                            >
-                              <Image size={18} />
-                            </button>
-                            
-                            <button 
-                              type="button" 
-                              title="Attach a document"
-                              style={{ border: "none", background: "none", cursor: "pointer", color: "#4b5563", padding: 0 }}
-                              onClick={() => fileInputRef.current.click()}
-                            >
-                              <Paperclip size={18} />
-                            </button>
-                            
-                            <button 
-                              type="button" 
-                              title="Add a GIF"
-                              style={{ border: "none", background: "none", cursor: "pointer", color: "#4b5563", padding: 0, fontWeight: "750", fontSize: "0.75rem" }}
-                              onClick={() => alert("GIF attachments are simulated in this prototype.")}
-                            >
-                              GIF
-                            </button>
-                            
-                            <button 
-                              type="button" 
-                              title="Add an emoji"
-                              style={{ border: "none", background: "none", cursor: "pointer", color: "#4b5563", padding: 0 }}
-                              onClick={() => setReplyText(prev => prev + " 😊")}
-                            >
-                              <Smile size={18} />
-                            </button>
-                          </div>
-
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                            <div>
-                              {messageSuccess && <span className="ps-alert-ok">✅ {messageSuccess}</span>}
-                              {error && <span className="ps-alert-err">⚠️ {error}</span>}
-                            </div>
-                            <button
-                              type="submit"
-                              disabled={sendingMessage || (!replyText.trim() && !attachedFile)}
-                              className="ps-btn-primary"
-                            >
-                              <Send size={12} />
-                              <span>{sendingMessage ? "Sending..." : "Send"}</span>
-                            </button>
-                          </div>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="msg-detail-empty">
-                    <div className="msg-detail-empty-icon">
-                      <MessageSquare size={36} />
-                    </div>
-                    <h3 className="msg-detail-empty-title">Select a Conversation</h3>
-                    <p className="msg-detail-empty-text">
-                      Choose an active conversation from the sidebar to view chat history and negotiate B2B deals.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* RIGHT PANEL: CONVERSATIONS SIDEBAR LIST */}
-              <div className="contacts-panel">
-                <div className="contacts-header">
-                  Conversations
-                </div>
-                <div className="contacts-items">
-                  {loadingMessages && threads.length === 0 ? (
-                    <div style={{ padding: "40px", color: "#6b7280", textAlign: "center", fontSize: "0.85rem" }}>
-                      Loading contacts...
-                    </div>
-                  ) : threads.length === 0 ? (
-                    <div style={{ 
-                      margin: "20px 16px",
-                      padding: "32px 16px", 
-                      color: "#6b7280", 
-                      textAlign: "center", 
-                      border: "1px dashed #e5e7eb", 
-                      borderRadius: "12px", 
-                      background: "#fafafb" 
-                    }}>
-                      <Inbox size={28} style={{ color: "#9ca3af", marginBottom: "8px", opacity: 0.7 }} />
-                      <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "#374151" }}>No active chats yet</div>
-                      <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "4px", lineHeight: 1.4 }}>
-                        Go to the "Matches" tab above to find and connect with partners.
-                      </div>
-                    </div>
-                  ) : (
-                    threads.map((thread) => {
-                      const isSelected = activeThreadId === thread.partnerId;
-                      const latestMsg = thread.messages[thread.messages.length - 1];
-                      const initial = thread.partnerName ? thread.partnerName[0].toUpperCase() : "?";
-
-                      return (
-                        <div
-                          key={thread.partnerId}
-                          className={`contact-item ${isSelected ? "selected" : ""}`}
-                          onClick={() => {
-                            setActiveThreadId(thread.partnerId);
-                            setSelectedMatch(null);
-                            setReplyText("");
-                            setError("");
-                          }}
-                        >
-                          {thread.unreadCount > 0 && (
-                            <span className="contact-badge">{thread.unreadCount}</span>
-                          )}
-                          
-                          <div className="contact-avatar-row">
-                            <div className="contact-avatar">
-                              {thread.partnerPhoto ? (
-                                <img src={thread.partnerPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                              ) : (
-                                initial
-                              )}
-                            </div>
-                            <div>
-                              <div className="contact-name">
-                                {thread.partnerName}
-                              </div>
-                              {thread.partnerCompany && (
-                                <div className="contact-company">{thread.partnerCompany}</div>
-                              )}
-                            </div>
-                          </div>
-
-                          {latestMsg && (
-                            <div className="contact-snippet">
-                              {latestMsg.direction === "outgoing" ? "You: " : ""}{latestMsg.body}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </>
-                          ) : (
-            /* MATCHES VIEW */
-            <>
-              {/* LEFT PANEL: MATCH SYNERGY DETAILS */}
-              <div className="chat-panel" style={{ overflowY: "auto" }}>
-                {selectedMatch ? (() => {
-                  const hasAccepted = (currentUserId === selectedMatch.user_id_1 && selectedMatch.status === "accepted_1") ||
-                                      (currentUserId === selectedMatch.user_id_2 && selectedMatch.status === "accepted_2");
-                  return (
-                    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-                      {/* Header card formatted with avatar and details */}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", borderBottom: "1px solid #e5e7eb", padding: "18px 24px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                          <div style={{ 
-                            width: "60px", 
-                            height: "60px", 
-                            borderRadius: "50%", 
-                            background: "linear-gradient(135deg, #f17c13 0%, #ffedd5 100%)", 
-                            color: "white", 
-                            display: "flex", 
-                            alignItems: "center", 
-                            justifyContent: "center", 
-                            fontWeight: "700", 
-                            fontSize: "1.5rem",
-                            overflow: "hidden",
-                            flexShrink: 0
-                          }}>
-                            {selectedMatch.partner.photo ? (
-                              <img src={selectedMatch.partner.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        {/* Message Bubble Container */}
+                        <div className={`chat-bubble-row ${isIncoming ? "incoming" : "outgoing"}`} style={{ width: "100%" }}>
+                          {/* Name and Phone metadata ABOVE the bubble */}
+                          <div className="chat-bubble-meta" style={{ marginBottom: "4px", alignSelf: isIncoming ? "flex-start" : "flex-end" }}>
+                            {isIncoming ? (
+                              <span 
+                                onClick={() => navigate(`/profile/${activeThread.partnerId}`)}
+                                style={{ cursor: "pointer", fontWeight: "600", transition: "color 0.15s" }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
+                                onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
+                              >
+                                {activeThread.partnerName} ({activeThread.partnerPhone || "No Phone"})
+                              </span>
                             ) : (
-                              selectedMatch.partner.first_name ? selectedMatch.partner.first_name[0].toUpperCase() : "?"
+                              `You (${currentUserPhone || "No Phone"})`
+                            )}
+                            {" • "}{m.sentAt.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                          
+                          <div className="chat-bubble">
+                            {m.body.includes("[Attachment:") ? (
+                              <div>
+                                <div style={{ whiteSpace: "pre-line" }}>
+                                  {m.body.split("[Attachment:")[0]}
+                                </div>
+                                <div 
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "10px",
+                                    backgroundColor: isIncoming ? "#ffffff" : "rgba(255, 255, 255, 0.18)",
+                                    padding: "8px 12px",
+                                    borderRadius: "8px",
+                                    marginTop: "8px",
+                                    border: isIncoming ? "1px solid #e5e7eb" : "none"
+                                  }}
+                                >
+                                  <Paperclip size={14} />
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: "0.8rem", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {m.body.split("[Attachment:")[1].replace("]", "")}
+                                    </div>
+                                    <div style={{ fontSize: "0.68rem", opacity: 0.85 }}>Attached Document</div>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              m.body
                             )}
                           </div>
-                          <div>
-                            <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: "700", color: "#111827" }}>
-                              {selectedMatch.partner.first_name} {selectedMatch.partner.last_name}
-                            </h3>
-                            <div style={{ fontSize: "0.85rem", color: "#4b5563", marginTop: "2px" }}>
-                              {selectedMatch.partner.role || "B2B Partner"} @ <strong>{selectedMatch.partner.company_name || "N/A"}</strong>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Badge */}
-                        <div style={{ 
-                          background: "#fffbeb", 
-                          color: "#d97706", 
-                          fontWeight: "750", 
-                          fontSize: "0.8rem", 
-                          padding: "6px 12px", 
-                          borderRadius: "20px", 
-                          border: "1px solid #fef3c7" 
-                        }}>
-                          {Math.round(selectedMatch.score)}% Compatibility
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
 
-                      {/* Scrollable details wrapper */}
-                      <div style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "24px", boxSizing: "border-box" }}>
-
-                    {/* Intention statement */}
-                    <div>
-                      <h4 style={{ margin: "0 0 8px 0", fontSize: "0.9rem", color: "#374151", fontWeight: "700" }}>Partner Intention</h4>
-                      <div style={{ 
-                        padding: "16px", 
-                        background: "#fafafb", 
-                        borderRadius: "12px", 
-                        border: "1px solid #e5e7eb", 
-                        fontSize: "0.9rem", 
-                        color: "#111827", 
-                        lineHeight: 1.5,
-                        whiteSpace: "pre-line"
-                      }}>
-                        "{selectedMatch.partner.intent}"
+                {/* Form to submit reply */}
+                <form className="chat-input-area" onSubmit={handleReplySubmit}>
+                  {attachedFile && (
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      backgroundColor: "#fef3c7",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      fontSize: "0.8rem",
+                      fontWeight: "600",
+                      color: "#b45309",
+                      marginBottom: "10px"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Paperclip size={14} />
+                        <span>Attached: {attachedFile.name}</span>
                       </div>
-                    </div>
-
-                    {/* Synergy reasoning */}
-                    <div>
-                      <h4 style={{ margin: "0 0 8px 0", fontSize: "0.9rem", color: "#374151", fontWeight: "700" }}>Why You Matched</h4>
-                      <div style={{ 
-                        padding: "16px", 
-                        background: "#fdfaf6", 
-                        borderRadius: "12px", 
-                        border: "1px solid #eddcd2", 
-                        fontSize: "0.875rem", 
-                        color: "#4b5563", 
-                        lineHeight: 1.5
-                      }}>
-                        {selectedMatch.match_reason}
-                      </div>
-                    </div>
-
-                    {/* Connection Status Message Banner */}
-                    {connectMessage && (
-                      <div style={{
-                        marginTop: "16px",
-                        padding: "12px 18px",
-                        borderRadius: "8px",
-                        fontSize: "0.9rem",
-                        fontWeight: "600",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        background: connectMessage.type === "success" ? "#ecfdf5" : "#fdfaf6",
-                        border: connectMessage.type === "success" ? "1px solid #a7f3d0" : "1px solid #eddcd2",
-                        color: connectMessage.type === "success" ? "#047857" : "#d97706"
-                      }}>
-                        {connectMessage.text}
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "16px" }}>
-                      {hasAccepted ? (
-                        <div style={{
-                          background: "#fdfaf6",
-                          border: "1px solid #eddcd2",
-                          color: "#d97706",
-                          padding: "10px 20px",
-                          borderRadius: "10px",
-                          fontSize: "0.9rem",
-                          fontWeight: "700",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px"
-                        }}>
-                          <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#f17c13" }}></span>
-                          Awaiting partner authorization...
-                        </div>
-                      ) : (
-                        <button 
-                          type="button" 
-                          className="ps-btn-primary" 
-                          style={{ padding: "12px 28px", borderRadius: "12px", width: "auto" }}
-                          disabled={connectingMatchId === selectedMatch.id}
-                          onClick={() => {
-                            setConnectingMatchId(selectedMatch.id);
-                            setConnectMessage(null);
-                            
-                            updateMatchStatus(selectedMatch.id, "accept")
-                              .then((res) => {
-                                getMatches().then((latestMatches) => {
-                                  setMatches(latestMatches);
-                                  const status = res.status;
-                                  
-                                  if (status === "connected") {
-                                    setConnectMessage({ type: "success", text: "🎉 It's a Match! You are now connected." });
-                                    loadMessages(selectedMatch.partner.id);
-                                    
-                                    // Navigate to next unconnected match after 2.5 seconds
-                                    setTimeout(() => {
-                                      const remaining = latestMatches.filter(m => m.id !== selectedMatch.id && m.status !== 'connected' && m.status !== 'rejected');
-                                      const next = remaining[0] || null;
-                                      setSelectedMatch(next);
-                                      setConnectingMatchId(null);
-                                      setConnectMessage(null);
-                                    }, 2500);
-                                  } else {
-                                    setConnectMessage({ type: "info", text: "Awaiting partner authorization..." });
-                                    const updated = latestMatches.find(m => m.id === selectedMatch.id);
-                                    if (updated) {
-                                      setSelectedMatch(updated);
-                                    }
-                                    setConnectingMatchId(null);
-                                  }
-                                });
-                              })
-                              .catch(err => {
-                                console.error("Error accepting match:", err);
-                                setConnectingMatchId(null);
-                              });
-                          }}
-                        >
-                          {connectingMatchId === selectedMatch.id ? "Connecting..." : "Connect"}
-                        </button>
-                      )}
                       <button 
                         type="button" 
-                        className="ps-btn-secondary" 
-                        style={{ padding: "12px 24px", borderRadius: "12px", width: "auto", color: "#ef4444", borderColor: "#fecaca" }}
-                        disabled={connectingMatchId === selectedMatch.id}
-                        onClick={() => {
-                          if (window.confirm("Are you sure you want to ignore this lead match?")) {
-                            updateMatchStatus(selectedMatch.id, "reject")
-                              .then(() => {
-                                getMatches().then(setMatches);
-                                setSelectedMatch(null);
-                              })
-                              .catch(err => console.error(err));
-                          }
-                        }}
+                        onClick={() => setAttachedFile(null)}
+                        style={{ background: "none", border: "none", color: "#b45309", cursor: "pointer", display: "flex", alignItems: "center" }}
                       >
-                        Decline match
+                        <X size={16} />
                       </button>
                     </div>
-                  </div>
-                </div>
-              );
-            })() : (
-                  <div className="msg-detail-empty">
-                    <div className="msg-detail-empty-icon">
-                      <MessageSquare size={36} />
-                    </div>
-                    <h3 className="msg-detail-empty-title">Select a B2B Match</h3>
-                    <p className="msg-detail-empty-text">
-                      Choose a matched candidate from the sidebar to inspect their B2B intentions, synergy score, and connect.
-                    </p>
-                  </div>
-                )}
-              </div>
+                  )}
 
-              {/* RIGHT PANEL: NEW B2B MATCHES SIDEBAR LIST */}
-              <div className="contacts-panel">
-                <div className="contacts-header">
-                  New B2B Matches
+                  {error && <div className="ps-alert-err" style={{ marginBottom: "10px" }}>{error}</div>}
+                  {messageSuccess && <div className="ps-alert-success" style={{ marginBottom: "10px" }}>{messageSuccess}</div>}
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
+                    <button 
+                      type="button" 
+                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#9ca3af",
+                        padding: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "color 0.15s"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
+                      onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
+                      title="Attach file"
+                    >
+                      <Paperclip size={20} />
+                    </button>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          setAttachedFile(e.target.files[0]);
+                        }
+                      }} 
+                      style={{ display: "none" }} 
+                    />
+
+                    <input 
+                      type="text"
+                      className="chat-text-input"
+                      placeholder="Type your message here..."
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      disabled={sendingMessage}
+                      style={{
+                        flex: 1,
+                        padding: "12px 18px",
+                        borderRadius: "24px",
+                        border: "1px solid #e5e7eb",
+                        outline: "none",
+                        fontSize: "0.92rem",
+                        boxSizing: "border-box"
+                      }}
+                    />
+
+                    <button 
+                      type="submit" 
+                      className="chat-send-btn"
+                      disabled={sendingMessage || (!replyText.trim() && !attachedFile)}
+                      style={{
+                        backgroundColor: "#f17c13",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "50%",
+                        width: "44px",
+                        height: "44px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        transition: "background-color 0.15s",
+                        flexShrink: 0
+                      }}
+                    >
+                      <Send size={18} />
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: "40px", color: "#6b7280" }}>
+                Select a message thread to start chatting.
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT PANEL: CONTACTS SIDEBAR LIST */}
+          <div className={`contacts-panel ${mobileShowDetails ? "mobile-hide" : "mobile-show"}`}>
+            <div className="contacts-header">
+              Conversations
+            </div>
+            <div className="contacts-items">
+              {loadingMessages ? (
+                <div style={{ padding: "32px 16px", color: "#6b7280", textAlign: "center" }}>
+                  Loading messages...
                 </div>
-                <div className="contacts-items">
-                  {(() => {
-                    const pendingMatches = matches.filter(m => m.status !== 'rejected' && m.status !== 'converted' && m.status !== 'connected');
-                    return pendingMatches.length === 0 ? (
-                      <div style={{ 
-                        margin: "20px 16px",
-                        padding: "32px 16px", 
-                        color: "#6b7280", 
-                        textAlign: "center", 
-                        border: "1px dashed #e5e7eb", 
-                        borderRadius: "12px", 
-                        background: "#fafafb" 
-                      }}>
-                        <Smile size={28} style={{ color: "#9ca3af", marginBottom: "8px", opacity: 0.7 }} />
-                        <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "#374151" }}>No matches yet</div>
-                        <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "4px", lineHeight: 1.4 }}>
-                          Try updating your intention text to trigger new AI matches.
+              ) : threads.length === 0 ? (
+                <div style={{ 
+                  margin: "20px 16px",
+                  padding: "32px 16px", 
+                  color: "#6b7280", 
+                  textAlign: "center", 
+                  border: "1px dashed #e5e7eb", 
+                  borderRadius: "12px", 
+                  background: "#fafafb" 
+                }}>
+                  <Inbox size={28} style={{ color: "#9ca3af", marginBottom: "8px", opacity: 0.7 }} />
+                  <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "#374151" }}>Inbox is empty</div>
+                  <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "4px", lineHeight: 1.4 }}>
+                    Once you connect with matches, your messages will appear here.
+                  </div>
+                </div>
+              ) : (
+                threads.map((thread) => {
+                  const isSelected = activeThreadId === thread.partnerId;
+                  const latestMsg = thread.messages[thread.messages.length - 1];
+                  const initial = thread.partnerName ? thread.partnerName[0].toUpperCase() : "?";
+                  
+                  return (
+                    <div
+                      key={thread.partnerId}
+                      className={`contact-item ${isSelected ? "selected" : ""}`}
+                      onClick={() => {
+                        setActiveThreadId(thread.partnerId);
+                        setMobileShowDetails(true);
+                      }}
+                    >
+                      <div className="contact-avatar-row">
+                        <div className="contact-avatar">
+                          {thread.partnerPhoto ? (
+                            <img src={thread.partnerPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : (
+                            initial
+                          )}
                         </div>
-                      </div>
-                    ) : (
-                      pendingMatches.map((m) => {
-                        const isSelected = selectedMatch && selectedMatch.id === m.id;
-                        const initial = m.partner.first_name ? m.partner.first_name[0].toUpperCase() : "?";
                         
-                        const userHasAccepted = (currentUserId === m.user_id_1 && m.status === "accepted_1") ||
-                                                (currentUserId === m.user_id_2 && m.status === "accepted_2");
-                        
-                        return (
-                          <div
-                            key={m.id}
-                            className={`contact-item ${isSelected ? "selected" : ""}`}
-                            onClick={() => {
-                              setSelectedMatch(m);
-                            }}
-                            style={{ position: "relative" }}
-                          >
-                            {userHasAccepted ? (
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div className="contact-name">
+                              {thread.partnerName}
+                            </div>
+                            
+                            {thread.unreadCount > 0 && (
                               <span style={{
-                                position: "absolute",
-                                top: "14px",
-                                right: "16px",
-                                background: "#fafafb",
-                                color: "#f17c13",
-                                fontSize: "0.68rem",
-                                fontWeight: "750",
-                                padding: "3px 8px",
-                                borderRadius: "10px",
-                                border: "1px solid #eddcd2"
-                              }}>
-                                Pending
-                              </span>
-                            ) : (
-                              <span style={{
-                                position: "absolute",
-                                top: "14px",
-                                right: "16px",
-                                background: "#fffbeb",
-                                color: "#d97706",
+                                backgroundColor: "#f17c13",
+                                color: "#ffffff",
                                 fontSize: "0.7rem",
-                                fontWeight: "750",
-                                padding: "3px 8px",
+                                fontWeight: "800",
+                                padding: "2px 6px",
                                 borderRadius: "10px",
-                                border: "1px solid #fef3c7"
+                                lineHeight: "1"
                               }}>
-                                {Math.round(m.score)}% Match
+                                {thread.unreadCount} unread
                               </span>
                             )}
-                            
-                            <div className="contact-avatar-row">
-                              <div className="contact-avatar">
-                                {m.partner.photo ? (
-                                  <img src={m.partner.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                ) : (
-                                  initial
-                                )}
-                              </div>
-                              
-                              <div>
-                                <div className="contact-name">
-                                  {m.partner.first_name} {m.partner.last_name}
-                                </div>
-                                <div className="contact-company">
-                                  {m.partner.company_name || "B2B Partner"}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="contact-snippet" style={{ color: userHasAccepted ? "#9ca3af" : "#6b7280", marginTop: "2px" }}>
-                              {userHasAccepted ? "Awaiting partner connection..." : (m.partner.role || "Complementary Intent")}
-                            </div>
                           </div>
-                        );
-                      })
-                    );
-                  })()}
-                </div>
-              </div>
-            </>
-          )}
+                          {thread.partnerCompany && (
+                            <div className="contact-company">{thread.partnerCompany}</div>
+                          )}
+                        </div>
+                      </div>
+
+                      {latestMsg && (
+                        <div className="contact-snippet">
+                          {latestMsg.direction === "outgoing" ? "You: " : ""}{latestMsg.body}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       </div>
-
 
       <Footer />
     </div>

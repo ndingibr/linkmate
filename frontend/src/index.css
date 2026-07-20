@@ -17,8 +17,10 @@ html {
 
 body {
   margin: 0;
-  font-family: "Poppins", sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #ffffff;
+  color: #35453f;
+  font-weight: 400;
 }
 
 /* ================================
@@ -32,7 +34,7 @@ body {
   padding: 15px;
 }
 
-/* Hero search section */
+/* Circles search section */
 .search-section {
   width: 100%;
   display: flex;
@@ -499,20 +501,19 @@ body {
   }
 }
 
-/* Redesigned Hero Section (Light Mode) */
-.hero-section-light {
-  background: radial-gradient(120% 120% at 50% 0%, #fffbf8 0%, #ffffff 100%);
+/* Redesigned Circles Section (Light Mode) */
+.circles-section-light {
+  background: #eef1f6;
   padding: 85px 0 75px;
   position: relative;
   overflow: hidden;
-  border-bottom: 1px solid #f3f4f6;
 }
 
 .cta-button-glowing {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #f17c13;
+  background: #ec5e3b;
   color: #ffffff;
   padding: 16px 36px;
   border-radius: 30px;
@@ -520,22 +521,22 @@ body {
   font-size: 1.05rem;
   border: none;
   cursor: pointer;
-  box-shadow: 0 10px 25px rgba(241, 124, 19, 0.25);
+  box-shadow: 0 10px 25px rgba(236, 94, 59, 0.2);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
 }
 
 .cta-button-glowing:hover {
-  background: #e06b0b;
+  background: #d44d2d;
   transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(241, 124, 19, 0.35);
+  box-shadow: 0 14px 30px rgba(236, 94, 59, 0.3);
 }
 
 .intent-option-card {
   text-align: left;
   padding: 16px 20px;
   border-radius: 16px;
-  border: 1px solid #f3e8df;
+  border: 1px solid #e5e7eb;
   background: #ffffff;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -547,24 +548,24 @@ body {
 }
 
 .intent-option-card:hover {
-  border-color: #f17c13;
-  background: #fffbf9;
+  border-color: #ec5e3b;
+  background: #fafbfc;
   transform: translateX(4px);
-  box-shadow: 0 8px 20px rgba(241, 124, 19, 0.05);
+  box-shadow: 0 8px 20px rgba(236, 94, 59, 0.05);
 }
 
 .intent-pill-badge {
   font-size: 0.72rem;
   font-weight: 800;
-  color: #f17c13;
-  background: rgba(241, 124, 19, 0.08);
+  color: #ec5e3b;
+  background: rgba(236, 94, 59, 0.08);
   padding: 4px 10px;
   border-radius: 12px;
   white-space: nowrap;
 }
 
 .intent-option-card:hover .intent-pill-badge {
-  background: #f17c13;
+  background: #ec5e3b;
   color: #ffffff;
 }
 
@@ -699,15 +700,15 @@ body {
   outline: none;
 }
 .sim-tab-btn.active {
-  background: #f17c13;
+  background: #ec5e3b;
   color: #ffffff;
-  border-color: #f17c13;
-  box-shadow: 0 4px 12px rgba(241, 124, 19, 0.15);
+  border-color: #ec5e3b;
+  box-shadow: 0 4px 12px rgba(236, 94, 59, 0.15);
 }
 .sim-tab-btn:hover:not(.active) {
-  border-color: #f17c13;
-  color: #f17c13;
-  background: #fffbf9;
+  border-color: #ec5e3b;
+  color: #ec5e3b;
+  background: #fafbfc;
 }
 .sim-result-container {
   margin-top: 18px;
@@ -735,8 +736,273 @@ body {
   transition: all 0.2s ease;
 }
 .sim-claim-btn:hover {
-  background: #f17c13;
-  box-shadow: 0 4px 15px rgba(241, 124, 19, 0.25);
+  background: #ec5e3b;
+  box-shadow: 0 4px 15px rgba(236, 94, 59, 0.25);
+}
+
+/* Reusable Premium Split Page Components */
+.split-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #fffcf9;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.split-page-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 60px 0;
+}
+
+.left-banner-tag {
+  color: #ec5e3b;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  padding: 6px 14px;
+  background-color: rgba(236, 94, 59, 0.06);
+  border: 1px solid rgba(236, 94, 59, 0.12);
+  border-radius: 20px;
+  margin-bottom: 1.2rem;
+  display: inline-block;
+}
+
+.left-banner-title {
+  font-family: 'Outfit', sans-serif;
+  color: #111827;
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.03em;
+}
+
+.left-banner-desc {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.08rem;
+  font-weight: 500;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0 0 2.5rem 0;
+  max-width: 500px;
+}
+
+.left-banner-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: #ffffff;
+  padding: 1.25rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid #f3e8df;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  max-width: 500px;
+  box-sizing: border-box;
+}
+
+.left-banner-badge-icon {
+  background-color: rgba(241, 124, 19, 0.08);
+  border-radius: 12px;
+  padding: 12px;
+  color: #f17c13;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.left-banner-badge-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.left-banner-badge-desc {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.85rem;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.welcome-driver-banner {
+  background-color: #fffcf9;
+  border: 1px solid #eddcd2;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.welcome-driver-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #f17c13;
+  background-color: rgba(241, 124, 19, 0.1);
+  padding: 3px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.welcome-driver-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #111827;
+}
+
+.welcome-driver-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #5c4b36;
+  line-height: 1.5;
+}
+
+.form-card-header {
+  margin-bottom: 24px;
+}
+
+.form-card-header-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.form-card-header-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.alert-success-premium {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.form-submit-btn-premium {
+  background: linear-gradient(135deg, #ec5e3b 0%, #d44d2d 100%);
+  color: #ffffff;
+  padding: 0.85rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(236, 94, 59, 0.2);
+  transition: all 0.2s ease;
+}
+
+.form-submit-btn-premium:hover {
+  box-shadow: 0 6px 20px rgba(236, 94, 59, 0.35);
+}
+
+.otp-input-premium {
+  letter-spacing: 0.25em;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.login-switch-footer {
+  margin: 1.5rem 0 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.login-switch-footer span {
+  color: #ec5e3b;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Form Helper Utility Classes */
+.flex-1 {
+  flex: 1;
+}
+
+.mb-1-5 {
+  margin-bottom: 1.5rem !important;
+}
+
+.mb-1-75 {
+  margin-bottom: 1.75rem !important;
+}
+
+.circles-section-light-banner {
+  text-align: left;
+}
+
+.how-it-works {
+  background-color: #ffffff !important;
+}
+
+@media (max-width: 768px) {
+  /* Center text on marketing pages & split pages */
+  .circles-section-light,
+  .how-it-works,
+  #faq,
+  .login-left-banner,
+  .form-card-premium,
+  .form-card-header {
+    text-align: center !important;
+  }
+
+  /* Center inner flex components as well */
+  .left-banner-badge-card,
+  .welcome-driver-banner,
+  .circles-section-light-banner {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Center buttons */
+  .cta-button-glowing {
+    margin: 0 auto !important;
+  }
+}
+
+/* Split Sticky Process Layout */
+.sticky-process-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+.sticky-process-left {
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .sticky-process-container {
+    grid-template-columns: 300px 1fr;
+    gap: 80px;
+  }
+  .sticky-process-left {
+    position: sticky;
+    top: 120px;
+    align-self: start;
+  }
 }
 
 

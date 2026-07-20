@@ -7,6 +7,7 @@ import Login from "./Login";
 import Register from "./Register";
 import Profile from "./Profile";
 import Messages from "./Messages";
+import Matches from "./Matches";
 import ForgotPassword from "./ForgotPassword";
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
       <Route path="/profile" element={<Profile />} />
       <Route path="/profile/:id" element={<Profile />} />
       <Route path="/messages" element={<Messages />} />
+      <Route path="/matches" element={<Matches />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
     </Routes>
   );

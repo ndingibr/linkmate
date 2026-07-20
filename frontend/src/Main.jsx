@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logoImg from "./img/ventureai_logo.jpg";
-import heroBg from "./img/ventureai_hero.jpg";
+import logoImg from "./img/small_circles.jpg";
+import circlesBg from "./img/small_circles_bg.jpg";
 import realHandshake120 from "./img/real_handshake_120deg.png";
 import HowItWorks from "./components/HowItWorks";
 import ContactSection from "./Contact";
@@ -16,24 +16,24 @@ export default function Main() {
 
   const faqItems = [
     {
-      q: "How does SmallCircles match my B2B intention statement?",
-      a: "Our advanced AI semantic engine analyzes your natural language statement, identifying your business needs, strengths, industry vertical, and targets. It then scans complementary statements from other verified organizations to identify high-compatibility B2B alignments."
+      q: "How does Small Circles find compatible businesses?",
+      a: "We read your description to understand your business objectives, industry, target location, and goals. We then look across our network of verified organizations to find companies whose business requirements align directly with what you do or need."
     },
     {
-      q: "Who can see my intention statement?",
-      a: "Your statements are analyzed confidentially by the semantic engine. Alignments are generated securely, and direct lead reports are shared only between complementary, verified partners to protect your privacy and credentials."
+      q: "Who can see what I write?",
+      a: "Your requests are kept secure. We only share details between verified companies when we identify a highly compatible match, ensuring your intentions aren't broadcast publicly."
     },
     {
-      q: "What makes a strong B2B intention statement?",
-      a: "Be specific and clear. Describe exactly what products, services, or partnerships you are looking to source or supply, including your target location, budget constraints, and delivery timelines."
+      q: "How should I describe my business need?",
+      a: "Be straightforward. Describe exactly what products, services, or partnerships you are looking for or offering. Specific details like locations or timelines help us find better matches."
     },
     {
-      q: "How do I receive my verified introductions?",
-      a: "Once a complementary intention alignment is verified and meets our compatibility thresholds, we compile a detailed B2B match report and dispatch it directly to your registered email address."
+      q: "How do I get introduced?",
+      a: "Once we confirm a compatible match with another business, we facilitate a direct, warm introduction so you can start a conversation right away."
     },
     {
-      q: "Is SmallCircles free to use?",
-      a: "Creating your profile, declaring your B2B intent, and running match simulations is completely free. We offer premium verification and automated introduction lead packages as you scale your sourcing operations."
+      q: "Is Small Circles free to use?",
+      a: "Sharing your business needs, looking at options, and simulating matches is free. We offer premium verification options if you want to scale up your introductions."
     }
   ];
 
@@ -46,12 +46,12 @@ export default function Main() {
     {
       badge: "I'm Buying",
       label: "I know exactly what I need for my business — I just can't find the right person to deliver it.",
-      intent: "I have a specific business need and I am looking for a verified supplier, service provider, or partner who can fulfill it reliably."
+      intent: "I have a specific business need and I am looking for a verified supplier, service provider, or circle member who can fulfill it reliably."
     },
     {
       badge: "I'm Connecting",
       label: "I'm not here to sell or buy — I want to meet the right people in my space.",
-      intent: "I am looking to expand my professional network and connect with like-minded business owners, industry peers, or strategic partners."
+      intent: "I am looking to expand my professional network and connect with like-minded business owners, industry peers, or strategic circles."
     }
   ];
 
@@ -64,8 +64,8 @@ export default function Main() {
       <Header />
 
 
-      {/* Hero Section */}
-      <section id="hero" className="hero-section-light">
+      {/* Circles Section */}
+      <section id="circles" className="circles-section-light">
         <div
           className="container"
           data-aos="fade-up"
@@ -83,37 +83,38 @@ export default function Main() {
         >
           <div className="row align-items-center justify-content-between" style={{ position: "relative" }}>
             {/* Left Column — Value Prop */}
-            <div className="col-lg-6" style={{ textAlign: "left", position: "relative", zIndex: 2 }}>
+            <div className="col-lg-6 circles-section-light-banner">
               <span 
                 style={{ 
-                  color: "#4b5563", 
+                  color: "#4a5d5e", 
                   fontWeight: "700", 
                   fontSize: "0.78rem", 
                   display: "inline-flex", 
                   alignItems: "center", 
                   padding: "6px 14px", 
                   borderRadius: "20px", 
-                  backgroundColor: "rgba(241, 124, 19, 0.06)", 
-                  border: "1px solid rgba(241, 124, 19, 0.12)",
+                  backgroundColor: "rgba(160, 167, 171, 0.15)", 
+                  border: "1px solid rgba(160, 167, 171, 0.3)",
                   marginBottom: "1.2rem",
                   letterSpacing: "0.02em"
                 }}
               >
-                🚀 South Africa's B2B Introductions Engine
+                Meet Businesses Ready to Do Business
               </span>
 
               <h1
                 style={{
-                  color: "#111827",
+                  color: "#4a5a50",
                   fontSize: "2.8rem",
-                  fontWeight: "900",
+                  fontWeight: "600",
                   lineHeight: "1.15",
                   margin: "0 0 1.2rem 0",
                   letterSpacing: "-0.04em"
                 }}
               >
-                Find business partners with <br />
-                <span style={{ color: "#f17c13" }}>verified intent.</span>
+                What does <br />
+                your business <br />
+                <span style={{ color: "#4a5a50" }}>need today?</span>
               </h1>
 
               <p
@@ -125,7 +126,7 @@ export default function Main() {
                   margin: "0 0 2.2rem 0"
                 }}
               >
-                SmallCircles maps actual current B2B goals. Declare what you offer or need, and let our AI match complementary intentions to introduce you directly to active business leads.
+                Tell us what you're looking for - or what your business offers - in plain language. We'll introduce you directly to compatible companies and the right decision-maker, bypassing the gatekeepers and starting straight with a warm conversation.
               </p>
 
               <div style={{ marginBottom: "1rem" }}>
@@ -138,12 +139,21 @@ export default function Main() {
                     }
                   }}
                   className="cta-button-glowing"
+                  style={{
+                    backgroundColor: "#ec5e3b",
+                    boxShadow: "0 10px 25px rgba(236, 94, 59, 0.2)",
+                    borderRadius: "30px",
+                    padding: "16px 36px",
+                    fontWeight: "700",
+                    fontSize: "1.05rem",
+                    color: "#ffffff"
+                  }}
                 >
-                  Declare B2B Intent - Free
+                  Start Your Introduction - Free
                 </button>
               </div>
 
-              <span style={{ fontSize: "0.8rem", color: "#9ca3af", display: "block" }}>
+              <span style={{ fontSize: "0.8rem", color: "#6b7280", display: "block" }}>
                 ✦ No credit card required &nbsp;·&nbsp; Under 2 minutes to start
               </span>
             </div>
@@ -154,7 +164,7 @@ export default function Main() {
                 width: "420px",
                 height: "420px",
                 borderRadius: "50%",
-                backgroundColor: "rgba(241, 124, 19, 0.04)",
+                backgroundColor: "#d1d5db",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -168,12 +178,12 @@ export default function Main() {
               }}>
                 <img
                   src={realHandshake120}
-                  alt="B2B Matchmaking Connection"
+                  alt="Business Matchmaking Connection"
                   style={{
                     width: "120%",
                     height: "auto",
                     display: "block",
-                    opacity: 0.85
+                    opacity: 0.95
                   }}
                 />
               </div>
@@ -183,16 +193,13 @@ export default function Main() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works-section">
         <HowItWorks />
-      </section>
 
       {/* FAQ Section */}
       <section
         id="faq"
         style={{
-          backgroundColor: "#ffffff",
-          borderTop: "1px solid #e5e7eb",
+          backgroundColor: "#26463a",
           padding: "80px 0",
         }}
       >
@@ -200,7 +207,7 @@ export default function Main() {
           <div style={{ textAlign: "center", marginBottom: "3rem" }}>
             <span
               style={{
-                color: "#f17c13",
+                color: "#ec5e3b",
                 fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
@@ -212,15 +219,15 @@ export default function Main() {
             <h2
               style={{
                 fontSize: "2rem",
-                fontWeight: 800,
-                color: "#111827",
+                fontWeight: 600,
+                color: "#ffffff",
                 marginTop: "0.5rem",
               }}
             >
               Frequently Asked Questions
             </h2>
-            <p style={{ color: "#5c4b36", fontSize: "0.95rem", margin: "8px 0 0" }}>
-              Learn more about how SmallCircles connects complementary B2B intentions.
+            <p style={{ color: "#eef1f6", fontSize: "0.95rem", margin: "8px 0 0" }}>
+              Learn more about how Small Circles connects complementary business intentions.
             </p>
           </div>
 
@@ -231,10 +238,10 @@ export default function Main() {
                 <div
                   key={index}
                   style={{
-                    border: "1px solid #e5e7eb",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
                     borderRadius: "12px",
                     overflow: "hidden",
-                    background: "#fbf7f3",
+                    background: "#ffffff",
                     transition: "all 0.25s ease"
                   }}
                 >
@@ -253,13 +260,13 @@ export default function Main() {
                       textAlign: "left"
                     }}
                   >
-                    <span style={{ fontWeight: 700, fontSize: "1.05rem", color: "#111827" }}>
+                    <span style={{ fontWeight: 600, fontSize: "1.05rem", color: "#26463a" }}>
                       {faq.q}
                     </span>
                     <span style={{
                       fontSize: "1.2rem",
                       fontWeight: "bold",
-                      color: "#f17c13",
+                      color: "#ec5e3b",
                       transition: "transform 0.2s",
                       transform: isOpen ? "rotate(45deg)" : "rotate(0deg)"
                     }}>

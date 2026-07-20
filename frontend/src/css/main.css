@@ -517,13 +517,13 @@ section,
 /*--------------------------------------------------------------
 # Hero Section
 --------------------------------------------------------------*/
-.hero {
+.circles {
   padding: 120px 0 80px;
   position: relative;
   overflow: hidden;
 }
 
-.hero .book-hero-content .book-genre {
+.circles .circles-content .circles-genre {
   display: inline-block;
   background-color: color-mix(in srgb, var(--accent-color), transparent 90%);
   color: var(--accent-color);
@@ -534,7 +534,7 @@ section,
   font-size: 14px;
 }
 
-.hero .book-hero-content h1 {
+.circles .circles-content h1 {
   font-size: 48px;
   font-weight: 700;
   margin-bottom: 16px;
@@ -543,18 +543,18 @@ section,
 }
 
 @media (max-width: 992px) {
-  .hero .book-hero-content h1 {
+  .circles .circles-content h1 {
     font-size: 36px;
   }
 }
 
 @media (max-width: 768px) {
-  .hero .book-hero-content h1 {
+  .circles .circles-content h1 {
     font-size: 32px;
   }
 }
 
-.hero .book-hero-content .book-subtitle {
+.circles .circles-content .circles-subtitle {
   font-size: 20px;
   color: color-mix(in srgb, var(--heading-color), transparent 20%);
   margin-bottom: 24px;
@@ -562,44 +562,44 @@ section,
 }
 
 @media (max-width: 768px) {
-  .hero .book-hero-content .book-subtitle {
+  .circles .circles-content .circles-subtitle {
     font-size: 18px;
   }
 }
 
-.hero .book-hero-content .author {
+.circles .circles-content .author {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 24px;
 }
 
-.hero .book-hero-content .author span {
+.circles .circles-content .author span {
   font-size: 16px;
   color: var(--default-color);
 }
 
-.hero .book-hero-content .author h3 {
+.circles .circles-content .author h3 {
   font-size: 18px;
   font-weight: 600;
   margin: 0;
   color: var(--heading-color);
 }
 
-.hero .book-hero-content .book-description {
+.circles .circles-content .circles-description {
   margin-bottom: 32px;
   color: var(--default-color);
   font-size: 16px;
   line-height: 1.6;
 }
 
-.hero .book-hero-content .hero-cta {
+.circles .circles-content .circles-cta {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
 }
 
-.hero .book-hero-content .hero-cta .btn-primary {
+.circles .circles-content .circles-cta .btn-primary {
   background-color: var(--accent-color);
   color: var(--contrast-color);
   padding: 12px 30px;
@@ -610,12 +610,12 @@ section,
   place-items: center;
 }
 
-.hero .book-hero-content .hero-cta .btn-primary:hover {
+.circles .circles-content .circles-cta .btn-primary:hover {
   background-color: color-mix(in srgb, var(--accent-color), transparent 20%);
   transform: translateY(-3px);
 }
 
-.hero .book-hero-content .hero-cta .btn-outline {
+.circles .circles-content .circles-cta .btn-outline {
   border: 2px solid var(--accent-color);
   color: var(--accent-color);
   padding: 12px 30px;
@@ -626,19 +626,19 @@ section,
   place-items: center;
 }
 
-.hero .book-hero-content .hero-cta .btn-outline:hover {
+.circles .circles-content .circles-cta .btn-outline:hover {
   background-color: color-mix(in srgb, var(--accent-color), transparent 95%);
   transform: translateY(-3px);
 }
 
-.hero .book-cover {
+.circles .circles-cover {
   position: relative;
   transform: rotate(-3deg);
   transition: all 0.5s ease;
   max-width: 400px;
 }
 
-.hero .book-cover .book-shadow {
+.circles .circles-cover .circles-shadow {
   position: absolute;
   bottom: -20px;
   left: 10%;
@@ -650,45 +650,45 @@ section,
   z-index: -1;
 }
 
-.hero .book-cover:hover {
+.circles .circles-cover:hover {
   transform: rotate(0) translateY(-10px);
 }
 
-.hero .book-cover:hover img {
+.circles .circles-cover:hover img {
   filter: brightness(1.05);
   transition: 0.3s;
 }
 
 @media (max-width: 992px) {
-  .hero {
+  .circles {
     padding: 100px 0 60px;
   }
 
-  .hero .book-cover {
+  .circles .circles-cover {
     margin-top: 40px;
     transform: rotate(0);
   }
 
-  .hero .book-cover:hover {
+  .circles .circles-cover:hover {
     transform: translateY(-10px);
   }
 }
 
 @media (max-width: 768px) {
-  .hero {
+  .circles {
     text-align: center;
     padding: 80px 0 40px;
   }
 
-  .hero .book-hero-content .author {
+  .circles .circles-content .author {
     justify-content: center;
   }
 
-  .hero .book-hero-content .hero-cta {
+  .circles .circles-content .circles-cta {
     justify-content: center;
   }
 
-  .hero .book-cover {
+  .circles .circles-cover {
     margin: 40px auto 0;
   }
 }
@@ -2885,9 +2885,9 @@ section,
   margin-bottom: 0.75rem;
 }
 
-/* ---------- SEARCH HERO ---------- */
+/* ---------- SEARCH CIRCLES ---------- */
 
-.search-hero {
+.search-circles {
   margin: 5rem auto;
   max-width: 720px;
   background: #fff;

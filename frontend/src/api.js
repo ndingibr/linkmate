@@ -112,8 +112,22 @@ export async function getUserProfile() {
 }
 
 export async function updateUserProfile(payload) {
+  const cleanPayload = { ...payload };
+  
+  if (cleanPayload.budget_min === "" || cleanPayload.budget_min === undefined) {
+    cleanPayload.budget_min = null;
+  } else if (cleanPayload.budget_min !== null) {
+    cleanPayload.budget_min = parseFloat(cleanPayload.budget_min);
+  }
+  
+  if (cleanPayload.budget_max === "" || cleanPayload.budget_max === undefined) {
+    cleanPayload.budget_max = null;
+  } else if (cleanPayload.budget_max !== null) {
+    cleanPayload.budget_max = parseFloat(cleanPayload.budget_max);
+  }
+
   try {
-    const response = await axios.put("/profile", payload, {
+    const response = await axios.put("/profile", cleanPayload, {
       headers: getAuthHeader(),
     });
     return response.data;

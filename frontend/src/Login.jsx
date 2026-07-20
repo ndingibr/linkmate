@@ -64,71 +64,35 @@ export default function Login() {
 
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fffcf9", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div className="split-page-wrapper">
       <Header />
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", padding: "60px 0" }}>
+      <div className="split-page-section">
         <div className="login-split-container">
           {/* LEFT COLUMN: BANNER */}
-          <div className="login-left-banner book-hero-content">
-            <span className="book-genre" style={{ color: "#f17c13", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "0.85rem", marginBottom: "0.5rem" }}>
+          <div className="login-left-banner circles-content">
+            <span className="left-banner-tag">
               Welcome Back
             </span>
-            <h1 style={{ color: "#111827", fontSize: "2.4rem", fontWeight: "800", lineHeight: "1.2", margin: "0 0 1rem 0" }}>
-              Start developing your circle of business friends.
+            <h1 className="left-banner-title">
+              Start developing your <br />
+              <span style={{ color: "#f17c13" }}>circle of business friends.</span>
             </h1>
-            <p
-              className="book-description"
-              style={{
-                fontSize: "1.05rem",
-                color: "#4b5563",
-                lineHeight: "1.6",
-                margin: "0 0 2.5rem 0",
-                maxWidth: "500px",
-              }}
-            >
+            <p className="left-banner-desc">
               When you register you can declare your goal of friendship. You will meet people with complementary skills and goals - verified.
             </p>
 
             {/* Inline Graphic Card */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "1.25rem",
-                background: "#ffffff",
-                padding: "1.25rem 1.5rem",
-                borderRadius: "16px",
-                border: "1px solid #f3e8df",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.02)",
-                maxWidth: "500px",
-                boxSizing: "border-box",
-              }}
-            >
-              <div style={{
-                backgroundColor: "rgba(241, 124, 19, 0.08)",
-                borderRadius: "12px",
-                padding: "12px",
-                color: "#f17c13",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}>
+            <div className="left-banner-badge-card">
+              <div className="left-banner-badge-icon">
                 <ShieldCheck size={28} />
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "700", color: "#111827" }}>
-                  Verified Circle Growing
+                <h4 className="left-banner-badge-title">
+                  Verified Friends Network
                 </h4>
-                <p
-                  style={{
-                    margin: "0.25rem 0 0 0",
-                    fontSize: "0.85rem",
-                    color: "#4b5563",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  Meet and match with professional business partners having complementary skills, goals, and verified intentions.
+                <p className="left-banner-badge-desc">
+                  Meet and match with professional business friends having complementary skills, goals, and verified intentions.
                 </p>
               </div>
             </div>
@@ -137,25 +101,14 @@ export default function Login() {
           {/* RIGHT COLUMN: LOGIN FORM CARD */}
           <div className="login-right-form">
             <div className="form-card-premium">
-              <h2
-                style={{
-                  fontSize: "1.75rem",
-                  fontWeight: "800",
-                  color: "#111827",
-                  margin: "0 0 0.5rem 0",
-                }}
-              >
-                Sign In
-              </h2>
-              <p
-                style={{
-                  color: "#6b7280",
-                  fontSize: "0.9rem",
-                  margin: "0 0 2rem 0",
-                }}
-              >
-                Enter your credentials to manage your B2B intention.
-              </p>
+              <div className="form-card-header">
+                <h3 className="form-card-header-title">
+                  Sign In
+                </h3>
+                <p className="form-card-header-desc">
+                  Enter your credentials to manage your business intention.
+                </p>
+              </div>
 
               {error && (
                 <div className="alert-error-premium">
@@ -165,19 +118,7 @@ export default function Login() {
               )}
 
               {successInfo && (
-                <div className="alert-success-premium" style={{
-                  backgroundColor: "#ecfdf5",
-                  color: "#065f46",
-                  border: "1px solid #a7f3d0",
-                  borderRadius: "12px",
-                  padding: "0.75rem 1rem",
-                  marginBottom: "1.5rem",
-                  fontSize: "0.85rem",
-                  fontWeight: "500",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem"
-                }}>
+                <div className="alert-success-premium">
                   <span>✅</span>
                   <span>{successInfo}</span>
                 </div>
@@ -197,7 +138,7 @@ export default function Login() {
                     />
                   </div>
 
-                  <div className="input-group-premium" style={{ marginBottom: "1.75rem" }}>
+                  <div className="input-group-premium mb-1-75">
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
                       <label className="input-label-premium" style={{ margin: 0 }}>Password</label>
                       <span 
@@ -220,43 +161,22 @@ export default function Login() {
                   <button
                     type="submit"
                     disabled={loading}
-                    style={{
-                      background: "linear-gradient(135deg, #f17c13 0%, #d96a0a 100%)",
-                      color: "#ffffff",
-                      padding: "0.875rem",
-                      borderRadius: "12px",
-                      fontWeight: "700",
-                      fontSize: "0.9rem",
-                      width: "100%",
-                      border: "none",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 15px rgba(241, 124, 19, 0.2)",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.boxShadow =
-                        "0 6px 20px rgba(241, 124, 19, 0.35)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.boxShadow =
-                        "0 4px 15px rgba(241, 124, 19, 0.2)";
-                    }}
+                    className="form-submit-btn-premium"
                   >
                     {loading ? "Signing in..." : "Sign In"}
                   </button>
                 </form>
               ) : (
                 <form onSubmit={handleVerifyActivationOtp}>
-                  <div className="input-group-premium" style={{ marginBottom: "1.75rem" }}>
+                  <div className="input-group-premium mb-1-75">
                     <label className="input-label-premium">6-Digit Verification Code</label>
                     <input
                       type="text"
                       maxLength={6}
-                      className="input-premium"
+                      className="input-premium otp-input-premium"
                       placeholder="123456"
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                      style={{ letterSpacing: "0.25em", textAlign: "center", fontSize: "1.25rem", fontWeight: "800" }}
                       required
                     />
                   </div>
@@ -264,20 +184,7 @@ export default function Login() {
                   <button
                     type="submit"
                     disabled={loading}
-                    style={{
-                      background: "linear-gradient(135deg, #f17c13 0%, #d96a0a 100%)",
-                      color: "#ffffff",
-                      padding: "0.875rem",
-                      borderRadius: "12px",
-                      fontWeight: "700",
-                      fontSize: "0.9rem",
-                      width: "100%",
-                      border: "none",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 15px rgba(241, 124, 19, 0.2)",
-                      transition: "all 0.2s ease",
-                      marginBottom: "1.5rem"
-                    }}
+                    className="form-submit-btn-premium mb-1-5"
                   >
                     {loading ? "Verifying..." : "Verify Activation Code"}
                   </button>
@@ -301,23 +208,9 @@ export default function Login() {
                 </form>
               )}
 
-              <p
-                style={{
-                  margin: "1.5rem 0 0 0",
-                  textAlign: "center",
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                }}
-              >
+              <p className="login-switch-footer">
                 Don't have an account yet?{" "}
-                <span
-                  style={{
-                    color: "#f17c13",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                  }}
-                  onClick={() => navigate("/register")}
-                >
+                <span onClick={() => navigate("/register")}>
                   Register here
                 </span>
               </p>
