@@ -86,7 +86,7 @@ export default function Main() {
     if (isAuthenticated()) {
       navigate("/profile");
     } else {
-      navigate("/register", { state: { fromSearch: true } });
+      navigate("/signup", { state: { fromSearch: true } });
     }
   };
 

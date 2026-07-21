@@ -219,7 +219,7 @@ export default function Messages() {
 
   useEffect(() => {
     if (!isAuthenticated()) {
-      navigate("/login");
+      navigate("/signin");
       return;
     }
 

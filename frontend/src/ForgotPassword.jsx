@@ -55,7 +55,7 @@ export default function ForgotPassword() {
       setConfirmPassword("");
       setOtpCode("");
       setTimeout(() => {
-        navigate("/login");
+        navigate("/signin");
       }, 3000);
     } catch (err) {
       setError(err.response?.data?.detail || "Reset failed. The code may be invalid or expired.");
@@ -100,7 +100,7 @@ export default function ForgotPassword() {
         </div>
 
         <div style={{ fontSize: "0.9rem", color: "#4b5563", fontWeight: "500" }}>
-          Remember your password? <span style={{ color: "#ec5e3b", cursor: "pointer", fontWeight: "700" }} onClick={() => navigate("/login")}>Sign In</span>
+          Remember your password? <span style={{ color: "#ec5e3b", cursor: "pointer", fontWeight: "700" }} onClick={() => navigate("/signin")}>Sign In</span>
         </div>
       </div>
 
@@ -426,7 +426,7 @@ export default function ForgotPassword() {
                     <>
                       Back to{" "}
                       <span 
-                        onClick={() => navigate("/login")} 
+                        onClick={() => navigate("/signin")} 
                         style={{ color: "#ec5e3b", fontWeight: "700", cursor: "pointer" }}
                       >
                         Sign In

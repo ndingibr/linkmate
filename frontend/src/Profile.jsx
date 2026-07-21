@@ -113,7 +113,7 @@ export default function Profile() {
         } else {
           setError("Failed to load profile. Please login again.");
           logout();
-          navigate("/login");
+          navigate("/signin");
         }
       })
       .finally(() => setLoading(false));
@@ -308,7 +308,7 @@ export default function Profile() {
     }
   };
 
-  const handleLogout = () => { logout(); navigate("/login"); };
+  const handleLogout = () => { logout(); navigate("/signin"); };
 
   const calculateExpiryDate = (lifespan) => {
     const days = parseInt(lifespan) || 90;

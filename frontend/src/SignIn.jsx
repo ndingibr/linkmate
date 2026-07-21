@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { loginUser } from "./api";
+import { signInUser } from "./api";
 import Footer from "./components/Footer";
 import imgThreeProfessionals from "./img/three_professionals.png";
 
-export default function Login() {
+export default function SignIn() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -62,12 +62,12 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await loginUser({ email, password });
+      await signInUser({ email, password });
       navigate("/profile");
     } catch (err) {
       setError(
         err.response?.data?.detail ||
-          "Login failed. Please check your credentials."
+          "Sign in failed. Please check your credentials."
       );
     } finally {
       setLoading(false);
@@ -128,7 +128,7 @@ export default function Login() {
         </div>
 
         <div style={{ fontSize: "0.9rem", color: "#4b5563", fontWeight: "500" }}>
-          New to Small Circles? <span style={{ color: "#ec5e3b", cursor: "pointer", fontWeight: "700" }} onClick={() => navigate("/register")}>Register</span>
+          New to Small Circles? <span style={{ color: "#ec5e3b", cursor: "pointer", fontWeight: "700" }} onClick={() => navigate("/signup")}>Sign Up</span>
         </div>
       </div>
 
@@ -515,10 +515,10 @@ export default function Login() {
               }}>
                 Don't have an account yet?{" "}
                 <span 
-                  onClick={() => navigate("/register")} 
+                  onClick={() => navigate("/signup")} 
                   style={{ color: "#ec5e3b", fontWeight: "700", cursor: "pointer" }}
                 >
-                  Register here
+                  Sign Up here
                 </span>
               </p>
             </div>

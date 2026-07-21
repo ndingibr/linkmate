@@ -20,12 +20,12 @@ export function isAuthenticated() {
   return !!localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
-export async function registerUser(payload) {
+export async function signUpUser(payload) {
   try {
-    const response = await axios.post("/register", payload);
+    const response = await axios.post("/signup", payload);
     return response.data;
   } catch (error) {
-    console.error("Registration failed:", error);
+    console.error("Sign up failed:", error);
     throw error;
   }
 }
@@ -40,15 +40,15 @@ export async function activateUser(email, otp_code) {
   }
 }
 
-export async function loginUser(payload) {
+export async function signInUser(payload) {
   try {
-    const response = await axios.post("/login", payload);
+    const response = await axios.post("/signin", payload);
     if (response.data?.access_token) {
       localStorage.setItem(AUTH_TOKEN_KEY, response.data.access_token);
     }
     return response.data;
   } catch (error) {
-    console.error("Login failed:", error);
+    console.error("Sign in failed:", error);
     throw error;
   }
 }

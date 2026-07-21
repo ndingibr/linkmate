@@ -25,7 +25,7 @@ def test_intents_flow():
     }
     
     # Create or clean old user
-    reg_response = client.post("/register", json=register_payload)
+    reg_response = client.post("/signup", json=register_payload)
     
     # Activate user
     client.get(f"/activate?email={register_payload['email']}")
@@ -34,7 +34,7 @@ def test_intents_flow():
         "email": "test_intents@example.com",
         "password": "securepassword123"
     }
-    login_response = client.post("/login", json=login_payload)
+    login_response = client.post("/signin", json=login_payload)
     token = login_response.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     

@@ -16,7 +16,7 @@ export default function Matches() {
 
   useEffect(() => {
     if (!isAuthenticated()) {
-      navigate("/login");
+      navigate("/signin");
       return;
     }
 

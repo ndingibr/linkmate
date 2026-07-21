@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { registerUser, activateUser } from "./api";
+import { signUpUser, activateUser } from "./api";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import imgThreeProfessionals from "./img/three_professionals.png";
 
-export default function Register() {
+export default function SignUp() {
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({
@@ -85,15 +85,15 @@ export default function Register() {
     };
 
     try {
-      // Save intent to localStorage so user can access it in their dashboard once registered
+      // Save intent to localStorage so user can access it in their dashboard once signed up
       localStorage.setItem("pending_intent", userIntent || pendingIntent);
-      await registerUser(updatedForm);
-      setSuccessMessage(`Registration successful! We've sent a 6-digit verification code to ${form.email}.`);
+      await signUpUser(updatedForm);
+      setSuccessMessage(`Sign up successful! We've sent a 6-digit verification code to ${form.email}.`);
       setShowOtpScreen(true);
     } catch (err) {
       setError(
         err.response?.data?.detail ||
-          "Registration failed. Try a different email."
+          "Sign up failed. Try a different email."
       );
     } finally {
       setLoading(false);
@@ -106,9 +106,9 @@ export default function Register() {
     setLoading(true);
     try {
       await activateUser(form.email, otpCode);
-      setSuccessMessage("✅ Account activated successfully! Redirecting you to login...");
+      setSuccessMessage("✅ Account activated successfully! Redirecting you to sign in...");
       setTimeout(() => {
-        navigate("/login");
+        navigate("/signin");
       }, 2500);
     } catch (err) {
       setError(err.response?.data?.detail || "Invalid or expired verification code.");
@@ -153,7 +153,7 @@ export default function Register() {
         </div>
 
         <div style={{ fontSize: "0.9rem", color: "#4b5563", fontWeight: "500" }}>
-          Already a member? <span style={{ color: "#ec5e3b", cursor: "pointer", fontWeight: "700" }} onClick={() => navigate("/login")}>Sign In</span>
+          Already a member? <span style={{ color: "#ec5e3b", cursor: "pointer", fontWeight: "700" }} onClick={() => navigate("/signin")}>Sign In</span>
         </div>
       </div>
 
@@ -465,7 +465,7 @@ export default function Register() {
                         gap: "8px"
                       }}
                     >
-                      {loading ? "Registering..." : "Get My Introductions"}
+                      {loading ? "Signing Up..." : "Get My Introductions"}
                     </button>
                   </form>
                 ) : (
@@ -508,8 +508,8 @@ export default function Register() {
 
                 <p className="login-switch-footer">
                   Already have an account?{" "}
-                  <span onClick={() => navigate("/login")} style={{ color: "#ec5e3b", fontWeight: "700" }}>
-                    Login here
+                  <span onClick={() => navigate("/signin")} style={{ color: "#ec5e3b", fontWeight: "700" }}>
+                    Sign In here
                   </span>
                 </p>
               </div> {/* closes inner div */}

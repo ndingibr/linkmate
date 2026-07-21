@@ -25,7 +25,7 @@ def test_user_flow():
     }
     
     # Check if user already exists from previous runs, if so ignore 400
-    reg_response = client.post("/register", json=register_payload)
+    reg_response = client.post("/signup", json=register_payload)
     print("Register Response Status:", reg_response.status_code)
     if reg_response.status_code == 201:
         reg_data = reg_response.json()
@@ -56,7 +56,7 @@ def test_user_flow():
         "email": "test_user_profile@example.com",
         "password": "securepassword123"
     }
-    login_response = client.post("/login", json=login_payload)
+    login_response = client.post("/signin", json=login_payload)
     assert login_response.status_code == 200, f"Login failed: {login_response.text}"
     token_data = login_response.json()
     assert "access_token" in token_data

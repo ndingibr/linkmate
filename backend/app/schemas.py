@@ -26,7 +26,7 @@ class QuoteRequest(BaseModel):
     items: List[QuoteItem]
 
 
-class UserRegister(BaseModel):
+class UserSignUp(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
@@ -35,7 +35,7 @@ class UserRegister(BaseModel):
     password: str
 
 
-class UserLogin(BaseModel):
+class UserSignIn(BaseModel):
     email: EmailStr
     password: str
 

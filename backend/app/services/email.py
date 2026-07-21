@@ -8,7 +8,7 @@ SMTP_USER = "admin@linkmate.co.za"
 SMTP_PASS = "#Doreen001"
 
 def send_activation_email(to_email: str, first_name: str):
-    activation_link = f"http://localhost:5173/login?activate_email={to_email}"
+    activation_link = f"http://localhost:5173/signin?activate_email={to_email}"
     
     # Create message container
     msg = MIMEMultipart('alternative')

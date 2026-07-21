@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends, status, BackgroundTasks
 from datetime import timedelta
 
 from app.schemas import (
-    UserRegister,
-    UserLogin,
+    UserSignUp,
+    UserSignIn,
     UserProfile,
     UserUpdate,
     TokenResponse,
@@ -22,15 +22,15 @@ from app.core.config import settings
 
 router = APIRouter(tags=["users"])
 
-@router.post("/register", response_model=UserProfile, status_code=status.HTTP_201_CREATED)
-def register_user(data: UserRegister):
+@router.post("/signup", response_model=UserProfile, status_code=status.HTTP_201_CREATED)
+def signup_user(data: UserSignUp):
     if user_repo.email_exists(data.email):
         if data.email.lower() == "ndinbr@gmail.com":
             user_repo.delete_user_by_email(data.email)
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
+                detail="Email already signed up"
             )
     
     hashed = auth.hash_password(data.password)
@@ -78,8 +78,8 @@ def activate_user(data: UserActivateRequest):
     user_repo.delete_otp(data.email, "activation")
     return {"message": "Account activated successfully"}
 
-@router.post("/login", response_model=TokenResponse)
-def login_user(data: UserLogin):
+@router.post("/signin", response_model=TokenResponse)
+def signin_user(data: UserSignIn):
     user = user_repo.get_user_by_email(data.email)
     if not user or not user.get("password_hash") or not auth.verify_password(data.password, user["password_hash"]):
         raise HTTPException(

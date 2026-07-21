@@ -103,7 +103,7 @@ export default function Header({ profileOverride }) {
   const handleLogout = () => {
     logout();
     setAuth(false);
-    navigate("/login");
+    navigate("/signin");
   };
 
   const handleSearchSubmit = (e) => {
@@ -525,7 +525,7 @@ export default function Header({ profileOverride }) {
           ) : (
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <button
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/signin")}
                 style={{
                   background: "transparent",
                   color: "#ec5e3b",
@@ -542,7 +542,7 @@ export default function Header({ profileOverride }) {
               </button>
               
               <button
-                onClick={() => navigate("/register")}
+                onClick={() => navigate("/signup")}
                 style={{
                   background: "#ec5e3b",
                   color: "#ffffff",

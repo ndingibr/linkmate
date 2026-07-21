@@ -3,8 +3,8 @@ import { Routes, Route } from "react-router-dom";
 
 import Main from "./Main";
 import ContactPage from "./ContactPage";
-import Login from "./Login";
-import Register from "./Register";
+import SignIn from "./SignIn";
+import SignUp from "./SignUp";
 import Profile from "./Profile";
 import Messages from "./Messages";
 import Matches from "./Matches";
@@ -15,8 +15,8 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Main />} />
       <Route path="/contact" element={<ContactPage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/signin" element={<SignIn />} />
+      <Route path="/signup" element={<SignUp />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/profile/:id" element={<Profile />} />
       <Route path="/messages" element={<Messages />} />
