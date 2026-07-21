@@ -75,11 +75,11 @@ export default function HowItWorks() {
   ];
 
   return (
-    <div className="section how-it-works" style={{ padding: "50px 0 30px", backgroundColor: "#ffffff" }}>
+    <div className="section how-it-works" style={{ padding: "30px 0 15px", backgroundColor: "#ffffff" }}>
       <div className="container" style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
         
         {/* Header Title Section */}
-        <div style={{ textAlign: "center", marginBottom: "35px" }}>
+        <div style={{ textAlign: "center", marginBottom: "20px" }}>
           <h2 style={{ 
             color: "#35453f", 
             fontWeight: "600", 
@@ -106,7 +106,7 @@ export default function HowItWorks() {
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "30px"
+          gap: "20px"
         }}>
           {steps.map((step, index) => {
             return (
@@ -114,7 +114,7 @@ export default function HowItWorks() {
                 key={index} 
                 style={{
                   background: "#ffffff",
-                  padding: "36px 30px",
+                  padding: "24px 20px",
                   borderRadius: "16px",
                   border: "1px solid #eef1f6",
                   position: "relative",
@@ -155,21 +155,21 @@ export default function HowItWorks() {
 
                 {/* Big Step Number */}
                 <div style={{
-                  fontSize: "3.5rem",
+                  fontSize: "3.2rem",
                   fontWeight: "700",
                   color: "rgba(38, 70, 58, 0.08)",
                   lineHeight: "1",
-                  marginBottom: "16px",
+                  marginBottom: "8px",
                   fontFamily: "'Outfit', sans-serif"
                 }}>
                   {step.num}
                 </div>
 
                 <h3 style={{ 
-                  fontSize: "1.2rem", 
+                  fontSize: "1.15rem", 
                   fontWeight: "600", 
                   color: "#35453f", 
-                  margin: "0 0 14px 0",
+                  margin: "0 0 8px 0",
                   letterSpacing: "-0.01em"
                 }}>
                   {step.title}

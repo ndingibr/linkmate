@@ -523,7 +523,7 @@ export default function Header({ profileOverride }) {
               </button>
             </div>
           ) : (
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <button
                 onClick={() => navigate("/login")}
                 style={{
@@ -534,10 +534,29 @@ export default function Header({ profileOverride }) {
                   borderRadius: "20px",
                   fontWeight: "700",
                   fontSize: "0.85rem",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
                 }}
               >
                 Sign In
+              </button>
+              
+              <button
+                onClick={() => navigate("/register")}
+                style={{
+                  background: "#ec5e3b",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  fontWeight: "700",
+                  fontSize: "0.85rem",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(236, 94, 59, 0.15)",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                Sign Up
               </button>
             </div>
           )}

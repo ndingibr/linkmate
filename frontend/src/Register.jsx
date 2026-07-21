@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { registerUser, activateUser } from "./api";
-import { MessageSquare, Zap, ArrowRight, CheckCircle, ShieldCheck } from "lucide-react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import imgThreeProfessionals from "./img/three_professionals.png";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -18,6 +18,9 @@ export default function Register() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingIntent, setPendingIntent] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [showIntent, setShowIntent] = useState(false);
 
   const [userIntent, setUserIntent] = useState("");
   const [preselectedDriver, setPreselectedDriver] = useState(null);
@@ -25,8 +28,14 @@ export default function Register() {
   const [showOtpScreen, setShowOtpScreen] = useState(false);
   const [otpCode, setOtpCode] = useState("");
 
-  // Check if a driver was selected on the home page to associate it with their profile
+  // Check if a driver was selected on the home page or search was performed
   useEffect(() => {
+    const savedIntent = localStorage.getItem("pending_intent");
+    const isFromSearch = location.state?.fromSearch;
+    if (savedIntent && isFromSearch) {
+      setPendingIntent(savedIntent);
+      setShowIntent(true);
+    }
     const driver = location.state?.driver;
     if (driver) {
       setPreselectedDriver(driver);
@@ -44,10 +53,19 @@ export default function Register() {
     setError("");
     setLoading(true);
 
+    const nameParts = fullName.trim().split(/\s+/);
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+    const updatedForm = {
+      ...form,
+      first_name: firstName,
+      last_name: lastName
+    };
+
     try {
       // Save intent to localStorage so user can access it in their dashboard once registered
-      localStorage.setItem("pending_intent", userIntent);
-      await registerUser(form);
+      localStorage.setItem("pending_intent", userIntent || pendingIntent);
+      await registerUser(updatedForm);
       setSuccessMessage(`Registration successful! We've sent a 6-digit verification code to ${form.email}.`);
       setShowOtpScreen(true);
     } catch (err) {
@@ -77,211 +95,366 @@ export default function Register() {
     }
   };
 
-
-
   return (
-    <div className="split-page-wrapper">
-      <Header />
+    <div className="split-page-wrapper" style={{ backgroundColor: "#eef1f6", minHeight: "100vh", display: "flex", flexDirection: "column", padding: "40px 0" }}>
 
-      <div className="split-page-section">
-        <div className="login-split-container">
-          {/* LEFT COLUMN: BANNER */}
-          <div className="login-left-banner circles-content">
-            <span className="left-banner-tag">
-              Join Us
-            </span>
-            <h1 className="left-banner-title">
-              Build a network of <br />
-              <span style={{ color: "#f17c13" }}>business friends who get it.</span>
-            </h1>
-            <p className="left-banner-desc">
-              State your business goals when you register. Our AI matches you with verified business friends whose skills and needs complement yours.
+      {/* TOP HEADER ROW: LOGO & ALREADY A MEMBER */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        width: "100%",
+        maxWidth: "1060px",
+        margin: "0 auto 2.5rem auto",
+        padding: "0 24px",
+        boxSizing: "border-box"
+      }}>
+        {/* Official Brand Logo Block */}
+        <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }} onClick={() => navigate("/")}>
+          <svg width="34" height="34" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: "10px", flexShrink: 0 }}>
+            <circle cx="25" cy="18" r="11" stroke="#b0a296" strokeWidth="3" fill="none" />
+            <circle cx="17" cy="31" r="11" stroke="#b0a296" strokeWidth="3" fill="none" />
+            <circle cx="33" cy="31" r="11" stroke="#b0a296" strokeWidth="3" fill="none" />
+          </svg>
+          <span style={{
+            color: "#35453f",
+            fontSize: "1.2rem",
+            fontWeight: "700",
+            lineHeight: "1.05",
+            letterSpacing: "-0.02em",
+            fontFamily: "inherit",
+            textTransform: "lowercase",
+            textAlign: "left"
+          }}>
+            small<br />circles
+          </span>
+        </div>
+
+        <div style={{ fontSize: "0.9rem", color: "#4b5563", fontWeight: "500" }}>
+          Already a member? <span style={{ color: "#ec5e3b", cursor: "pointer", fontWeight: "700" }} onClick={() => navigate("/login")}>Sign In</span>
+        </div>
+      </div>
+
+      <div className="split-page-section" style={{ flex: 1, display: "flex", alignItems: "center" }}>
+        <div className="login-split-container" style={{ display: "flex", gap: "60px", flexWrap: "wrap", width: "100%", maxWidth: "1060px", margin: "0 auto", padding: "0 24px", boxSizing: "border-box", alignItems: "center" }}>
+          
+          {/* LEFT COLUMN: BRAND VALUE PROP INSPIRATION FROM HERO */}
+          <div className="login-left-banner circles-content" style={{ 
+            flex: "1 1 450px", 
+            color: "#35453f",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center"
+          }}>
+            
+            {/* Conditional Layout A (From Search) vs B (Direct Navigation) */}
+            {showIntent ? (
+              <div style={{
+                marginBottom: "2rem",
+                width: "100%",
+                boxSizing: "border-box"
+              }}>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "10px" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span>
+                  <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.9rem" }}>
+                    We found businesses that may match your needs:
+                  </span>
+                </div>
+                <div style={{ color: "#6b7280", fontSize: "0.8rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>
+                  Looking for
+                </div>
+                <div style={{ color: "#ec5e3b", fontWeight: "700", fontSize: "1.3rem", fontStyle: "italic", lineHeight: "1.3" }}>
+                  "{pendingIntent}"
+                </div>
+              </div>
+            ) : (
+              <>
+                <span style={{
+                  color: "#4a5d5e",
+                  fontWeight: "700",
+                  fontSize: "0.78rem",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "6px 14px",
+                  borderRadius: "20px",
+                  backgroundColor: "rgba(160, 167, 171, 0.15)",
+                  border: "1px solid rgba(160, 167, 171, 0.3)",
+                  marginBottom: "1.2rem",
+                  width: "fit-content",
+                  letterSpacing: "0.02em"
+                }}>
+                  Meet Businesses Ready to Do Business
+                </span>
+                <h1 className="left-banner-title" style={{
+                  color: "#35453f",
+                  fontSize: "2.5rem",
+                  fontWeight: "600",
+                  lineHeight: "1.2",
+                  margin: "0 0 1.2rem 0",
+                  letterSpacing: "-0.03em"
+                }}>
+                  Connect with <br />
+                  verified <span style={{ color: "#ec5e3b" }}>partners.</span>
+                </h1>
+              </>
+            )}
+
+            {/* Centered Single Circle Image Frame */}
+            <div style={{
+              position: "relative",
+              width: "220px",
+              height: "220px",
+              margin: "0 auto 2rem auto",
+              borderRadius: "50%",
+              border: "3px solid rgba(176, 162, 150, 0.35)",
+              overflow: "hidden",
+              flexShrink: 0,
+              boxShadow: "0 8px 24px rgba(38, 70, 58, 0.1)"
+            }}>
+              <img
+                src={imgThreeProfessionals}
+                alt="Three Professionals Partnership Connection"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block"
+                }}
+              />
+            </div>
+
+            <p style={{
+              color: "#35453f",
+              fontSize: "1.2rem",
+              fontWeight: "700",
+              lineHeight: "1.4",
+              margin: "0 0 8px 0",
+              letterSpacing: "-0.01em"
+            }}>
+              Small Circles doesn't show you hundreds of listings.
+            </p>
+            <p style={{
+              color: "#4b5563",
+              fontSize: "1rem",
+              fontWeight: "500",
+              lineHeight: "1.5",
+              margin: "0 0 1.8rem 0"
+            }}>
+              We introduce businesses that are most likely to work with you.
             </p>
 
-            {/* Inline Graphic Card */}
-            <div className="left-banner-badge-card">
-              <div className="left-banner-badge-icon">
-                <ShieldCheck size={28} />
+            {/* Checklist items from wireframe */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", margin: "0 0 1rem 0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
+                <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> Verified Businesses
               </div>
-              <div>
-                <h4 className="left-banner-badge-title">
-                  Verified Matchmaking
-                </h4>
-                <p className="left-banner-badge-desc">
-                  Connect with verified business friends who align with your goals and complement your expertise.
-                </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
+                <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> AI Matching
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
+                <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> Private Introductions
               </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: CONVERSATIONAL ONBOARDING / REGISTER CARD */}
-          <div className="login-right-form">
-            <div className="form-card-premium">
-              
-              {/* ACCOUNT REGISTRATION FORM */}
+          {/* RIGHT COLUMN: REGISTER CARD */}
+          <div className="login-right-form" style={{ flex: "1 1 450px", display: "flex", justifyContent: "flex-end", width: "100%" }}>
+            <div className="form-card-premium" style={{ 
+              backgroundColor: "#ffffff",
+              borderRadius: "24px",
+              padding: "2.5rem",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.05)",
+              border: "1px solid #e5e7eb",
+              width: "100%",
+              boxSizing: "border-box",
+              color: "#1f2937"
+            }}>
               <div>
-                {/* Personalized welcome banner when driver was pre-selected */}
-                {preselectedDriver ? (
-                  <div className="welcome-driver-banner">
-                    <span className="welcome-driver-badge">{preselectedDriver.badge}</span>
-                    <div>
-                      <p className="welcome-driver-title">
-                        Great choice! Let's get you registered.
-                      </p>
-                      <p className="welcome-driver-desc">
-                        We've noted your driver: <em>"{preselectedDriver.label}"</em><br />
-                        Complete the details below and we'll start matching for you right away.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="form-card-header">
-                    <h3 className="form-card-header-title">
-                      Create Your Account
-                    </h3>
-                    <p className="form-card-header-desc">
-                      Join Small Circles to connect with verified business friends matching your business intent.
-                    </p>
-                  </div>
-                )}
+                <div className="form-card-header" style={{ marginBottom: "24px" }}>
+                  <h3 className="form-card-header-title" style={{
+                    color: "#35453f",
+                    fontSize: "1.5rem",
+                    fontWeight: "600",
+                    margin: "0 0 6px 0",
+                    letterSpacing: "-0.01em"
+                  }}>
+                    Create Your Account
+                  </h3>
+                  <p className="form-card-header-desc" style={{
+                    color: "#6b7280",
+                    fontSize: "0.9rem",
+                    lineHeight: "1.4",
+                    margin: 0
+                  }}>
+                    Join Small Circles to connect with verified partners matching your business intent.
+                  </p>
+                </div>
+                
+                <hr style={{ border: "0", borderTop: "1px solid #e5e7eb", margin: "20px 0" }} />
 
                 {error && (
-                  <div className="alert-error-premium">
+                  <div className="alert-error-premium" style={{
+                    backgroundColor: "#fef2f2",
+                    border: "1px solid #fca5a5",
+                    color: "#b91c1c",
+                    padding: "12px 16px",
+                    borderRadius: "8px",
+                    fontSize: "0.85rem",
+                    display: "flex",
+                    gap: "8px",
+                    alignItems: "center",
+                    marginBottom: "20px"
+                  }}>
                     <span>⚠️</span>
                     <span>{error}</span>
                   </div>
                 )}
 
                 {successMessage && (
-                  <div className="alert-success-premium">
+                  <div className="alert-success-premium" style={{
+                    backgroundColor: "#f0fdf4",
+                    border: "1px solid #86efac",
+                    color: "#166534",
+                    padding: "12px 16px",
+                    borderRadius: "8px",
+                    fontSize: "0.85rem",
+                    marginBottom: "20px",
+                    fontWeight: "500"
+                  }}>
                     {successMessage}
                   </div>
                 )}
 
-              {!showOtpScreen ? (
-                <form onSubmit={handleSubmit}>
-                  <div className="form-row-premium">
-                    <div className="input-group-premium flex-1">
-                      <label className="input-label-premium">First Name</label>
+                {!showOtpScreen ? (
+                  <form onSubmit={handleSubmit}>
+                    
+                    <div className="input-group-premium">
+                      <label className="input-label-premium">Full Name</label>
                       <input
                         type="text"
-                        name="first_name"
                         className="input-premium"
-                        placeholder="John"
-                        value={form.first_name}
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-row-premium">
+                      <div className="input-group-premium flex-1">
+                        <label className="input-label-premium">Work Email</label>
+                        <input
+                          type="email"
+                          name="email"
+                          className="input-premium"
+                          placeholder="john@company.com"
+                          value={form.email}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                      <div className="input-group-premium flex-1">
+                        <label className="input-label-premium">Phone Number</label>
+                        <input
+                          type="text"
+                          name="phone"
+                          className="input-premium"
+                          placeholder="+27 82 123 4567"
+                          value={form.phone}
+                          onChange={handleChange}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="input-group-premium">
+                      <label className="input-label-premium">Company Name</label>
+                      <input
+                        type="text"
+                        name="company_name"
+                        className="input-premium"
+                        placeholder="Acme Corp"
+                        value={form.company_name}
+                        onChange={handleChange}
+                      />
+                    </div>
+
+                    <div className="input-group-premium mb-1-5">
+                      <label className="input-label-premium">Password</label>
+                      <input
+                        type="password"
+                        name="password"
+                        className="input-premium"
+                        placeholder="••••••••"
+                        value={form.password}
                         onChange={handleChange}
                         required
                       />
                     </div>
-                    <div className="input-group-premium flex-1">
-                      <label className="input-label-premium">Last Name</label>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="form-submit-btn-premium"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px"
+                      }}
+                    >
+                      {loading ? "Registering..." : "Get My Introductions"}
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyOtp}>
+                    <div className="input-group-premium mb-1-75">
+                      <label className="input-label-premium">6-Digit Verification Code</label>
                       <input
                         type="text"
-                        name="last_name"
-                        className="input-premium"
-                        placeholder="Doe"
-                        value={form.last_name}
-                        onChange={handleChange}
+                        maxLength={6}
+                        className="input-premium otp-input-premium"
+                        placeholder="123456"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
                         required
                       />
                     </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="form-submit-btn-premium mb-1-5"
+                    >
+                      {loading ? "Verifying..." : "Verify Code"}
+                    </button>
+                  </form>
+                )}
+
+                {/* Under-button Checklist (Wireframe footer) */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "20px", borderTop: "1px solid #f3f4f6", paddingTop: "15px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6b7280", fontSize: "0.82rem", fontWeight: "500" }}>
+                    <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> No public profile
                   </div>
-
-                  <div className="form-row-premium">
-                    <div className="input-group-premium flex-1">
-                      <label className="input-label-premium">Email Address</label>
-                      <input
-                        type="email"
-                        name="email"
-                        className="input-premium"
-                        placeholder="john@company.com"
-                        value={form.email}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                    <div className="input-group-premium flex-1">
-                      <label className="input-label-premium">Phone Number</label>
-                      <input
-                        type="text"
-                        name="phone"
-                        className="input-premium"
-                        placeholder="+27 82 123 4567"
-                        value={form.phone}
-                        onChange={handleChange}
-                      />
-                    </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6b7280", fontSize: "0.82rem", fontWeight: "500" }}>
+                    <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> Verified businesses only
                   </div>
-
-                  <div className="input-group-premium">
-                    <label className="input-label-premium">Company Name</label>
-                    <input
-                      type="text"
-                      name="company_name"
-                      className="input-premium"
-                      placeholder="Acme Corp"
-                      value={form.company_name}
-                      onChange={handleChange}
-                    />
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6b7280", fontSize: "0.82rem", fontWeight: "500" }}>
+                    <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> Takes less than 60 seconds
                   </div>
+                </div>
 
-                  <div className="input-group-premium mb-1-5">
-                    <label className="input-label-premium">Password</label>
-                    <input
-                      type="password"
-                      name="password"
-                      className="input-premium"
-                      placeholder="••••••••"
-                      value={form.password}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
+                <p className="login-switch-footer">
+                  Already have an account?{" "}
+                  <span onClick={() => navigate("/login")} style={{ color: "#ec5e3b", fontWeight: "700" }}>
+                    Login here
+                  </span>
+                </p>
+              </div> {/* closes inner div */}
+            </div> {/* closes form-card-premium */}
+          </div> {/* closes login-right-form */}
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="form-submit-btn-premium"
-                  >
-                    {loading ? "Registering & Matching Friends..." : "Register & Match Friends"}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleVerifyOtp}>
-                  <div className="input-group-premium mb-1-75">
-                    <label className="input-label-premium">6-Digit Verification Code</label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      className="input-premium otp-input-premium"
-                      placeholder="123456"
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                      required
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="form-submit-btn-premium mb-1-5"
-                  >
-                    {loading ? "Verifying..." : "Verify Code"}
-                  </button>
-                </form>
-              )}
-              </div>
-
-              <p className="login-switch-footer">
-                Already have an account?{" "}
-                <span onClick={() => navigate("/login")}>
-                  Login here
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+        </div> {/* closes login-split-container */}
+      </div> {/* closes split-page-section */}
 
       <Footer />
     </div>

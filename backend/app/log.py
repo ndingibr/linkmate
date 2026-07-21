@@ -81,61 +81,133 @@ def init_db():
     )
     """)
 
-    # 2. Seed Industries and Sub-Industries if empty
-    c.execute("SELECT COUNT(*) FROM industries")
-    if c.fetchone()["count"] == 0:
-        seeds = {
-            "Financial Services & Banking": [
-                "Retail Banking", "Investment Banking", "Fintech", "Asset Management", "Insurance"
-            ],
-            "Mining & Resources": [
-                "Coal Mining", "Platinum & Gold Mining", "Mineral Processing", "Mining Equipment"
-            ],
-            "Agriculture & Agro-processing": [
-                "Wine & Viticulture", "Citrus & Fruit Farming", "Grain & Maize", "Livestock", "Forestry & Timber"
-            ],
-            "Manufacturing & Automotive": [
-                "Automotive Assembly", "Component Manufacturing", "Steel & Metal Fabrication", "Chemicals", "Textiles & Apparel"
-            ],
-            "Retail, Wholesale & Logistics": [
-                "E-commerce", "FMCG (Fast-Moving Consumer Goods)", "Warehousing", "Road Freight", "Supply Chain Management"
-            ],
-            "Telecommunications & IT": [
-                "Mobile Networks & ISP", "Software Development", "SaaS", "Cybersecurity", "IT Consulting & Support"
-            ],
-            "Tourism & Hospitality": [
-                "Hotel & Lodging", "Travel Agencies", "Ecotourism", "Catering & Events"
-            ],
-            "Healthcare & Pharmaceuticals": [
-                "Medical Devices", "Private Healthcare Services", "Pharmaceutical Manufacturing", "Health Insurance (Medical Aid)"
-            ],
-            "Energy & Utilities": [
-                "Solar & Renewable Energy", "Electrical Engineering", "Water Management", "Waste Management"
-            ],
-            "Construction & Infrastructure": [
-                "Civil Engineering", "Commercial Property Development", "Residential Construction", "Building Materials"
-            ],
-            "Business Services & Consulting": [
-                "Legal Services", "Accounting & Tax", "Recruitment & HR", "Marketing & Advertising", "Security Services"
-            ]
-        }
-        for ind_name, sub_list in seeds.items():
+     # 2. Seed Industries and Sub-Industries
+    seeds = {
+        "Financial Services & Banking": [
+            "Retail Banking", "Investment Banking", "Fintech", "Asset Management", "Insurance"
+        ],
+        "Mining & Resources": [
+            "Coal Mining", "Platinum & Gold Mining", "Mineral Processing", "Mining Equipment"
+        ],
+        "Agriculture & Agro-processing": [
+            "Wine & Viticulture", "Citrus & Fruit Farming", "Grain & Maize", "Livestock", "Forestry & Timber"
+        ],
+        "Manufacturing & Automotive": [
+            "Automotive Assembly", "Component Manufacturing", "Steel & Metal Fabrication", "Chemicals", "Textiles & Apparel"
+        ],
+        "Retail, Wholesale & Logistics": [
+            "E-commerce", "FMCG (Fast-Moving Consumer Goods)", "Warehousing", "Road Freight", "Supply Chain Management"
+        ],
+        "Telecommunications & IT": [
+            "Mobile Networks & ISP", "Software Development", "SaaS", "Cybersecurity", "IT Consulting & Support"
+        ],
+        "Tourism & Hospitality": [
+            "Hotel & Lodging", "Travel Agencies", "Ecotourism", "Catering & Events"
+        ],
+        "Healthcare & Pharmaceuticals": [
+            "Medical Devices", "Private Healthcare Services", "Pharmaceutical Manufacturing", "Health Insurance (Medical Aid)"
+        ],
+        "Energy & Utilities": [
+            "Solar & Renewable Energy", "Electrical Engineering", "Water Management", "Waste Management"
+        ],
+        "Construction & Infrastructure": [
+            "Civil Engineering", "Commercial Property Development", "Residential Construction", "Building Materials"
+        ],
+        "Business Services & Consulting": [
+            "Legal Services", "Accounting & Tax", "Recruitment & HR", "Marketing & Advertising", "Security Services"
+        ],
+        "AI": [
+            "Generative AI & LLMs", "Computer Vision", "Machine Learning Operations (MLOps)", "AI Consulting & Strategy"
+        ]
+    }
+    for ind_name, sub_list in seeds.items():
+        c.execute("SELECT id FROM industries WHERE name = %s", (ind_name,))
+        ind_row = c.fetchone()
+        if ind_row:
+            ind_id = ind_row["id"]
+        else:
             c.execute("INSERT INTO industries (name) VALUES (%s) RETURNING id", (ind_name,))
             ind_id = c.fetchone()["id"]
-            for sub_name in sub_list:
-                # Check if sub-industry already exists to handle many-to-many duplicates (e.g. Sales)
-                c.execute("SELECT id FROM sub_industries WHERE name = %s", (sub_name,))
-                sub_row = c.fetchone()
-                if sub_row:
-                    sub_id = sub_row["id"]
-                else:
-                    c.execute("INSERT INTO sub_industries (name) VALUES (%s) RETURNING id", (sub_name,))
-                    sub_id = c.fetchone()["id"]
-                
-                c.execute("""
-                    INSERT INTO industry_sub_industries (industry_id, sub_industry_id) 
-                    VALUES (%s, %s) ON CONFLICT DO NOTHING
-                """, (ind_id, sub_id))
+            
+        for sub_name in sub_list:
+            # Check if sub-industry already exists to handle many-to-many duplicates (e.g. Sales)
+            c.execute("SELECT id FROM sub_industries WHERE name = %s", (sub_name,))
+            sub_row = c.fetchone()
+            if sub_row:
+                sub_id = sub_row["id"]
+            else:
+                c.execute("INSERT INTO sub_industries (name) VALUES (%s) RETURNING id", (sub_name,))
+                sub_id = c.fetchone()["id"]
+            
+            c.execute("""
+                INSERT INTO industry_sub_industries (industry_id, sub_industry_id) 
+                VALUES (%s, %s) ON CONFLICT DO NOTHING
+            """, (ind_id, sub_id))
+
+    # Create seo_keywords table
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS seo_keywords (
+        id SERIAL PRIMARY KEY,
+        phrase TEXT UNIQUE NOT NULL,
+        canonical_term TEXT NOT NULL,
+        intent TEXT NOT NULL,
+        industry_id INT REFERENCES industries(id) ON DELETE CASCADE,
+        sub_industry_id INT REFERENCES sub_industries(id) ON DELETE CASCADE,
+        search_volume INT NOT NULL,
+        difficulty INT NOT NULL,
+        heading TEXT,
+        description TEXT,
+        pre_fill TEXT,
+        what_to_look_for TEXT
+    )
+    """)
+    c.execute("ALTER TABLE seo_keywords ADD COLUMN IF NOT EXISTS heading TEXT")
+    c.execute("ALTER TABLE seo_keywords ADD COLUMN IF NOT EXISTS description TEXT")
+    c.execute("ALTER TABLE seo_keywords ADD COLUMN IF NOT EXISTS pre_fill TEXT")
+    c.execute("ALTER TABLE seo_keywords ADD COLUMN IF NOT EXISTS what_to_look_for TEXT")
+
+    # Seed seo_keywords
+    c.execute("SELECT COUNT(*) FROM seo_keywords")
+    if c.fetchone()["count"] == 0:
+        import os
+        seed_path = os.path.join(os.path.dirname(__file__), "seo_seed.json")
+        if os.path.exists(seed_path):
+            with open(seed_path, "r", encoding="utf-8") as f:
+                seo_seeds = json.load(f)
+            
+            # Load all industries and sub-industries to resolve IDs in-memory
+            c.execute("SELECT id, name FROM industries")
+            industries = {row["name"]: row["id"] for row in c.fetchall()}
+            
+            c.execute("SELECT id, name FROM sub_industries")
+            sub_industries = {row["name"]: row["id"] for row in c.fetchall()}
+            
+            values = []
+            for item in seo_seeds:
+                ind_id = industries.get(item["industry"])
+                sub_id = sub_industries.get(item["sub_industry"])
+                if ind_id and sub_id:
+                    values.append((
+                        item["phrase"],
+                        item["canonical_term"],
+                        item["intent"],
+                        ind_id,
+                        sub_id,
+                        item["search_volume"],
+                        item["difficulty"],
+                        item.get("heading", ""),
+                        item.get("description", ""),
+                        item.get("pre_fill", ""),
+                        json.dumps(item.get("what_to_look_for", []))
+                    ))
+            
+            if values:
+                from psycopg2.extras import execute_values
+                execute_values(c, """
+                    INSERT INTO seo_keywords (phrase, canonical_term, intent, industry_id, sub_industry_id, search_volume, difficulty, heading, description, pre_fill, what_to_look_for)
+                    VALUES %s
+                    ON CONFLICT (phrase) DO NOTHING
+                """, values)
 
     # Contact form submissions
     c.execute("""

@@ -245,4 +245,14 @@ export async function updateMatchStatus(matchId, action) {
     throw error;
   }
 }
+
+export async function getSeoLandingCopy(keyword) {
+  try {
+    const response = await axios.get("/seo/landing", { params: { keyword } });
+    return response.data;
+  } catch (error) {
+    console.error("Fetching SEO landing copy failed:", error);
+    throw error;
+  }
+}
 
