@@ -21,6 +21,8 @@ export default function Register() {
   const [pendingIntent, setPendingIntent] = useState("");
   const [fullName, setFullName] = useState("");
   const [showIntent, setShowIntent] = useState(false);
+  const [intentLoading, setIntentLoading] = useState(false);
+  const [loaderText, setLoaderText] = useState("Analyzing search query...");
 
   const [userIntent, setUserIntent] = useState("");
   const [preselectedDriver, setPreselectedDriver] = useState(null);
@@ -34,7 +36,27 @@ export default function Register() {
     const isFromSearch = location.state?.fromSearch;
     if (savedIntent && isFromSearch) {
       setPendingIntent(savedIntent);
-      setShowIntent(true);
+      setIntentLoading(true);
+      setLoaderText("Analyzing search query...");
+      
+      const t1 = setTimeout(() => {
+        setLoaderText("Scanning circles network for partners...");
+      }, 700);
+
+      const t2 = setTimeout(() => {
+        setLoaderText("Finding verified decision-makers...");
+      }, 1400);
+
+      const t3 = setTimeout(() => {
+        setIntentLoading(false);
+        setShowIntent(true);
+      }, 2100);
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
     }
     const driver = location.state?.driver;
     if (driver) {
@@ -148,7 +170,48 @@ export default function Register() {
           }}>
             
             {/* Conditional Layout A (From Search) vs B (Direct Navigation) */}
-            {showIntent ? (
+            {intentLoading ? (
+              <div style={{
+                marginBottom: "2rem",
+                width: "100%",
+                padding: "20px",
+                borderRadius: "16px",
+                border: "1px solid rgba(236, 94, 59, 0.2)",
+                backgroundColor: "rgba(236, 94, 59, 0.03)",
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+                animation: "pulse 1.8s infinite ease-in-out"
+              }}>
+                <style>{`
+                  @keyframes pulse {
+                    0% { opacity: 0.7; }
+                    50% { opacity: 1; }
+                    100% { opacity: 0.7; }
+                  }
+                  @keyframes spin {
+                    to { transform: rotate(360deg); }
+                  }
+                `}</style>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{
+                    width: "18px",
+                    height: "18px",
+                    border: "2.5px solid rgba(236, 94, 59, 0.2)",
+                    borderTopColor: "#ec5e3b",
+                    borderRadius: "50%",
+                    animation: "spin 0.8s linear infinite"
+                  }} />
+                  <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.88rem" }}>
+                    Small Circles AI Engine
+                  </span>
+                </div>
+                <div style={{ color: "#ec5e3b", fontWeight: "600", fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                  Status: {loaderText}
+                </div>
+              </div>
+            ) : showIntent ? (
               <div style={{
                 marginBottom: "2rem",
                 width: "100%",
