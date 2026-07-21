@@ -41,16 +41,16 @@ export default function SignUp() {
       
       const t1 = setTimeout(() => {
         setLoaderText("Scanning circles network for partners...");
-      }, 700);
+      }, 1500);
 
       const t2 = setTimeout(() => {
         setLoaderText("Finding verified decision-makers...");
-      }, 1400);
+      }, 3000);
 
       const t3 = setTimeout(() => {
         setIntentLoading(false);
         setShowIntent(true);
-      }, 2100);
+      }, 4500);
 
       return () => {
         clearTimeout(t1);
@@ -220,7 +220,7 @@ export default function SignUp() {
                 <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "10px" }}>
                   <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span>
                   <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.9rem" }}>
-                    We found businesses that may match your needs:
+                   There are potential partners that may match your needs:
                   </span>
                 </div>
                 <div style={{ color: "#6b7280", fontSize: "0.8rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>

@@ -33,16 +33,16 @@ export default function SignIn() {
       
       const t1 = setTimeout(() => {
         setLoaderText("Scanning circles network for partners...");
-      }, 700);
+      }, 1500);
 
       const t2 = setTimeout(() => {
         setLoaderText("Finding verified decision-makers...");
-      }, 1400);
+      }, 3000);
 
       const t3 = setTimeout(() => {
         setIntentLoading(false);
         setShowIntent(true);
-      }, 2100);
+      }, 4500);
 
       return () => {
         clearTimeout(t1);

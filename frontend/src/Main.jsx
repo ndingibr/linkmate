@@ -166,7 +166,7 @@ export default function Main() {
                 {seoData && seoData.description ? (
                   seoData.description
                 ) : (
-                  "Tell us what you're looking for - or what your business offers - in plain language. We'll introduce you directly to compatible companies and the right decision-maker, bypassing the gatekeepers and starting straight with a warm conversation."
+                  "Tell us what you're looking for - or what your business offers. We'll introduce you directly to compatible companies and the right decision-maker, bypassing the gatekeepers and starting straight with a warm conversation."
                 )}
               </p>
 
