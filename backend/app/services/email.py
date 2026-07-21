@@ -269,11 +269,7 @@ Small Circles Team
         <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 24px auto;">
           <tr>
             <td style="padding-right: 10px; vertical-align: middle;">
-              <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
-                <circle cx="17" cy="12" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
-                <circle cx="12" cy="21" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
-                <circle cx="22" cy="21" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
-              </svg>
+              <img src="https://linkmate.fly.dev/logo_rings.png" alt="Small Circles Logo" width="34" height="34" style="display: block; border: 0; outline: none; text-decoration: none;" />
             </td>
             <td style="vertical-align: middle; text-align: left; line-height: 1.05;">
               <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; color: #35453f; text-transform: lowercase; display: inline-block;">
@@ -361,11 +357,7 @@ Small Circles Team
         <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 24px auto;">
           <tr>
             <td style="padding-right: 10px; vertical-align: middle;">
-              <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
-                <circle cx="17" cy="12" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
-                <circle cx="12" cy="21" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
-                <circle cx="22" cy="21" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
-              </svg>
+              <img src="https://linkmate.fly.dev/logo_rings.png" alt="Small Circles Logo" width="34" height="34" style="display: block; border: 0; outline: none; text-decoration: none;" />
             </td>
             <td style="vertical-align: middle; text-align: left; line-height: 1.05;">
               <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; color: #35453f; text-transform: lowercase; display: inline-block;">
