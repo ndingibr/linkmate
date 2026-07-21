@@ -263,35 +263,58 @@ Small Circles Team
 
     # HTML version with Small Circles branding and static image logo
     html = f"""<html>
-      <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
-        <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px; text-align: left;">
-            <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
-              small<span style="color: #f17c13;">circles</span>
-            </span>
-          </div>
-          <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
-            <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
-            <p>
-              Thank you for creating an account on <strong>Small Circles</strong>. We utilise your intention to help you build the right network of business friends around your goals.
-            </p>
-            <p>
-              Please verify your email address using the following 6-digit One-Time Password (OTP):
-            </p>
-            <div style="margin: 30px 0; text-align: left;">
-              <span style="display: inline-block; background-color: #f9fafb; border: 1px solid #e5e7eb; color: #1f2937; font-size: 22px; font-weight: 700; letter-spacing: 0.15em; padding: 8px 24px; border-radius: 8px;">
-                {otp_code}
-              </span>
-            </div>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 24px;">
-              This code is valid for 15 minutes. Once verified, your account will be activated.
-            </p>
-            <div style="margin: 24px 0; border-top: 1px dashed #e5e7eb;"></div>
-            <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-              This is an automated message. Please do not reply directly.
-            </p>
-          </div>
+      <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f3f4f6; margin: 0; padding: 40px 20px; color: #1f2937; -webkit-font-smoothing: antialiased;">
+        
+        <!-- Centered Brand Header Logo -->
+        <div style="text-align: center; margin-bottom: 24px;">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 10px auto;">
+            <tr>
+              <td align="center" style="padding-bottom: 5px;">
+                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%;"></span>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%; margin-right: -4px;"></span>
+                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%;"></span>
+              </td>
+            </tr>
+          </table>
+          <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: #35453f; text-transform: lowercase;">
+            small<span style="color: #ec5e3b;">circles</span>
+          </span>
         </div>
+
+        <!-- Premium Transactional White Card -->
+        <div style="max-width: 540px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 40px 30px; text-align: center; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); box-sizing: border-box;">
+          
+          <h2 style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-size: 24px; font-weight: 700; color: #35453f; margin: 0 0 16px 0; letter-spacing: -0.01em;">
+            Here's Your Verification Code
+          </h2>
+          
+          <p style="font-family: 'Inter', -apple-system, sans-serif; font-size: 14px; line-height: 1.5; color: #4b5563; margin: 0 0 30px 0; font-weight: 500;">
+            Copy the code, and then enter it to verify your email address.<br />
+            The code expires in 15 minutes.
+          </p>
+
+          <div style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-size: 42px; font-weight: 800; color: #ec5e3b; letter-spacing: 0.05em; margin: 30px 0; line-height: 1;">
+            {otp_code}
+          </div>
+
+          <div style="border-top: 1px solid #f3f4f6; margin: 30px 0 20px 0;"></div>
+
+          <p style="font-family: 'Inter', -apple-system, sans-serif; font-size: 12px; color: #9ca3af; margin: 0; font-weight: 500;">
+            If you haven't requested this email, you can safely ignore it.
+          </p>
+
+        </div>
+
+        <!-- Footer Copyright -->
+        <div style="text-align: center; margin-top: 24px; font-family: 'Inter', -apple-system, sans-serif; font-size: 11px; color: #9ca3af; line-height: 1.5;">
+          © 2026 Small Circles. All rights reserved.<br />
+          Various trademarks held by their respective owners.
+        </div>
+
       </body>
     </html>"""
 
@@ -334,35 +357,58 @@ Small Circles Team
 
     # HTML version with Small Circles branding and static image logo
     html = f"""<html>
-      <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #1f2937;">
-        <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px; text-align: left;">
-            <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; color: #1f2937;">
-              small<span style="color: #f17c13;">circles</span>
-            </span>
-          </div>
-          <div style="padding: 32px; line-height: 1.6; font-size: 15px;">
-            <p style="font-weight: 600; margin-top: 0; font-size: 16px;">Hi {first_name},</p>
-            <p>
-              We received a request to reset your <strong>Small Circles</strong> account password.
-            </p>
-            <p>
-              Please verify this request using the following 6-digit One-Time Password (OTP):
-            </p>
-            <div style="margin: 30px 0; text-align: left;">
-              <span style="display: inline-block; background-color: #f9fafb; border: 1px solid #e5e7eb; color: #1f2937; font-size: 22px; font-weight: 700; letter-spacing: 0.15em; padding: 8px 24px; border-radius: 8px;">
-                {otp_code}
-              </span>
-            </div>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 24px;">
-              This code is valid for 15 minutes. If you did not request a password reset, you can safely ignore this email.
-            </p>
-            <div style="margin: 24px 0; border-top: 1px dashed #e5e7eb;"></div>
-            <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-              This is an automated message. Please do not reply directly.
-            </p>
-          </div>
+      <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f3f4f6; margin: 0; padding: 40px 20px; color: #1f2937; -webkit-font-smoothing: antialiased;">
+        
+        <!-- Centered Brand Header Logo -->
+        <div style="text-align: center; margin-bottom: 24px;">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 10px auto;">
+            <tr>
+              <td align="center" style="padding-bottom: 5px;">
+                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%;"></span>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%; margin-right: -4px;"></span>
+                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%;"></span>
+              </td>
+            </tr>
+          </table>
+          <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: #35453f; text-transform: lowercase;">
+            small<span style="color: #ec5e3b;">circles</span>
+          </span>
         </div>
+
+        <!-- Premium Transactional White Card -->
+        <div style="max-width: 540px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 40px 30px; text-align: center; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); box-sizing: border-box;">
+          
+          <h2 style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-size: 24px; font-weight: 700; color: #35453f; margin: 0 0 16px 0; letter-spacing: -0.01em;">
+            Here's Your Verification Code
+          </h2>
+          
+          <p style="font-family: 'Inter', -apple-system, sans-serif; font-size: 14px; line-height: 1.5; color: #4b5563; margin: 0 0 30px 0; font-weight: 500;">
+            Copy the code, and then enter it to reset your password.<br />
+            The code expires in 15 minutes.
+          </p>
+
+          <div style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-size: 42px; font-weight: 800; color: #ec5e3b; letter-spacing: 0.05em; margin: 30px 0; line-height: 1;">
+            {otp_code}
+          </div>
+
+          <div style="border-top: 1px solid #f3f4f6; margin: 30px 0 20px 0;"></div>
+
+          <p style="font-family: 'Inter', -apple-system, sans-serif; font-size: 12px; color: #9ca3af; margin: 0; font-weight: 500;">
+            If you haven't requested this email, you can safely ignore it.
+          </p>
+
+        </div>
+
+        <!-- Footer Copyright -->
+        <div style="text-align: center; margin-top: 24px; font-family: 'Inter', -apple-system, sans-serif; font-size: 11px; color: #9ca3af; line-height: 1.5;">
+          © 2026 Small Circles. All rights reserved.<br />
+          Various trademarks held by their respective owners.
+        </div>
+
       </body>
     </html>"""
 

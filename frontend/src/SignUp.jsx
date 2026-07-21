@@ -349,7 +349,10 @@ export default function SignUp() {
                     lineHeight: "1.4",
                     margin: 0
                   }}>
-                    Join Small Circles to connect with verified partners matching your business intent.
+                    {showIntent 
+                      ? "There are potential partners we would like to introduce you to. Complete the form below to connect."
+                      : "Join Small Circles to connect with verified partners matching your business intent."
+                    }
                   </p>
                 </div>
                 

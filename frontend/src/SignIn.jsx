@@ -195,7 +195,7 @@ export default function SignIn() {
                 <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "10px" }}>
                   <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span>
                   <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.9rem" }}>
-                    We found businesses that may match your needs:
+                    There are potential partners that may match your needs:
                   </span>
                 </div>
                 <div style={{ color: "#6b7280", fontSize: "0.8rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>
@@ -317,6 +317,17 @@ export default function SignIn() {
                 }}>
                   Sign In
                 </h3>
+                <p className="form-card-header-desc" style={{
+                  color: "#6b7280",
+                  fontSize: "0.9rem",
+                  lineHeight: "1.4",
+                  margin: 0
+                }}>
+                  {showIntent 
+                    ? "We found potential partners matching your request. Sign in to view these introductions and connect directly."
+                    : "Sign in to connect with verified partners matching your business intent."
+                  }
+                </p>
               </div>
 
               {error && (
