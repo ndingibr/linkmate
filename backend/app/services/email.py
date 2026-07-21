@@ -266,24 +266,22 @@ Small Circles Team
       <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f3f4f6; margin: 0; padding: 40px 20px; color: #1f2937; -webkit-font-smoothing: antialiased;">
         
         <!-- Centered Brand Header Logo -->
-        <div style="text-align: center; margin-bottom: 24px;">
-          <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 10px auto;">
-            <tr>
-              <td align="center" style="padding-bottom: 5px;">
-                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%;"></span>
-              </td>
-            </tr>
-            <tr>
-              <td align="center">
-                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%; margin-right: -4px;"></span>
-                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%;"></span>
-              </td>
-            </tr>
-          </table>
-          <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: #35453f; text-transform: lowercase;">
-            small<span style="color: #ec5e3b;">circles</span>
-          </span>
-        </div>
+        <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 24px auto;">
+          <tr>
+            <td style="padding-right: 10px; vertical-align: middle;">
+              <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+                <circle cx="17" cy="12" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
+                <circle cx="12" cy="21" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
+                <circle cx="22" cy="21" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
+              </svg>
+            </td>
+            <td style="vertical-align: middle; text-align: left; line-height: 1.05;">
+              <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; color: #35453f; text-transform: lowercase; display: inline-block;">
+                small<br />circles
+              </span>
+            </td>
+          </tr>
+        </table>
 
         <!-- Premium Transactional White Card -->
         <div style="max-width: 540px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 40px 30px; text-align: center; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); box-sizing: border-box;">
@@ -360,24 +358,22 @@ Small Circles Team
       <body style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; background-color: #f3f4f6; margin: 0; padding: 40px 20px; color: #1f2937; -webkit-font-smoothing: antialiased;">
         
         <!-- Centered Brand Header Logo -->
-        <div style="text-align: center; margin-bottom: 24px;">
-          <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 10px auto;">
-            <tr>
-              <td align="center" style="padding-bottom: 5px;">
-                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%;"></span>
-              </td>
-            </tr>
-            <tr>
-              <td align="center">
-                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%; margin-right: -4px;"></span>
-                <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #b0a296; border-radius: 50%;"></span>
-              </td>
-            </tr>
-          </table>
-          <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: #35453f; text-transform: lowercase;">
-            small<span style="color: #ec5e3b;">circles</span>
-          </span>
-        </div>
+        <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 24px auto;">
+          <tr>
+            <td style="padding-right: 10px; vertical-align: middle;">
+              <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+                <circle cx="17" cy="12" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
+                <circle cx="12" cy="21" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
+                <circle cx="22" cy="21" r="7.5" stroke="#b0a296" stroke-width="2" fill="none" />
+              </svg>
+            </td>
+            <td style="vertical-align: middle; text-align: left; line-height: 1.05;">
+              <span style="font-family: 'Outfit', 'Inter', -apple-system, sans-serif; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; color: #35453f; text-transform: lowercase; display: inline-block;">
+                small<br />circles
+              </span>
+            </td>
+          </tr>
+        </table>
 
         <!-- Premium Transactional White Card -->
         <div style="max-width: 540px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 40px 30px; text-align: center; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); box-sizing: border-box;">

@@ -342,12 +342,7 @@ export default function SignUp() {
                     marginBottom: "20px",
                     textAlign: "left"
                   }}>
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "4px" }}>
-                      <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span>
-                      <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.85rem" }}>
-                        Matching Partners Found
-                      </span>
-                    </div>
+    
                     <div style={{ color: "#6b7280", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                       Intent query:
                     </div>
