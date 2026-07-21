@@ -9,11 +9,12 @@ import ContactSection from "./Contact";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import { isAuthenticated, logout } from "./api";
-import { Menu, X, ArrowRight, Sparkles, Building, Briefcase, Mail, CheckCircle, Send, Zap } from "lucide-react";
+import { Menu, X, ArrowRight, Sparkles, Building, Briefcase, Mail, CheckCircle, Send, Zap, Search } from "lucide-react";
 
 export default function Main() {
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState(null);
+  const [heroQuery, setHeroQuery] = useState("");
 
   const faqItems = [
     {
@@ -56,8 +57,15 @@ export default function Main() {
     }
   ];
 
-  const handleDriverSelect = (driver) => {
-    navigate("/register", { state: { driver } });
+  const handleHeroSearch = (e) => {
+    e.preventDefault();
+    if (!heroQuery.trim()) return;
+    localStorage.setItem("pending_intent", heroQuery.trim());
+    if (isAuthenticated()) {
+      navigate("/profile");
+    } else {
+      navigate("/register");
+    }
   };
 
   return (
@@ -83,8 +91,8 @@ export default function Main() {
           }}
         >
           <div className="row align-items-center justify-content-between" style={{ position: "relative" }}>
-            {/* Left Column — Value Prop */}
-            <div className="col-lg-6 circles-section-light-banner">
+            {/* Left Column — Value Prop & Search */}
+            <div className="col-lg-8 circles-section-light-banner">
               <span 
                 style={{ 
                   color: "#4a5d5e", 
@@ -130,40 +138,73 @@ export default function Main() {
                 Tell us what you're looking for - or what your business offers - in plain language. We'll introduce you directly to compatible companies and the right decision-maker, bypassing the gatekeepers and starting straight with a warm conversation.
               </p>
 
-              <div style={{ marginBottom: "1rem" }}>
-                <button 
-                  onClick={() => {
-                    if (isAuthenticated()) {
-                      navigate("/profile");
-                    } else {
-                      navigate("/register");
-                    }
-                  }}
-                  className="cta-button-glowing"
-                  style={{
-                    backgroundColor: "#ec5e3b",
-                    boxShadow: "0 10px 25px rgba(236, 94, 59, 0.2)",
-                    borderRadius: "30px",
-                    padding: "16px 36px",
-                    fontWeight: "700",
-                    fontSize: "1.05rem",
-                    color: "#ffffff"
-                  }}
-                >
-                  Start Your Introduction - Free
-                </button>
-              </div>
+              <form onSubmit={handleHeroSearch} style={{ position: "relative", maxWidth: "740px", marginBottom: "1.5rem" }}>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  {/* Search Icon */}
+                  <Search size={20} style={{ position: "absolute", left: "20px", color: "#9ca3af" }} />
+                  
+                  {/* Input Box */}
+                  <input
+                    type="text"
+                    value={heroQuery}
+                    onChange={(e) => setHeroQuery(e.target.value)}
+                    placeholder='e.g. "Looking for food packaging suppliers in Gauteng..."'
+                    style={{
+                      width: "100%",
+                      padding: "16px 130px 16px 54px",
+                      borderRadius: "32px",
+                      border: "1px solid #d1d5db",
+                      fontSize: "0.98rem",
+                      color: "#374151",
+                      backgroundColor: "#ffffff",
+                      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
+                      outline: "none",
+                      transition: "all 0.3s ease",
+                      boxSizing: "border-box"
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = "#ec5e3b";
+                      e.target.style.boxShadow = "0 8px 30px rgba(236, 94, 59, 0.08)";
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = "#d1d5db";
+                      e.target.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.04)";
+                    }}
+                  />
+
+                  {/* Search Button inside input */}
+                  <button
+                    type="submit"
+                    style={{
+                      position: "absolute",
+                      right: "8px",
+                      backgroundColor: "#ec5e3b",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "10px 22px",
+                      borderRadius: "24px",
+                      fontWeight: "600",
+                      fontSize: "0.88rem",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 12px rgba(236, 94, 59, 0.15)",
+                      transition: "all 0.3s ease"
+                    }}
+                  >
+                    Connect
+                  </button>
+                </div>
+              </form>
 
               <span style={{ fontSize: "0.8rem", color: "#6b7280", display: "block" }}>
                 ✦ No credit card required &nbsp;·&nbsp; Under 2 minutes to start
               </span>
             </div>
 
-            {/* Right Column — Handshake Picture inside a Circle with Background and Without Borders */}
-            <div className="col-lg-5" style={{ position: "relative", minHeight: "450px", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
+            {/* Right Column — Handshake Picture shifted up vertically to make space */}
+            <div className="col-lg-4" style={{ position: "relative", minHeight: "450px", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
               <div style={{
-                width: "420px",
-                height: "420px",
+                width: "315px",
+                height: "315px",
                 borderRadius: "50%",
                 backgroundColor: "#d1d5db",
                 display: "flex",
@@ -172,7 +213,7 @@ export default function Main() {
                 overflow: "hidden",
                 position: "absolute",
                 right: "-20px",
-                top: "50%",
+                top: "38%",
                 transform: "translateY(-50%)",
                 pointerEvents: "none",
                 zIndex: 1

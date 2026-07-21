@@ -486,7 +486,7 @@ export default function Header({ profileOverride }) {
                       initial
                     )}
                   </div>
-                  <span>My Network ▾</span>
+                  <span>My Circles ▾</span>
                 </div>
                 
                 {meMenuOpen && (
