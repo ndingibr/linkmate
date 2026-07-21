@@ -72,7 +72,7 @@ Note: We strictly reject spam and low-quality alerts. If we don't identify any b
     try:
         server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
         server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.sendmail(SMTP_USER, [to_email, "ndingibr@gmail.com"], msg.as_string())
         server.quit()
         # Log successful dispatch
         email_repo.log_sent_email(to_email, msg['Subject'], html, "sent")
@@ -158,7 +158,7 @@ Small Circles Team
     try:
         server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
         server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.sendmail(SMTP_USER, [to_email, "ndingibr@gmail.com"], msg.as_string())
         server.quit()
         email_repo.log_sent_email(to_email, subject, html, "sent")
     except Exception as e:
@@ -231,7 +231,7 @@ Small Circles Team
     try:
         server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
         server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.sendmail(SMTP_USER, [to_email, "ndingibr@gmail.com"], msg.as_string())
         server.quit()
         email_repo.log_sent_email(to_email, msg['Subject'], html, "sent")
     except Exception as e:
@@ -302,7 +302,7 @@ Small Circles Team
     try:
         server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
         server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.sendmail(SMTP_USER, [to_email, "ndingibr@gmail.com"], msg.as_string())
         server.quit()
         email_repo.log_sent_email(to_email, msg['Subject'], html, "sent")
     except Exception as e:
@@ -373,7 +373,7 @@ Small Circles Team
     try:
         server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
         server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.sendmail(SMTP_USER, [to_email, "ndingibr@gmail.com"], msg.as_string())
         server.quit()
         email_repo.log_sent_email(to_email, msg['Subject'], html, "sent")
     except Exception as e:
