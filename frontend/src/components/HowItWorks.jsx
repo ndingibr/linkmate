@@ -75,11 +75,11 @@ export default function HowItWorks() {
   ];
 
   return (
-    <div className="section how-it-works" style={{ padding: "90px 0", backgroundColor: "#ffffff" }}>
+    <div className="section how-it-works" style={{ padding: "50px 0 30px", backgroundColor: "#ffffff" }}>
       <div className="container" style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
         
         {/* Header Title Section */}
-        <div style={{ textAlign: "center", marginBottom: "60px" }}>
+        <div style={{ textAlign: "center", marginBottom: "35px" }}>
           <h2 style={{ 
             color: "#35453f", 
             fontWeight: "600", 

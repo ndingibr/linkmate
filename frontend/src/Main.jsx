@@ -4,6 +4,7 @@ import logoImg from "./img/small_circles.jpg";
 import circlesBg from "./img/small_circles_bg.jpg";
 import realHandshake120 from "./img/real_handshake_120deg.png";
 import HowItWorks from "./components/HowItWorks";
+import BusinessUsage from "./components/BusinessUsage";
 import ContactSection from "./Contact";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
@@ -194,6 +195,9 @@ export default function Main() {
 
       {/* How It Works */}
         <HowItWorks />
+
+      {/* How businesses use Small Circles */}
+        <BusinessUsage />
 
       {/* FAQ Section */}
       <section
