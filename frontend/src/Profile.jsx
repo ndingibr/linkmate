@@ -565,6 +565,54 @@ export default function Profile() {
 
         {/* Content */}
         <div className="ps-content">
+          
+          {/* Missing Onboarding Profile Details Prompt Banner */}
+          {!isReadOnly && (!form.company_name || !form.phone) && (
+            <div style={{
+              backgroundColor: "#fef8f3",
+              border: "1px solid #fbdcbd",
+              borderRadius: "12px",
+              padding: "16px 20px",
+              marginBottom: "24px",
+              textAlign: "left",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              boxShadow: "0 4px 12px rgba(236, 94, 59, 0.05)"
+            }}>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.2rem" }}>👋</span>
+                <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.95rem" }}>
+                  Complete Your Business Profile
+                </span>
+              </div>
+              <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: 0, lineHeight: "1.4" }}>
+                Since you authenticated via a social provider, your company name and phone details are still blank.
+                Please complete these details under the <strong>Profile</strong> tab to ensure your intent matching runs optimally.
+              </p>
+              {activeTab !== "profile" && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("profile")}
+                  style={{
+                    background: "#ec5e3b",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "6px 14px",
+                    borderRadius: "16px",
+                    fontSize: "0.8rem",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    alignSelf: "flex-start",
+                    boxShadow: "0 2px 8px rgba(236, 94, 59, 0.15)"
+                  }}
+                >
+                  Edit Profile Details
+                </button>
+              )}
+            </div>
+          )}
+
           <h1 className="ps-page-title">
             {isReadOnly ? `${form.first_name || "Partner"}'s Business Intent` : "Intent | Profile"}
           </h1>

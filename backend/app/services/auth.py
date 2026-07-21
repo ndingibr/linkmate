@@ -57,7 +57,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
     return user
 
 # OAuth exchange simulation / logic
-async def exchange_google_code(code: str) -> Dict[str, Any]:
+async def exchange_google_code(code: str, redirect_uri: Optional[str] = None) -> Dict[str, Any]:
     """
     Exchange the authorization code for Google user details.
     In real usage, we would make a POST request to Google's oauth2/token endpoint
@@ -83,7 +83,7 @@ async def exchange_google_code(code: str) -> Dict[str, Any]:
                 "code": code,
                 "client_id": settings.google_client_id,
                 "client_secret": settings.google_client_secret,
-                "redirect_uri": settings.oauth_redirect_url,
+                "redirect_uri": redirect_uri or settings.oauth_redirect_url,
                 "grant_type": "authorization_code"
             }
             token_response = await client.post(token_url, data=data)
@@ -109,7 +109,7 @@ async def exchange_google_code(code: str) -> Dict[str, Any]:
             detail=f"Google authentication failed: {str(e)}"
         )
 
-async def exchange_linkedin_code(code: str) -> Dict[str, Any]:
+async def exchange_linkedin_code(code: str, redirect_uri: Optional[str] = None) -> Dict[str, Any]:
     """
     Exchange the authorization code for LinkedIn user details.
     If linkedin_client_id is not set, we'll run a mock/sandbox flow.
@@ -135,7 +135,7 @@ async def exchange_linkedin_code(code: str) -> Dict[str, Any]:
                 "code": code,
                 "client_id": settings.linkedin_client_id,
                 "client_secret": settings.linkedin_client_secret,
-                "redirect_uri": settings.oauth_redirect_url
+                "redirect_uri": redirect_uri or settings.oauth_redirect_url
             }
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             token_response = await client.post(token_url, data=data, headers=headers)

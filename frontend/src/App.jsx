@@ -1,5 +1,5 @@
-// src/App.jsx
-import { Routes, Route } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
 
 import Main from "./Main";
 import ContactPage from "./ContactPage";
@@ -11,6 +11,18 @@ import Matches from "./Matches";
 import ForgotPassword from "./ForgotPassword";
 
 export default function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("linkmate_auth_token", token);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      navigate("/profile");
+    }
+  }, [navigate]);
+
   return (
     <Routes>
       <Route path="/" element={<Main />} />
