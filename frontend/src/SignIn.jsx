@@ -307,6 +307,30 @@ export default function SignIn() {
               boxSizing: "border-box",
               color: "#1f2937"
             }}>
+              {showIntent && (
+                <div style={{
+                  backgroundColor: "#fef8f3",
+                  border: "1px solid #fbdcbd",
+                  borderRadius: "12px",
+                  padding: "12px 16px",
+                  marginBottom: "20px",
+                  textAlign: "left"
+                }}>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "4px" }}>
+                    <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span>
+                    <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.85rem" }}>
+                      Matching Partners Found
+                    </span>
+                  </div>
+                  <div style={{ color: "#6b7280", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    Intent query:
+                  </div>
+                  <div style={{ color: "#ec5e3b", fontWeight: "700", fontSize: "1.05rem", fontStyle: "italic" }}>
+                    "{pendingIntent}"
+                  </div>
+                </div>
+              )}
+
               <div className="form-card-header" style={{ marginBottom: "24px" }}>
                 <h3 className="form-card-header-title" style={{
                   color: "#35453f",
