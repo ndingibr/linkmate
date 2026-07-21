@@ -262,6 +262,16 @@ def init_db():
         CONSTRAINT unique_user_pair UNIQUE (user_id_1, user_id_2)
     )
     """)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS matches_status_snapshot (
+        id SERIAL PRIMARY KEY,
+        match_id INT REFERENCES matches(id) ON DELETE CASCADE,
+        status TEXT NOT NULL,
+        logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+
 
     # User OTPs for activation and forgot password verification
     c.execute("""

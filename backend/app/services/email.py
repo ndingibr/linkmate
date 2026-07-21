@@ -414,3 +414,172 @@ Small Circles Team
         email_repo.log_sent_email(to_email, msg['Subject'], html, "failed", str(e))
         raise e
 
+def send_match_summary_email(to_email: str, new_matches: list, rejected_matches: list, connected_matches: list):
+    """
+    Sends a consolidated transaction summary of matchmaking status changes (new, rejected, connected)
+    detected by state-comparison during the matching scheduler cycle.
+    """
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = "Small Circles - B2B Matchmaking Audit Summary Alert"
+    msg['From'] = f"Small Circles Audit <{SMTP_USER}>"
+    msg['To'] = to_email
+
+    # Plain text summary
+    text = f"""Small Circles B2B Matchmaking Audit Summary:
+    
+- New Matches: {len(new_matches)}
+- Connected Matches: {len(connected_matches)}
+- Rejected Matches: {len(rejected_matches)}
+
+Check your audit history for detailed intention synergy logs.
+"""
+
+    # Generate HTML Table for New Matches
+    new_matches_html = ""
+    if new_matches:
+        new_matches_html = """
+        <h3 style="font-family: 'Outfit', sans-serif; color: #35453f; border-bottom: 2px solid #ec5e3b; padding-bottom: 6px; margin-top: 24px;">🔥 New Matches Discovered ({count})</h3>
+        <table width="100%" cellpadding="10" cellspacing="0" style="border-collapse: collapse; margin-top: 10px; font-size: 13px;">
+          <thead>
+            <tr style="background-color: #fcf8f2; text-align: left; border-bottom: 2px solid #eddcd2;">
+              <th style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #35453f; width: 60px;">ID / %</th>
+              <th style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #35453f;">Segment</th>
+              <th style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #35453f;">User A (Offer/Need)</th>
+              <th style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #35453f;">User B (Offer/Need)</th>
+              <th style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #35453f;">AI Synergy Synergy Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+        """.replace("{count}", str(len(new_matches)))
+        
+        for idx, m in enumerate(new_matches):
+            bg = "#ffffff" if idx % 2 == 0 else "#fafafa"
+            new_matches_html += f"""
+            <tr style="background-color: {bg}; border-bottom: 1px solid #f3f4f6;">
+              <td style="font-weight: 700; color: #ec5e3b; vertical-align: top;">
+                #{m.get('match_id')}<br/>
+                <span style="font-size: 14px; color: #10b981;">{m.get('match_percentage_formatted')}</span>
+              </td>
+              <td style="color: #6b7280; vertical-align: top;">
+                <strong>{m.get('industry')}</strong><br/>
+                <span style="font-size: 11px;">{m.get('sub_industry')}</span>
+              </td>
+              <td style="vertical-align: top; line-height: 1.4;">
+                <strong>{m.get('user_1_name')}</strong><br/>
+                <span style="font-size: 11px; color: #9ca3af;">{m.get('user_1_company')}</span><br/>
+                <span style="font-style: italic; font-size: 12px; color: #4b5563;">"{m.get('user_1_intention')}"</span>
+              </td>
+              <td style="vertical-align: top; line-height: 1.4;">
+                <strong>{m.get('user_2_name')}</strong><br/>
+                <span style="font-size: 11px; color: #9ca3af;">{m.get('user_2_company')}</span><br/>
+                <span style="font-style: italic; font-size: 12px; color: #4b5563;">"{m.get('user_2_intention')}"</span>
+              </td>
+              <td style="vertical-align: top; color: #4b5563; font-size: 12px; line-height: 1.4;">
+                {m.get('ai_synergy_reason')}
+              </td>
+            </tr>
+            """
+        new_matches_html += "</tbody></table>"
+
+    # Generate lists for state changes
+    connected_html = ""
+    if connected_matches:
+        connected_html = f"""
+        <h3 style="font-family: 'Outfit', sans-serif; color: #10b981; border-bottom: 2px solid #10b981; padding-bottom: 6px; margin-top: 24px;">🤝 Matches Connected ({len(connected_matches)})</h3>
+        <ul style="padding-left: 20px; font-size: 13px; color: #374151; line-height: 1.6;">
+        """
+        for m in connected_matches:
+            connected_html += f"<li><strong>Match #{m['match_id']}</strong> ({m['match_percentage']}%): <strong>{m['user_1_name']}</strong> ({m['user_1_company']}) accepted connection with <strong>{m['user_2_name']}</strong> ({m['user_2_company']})</li>"
+        connected_html += "</ul>"
+
+    rejected_html = ""
+    if rejected_matches:
+        rejected_html = f"""
+        <h3 style="font-family: 'Outfit', sans-serif; color: #ef4444; border-bottom: 2px solid #ef4444; padding-bottom: 6px; margin-top: 24px;">❌ Matches Rejected ({len(rejected_matches)})</h3>
+        <ul style="padding-left: 20px; font-size: 13px; color: #374151; line-height: 1.6;">
+        """
+        for m in rejected_matches:
+            rejected_html += f"<li><strong>Match #{m['match_id']}</strong> ({m['match_percentage']}%): Intention link between <strong>{m['user_1_name']}</strong> and <strong>{m['user_2_name']}</strong> was rejected.</li>"
+        rejected_html += "</ul>"
+
+    no_changes_html = ""
+    if not new_matches and not rejected_matches and not connected_matches:
+        no_changes_html = """
+        <div style="background-color: #f9fafb; border: 1px dashed #d1d5db; border-radius: 8px; padding: 24px; text-align: center; color: #6b7280; font-size: 14px; margin-top: 20px;">
+          💤 No matchmaking state transitions occurred during this 30-minute interval.
+        </div>
+        """
+
+    # Complete HTML email structure
+    html = f"""<html>
+      <body style="font-family: 'Inter', -apple-system, sans-serif; background-color: #fafbfc; margin: 0; padding: 40px 20px; color: #1f2937;">
+        <div style="max-width: 900px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          
+          <!-- Header Logo block -->
+          <div style="background-color: #ffffff; border-bottom: 3px solid #f17c13; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: inline-flex; align-items: center;">
+              <img src="https://linkmate.fly.dev/logo_rings.png" alt="Small Circles Logo" width="30" height="30" style="margin-right: 8px; vertical-align: middle;" />
+              <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: #35453f; text-transform: lowercase; line-height: 1;">
+                small<br/><span style="color: #b0a296; font-size: 18px;">circles</span>
+              </span>
+            </div>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">
+              Audit Notification Digest
+            </div>
+          </div>
+          
+          <!-- Body Content -->
+          <div style="padding: 32px; line-height: 1.6;">
+            <h2 style="font-family: 'Outfit', sans-serif; margin-top: 0; color: #35453f; font-size: 20px; font-weight: 700;">Matchmaking Cycle Results Summary</h2>
+            <p style="color: #6b7280; font-size: 14px; margin-bottom: 24px;">
+              The B2B matchmaking engine executed. Here is the summary of state changes detected by comparing the current state of active matches with the previous logged snapshot.
+            </p>
+            
+            <!-- Statistics Row -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+              <div style="background-color: #fef8f3; border: 1px solid #fbdcbd; border-radius: 8px; padding: 16px; text-align: center;">
+                <span style="display: block; font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: #ec5e3b;">{len(new_matches)}</span>
+                <span style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase;">New Matches</span>
+              </div>
+              <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; text-align: center;">
+                <span style="display: block; font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: #166534;">{len(connected_matches)}</span>
+                <span style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Connected</span>
+              </div>
+              <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; text-align: center;">
+                <span style="display: block; font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: #991b1b;">{len(rejected_matches)}</span>
+                <span style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Rejected</span>
+              </div>
+            </div>
+
+            <!-- Dynamic Tables -->
+            {no_changes_html}
+            {new_matches_html}
+            {connected_html}
+            {rejected_html}
+            
+          </div>
+          
+          <!-- Footer Copyright -->
+          <div style="background-color: #fafbfc; border-top: 1px solid #e5e7eb; padding: 20px 32px; text-align: center; font-size: 11px; color: #9ca3af;">
+            © 2026 Small Circles. Confidential Audit Log Notification.
+          </div>
+          
+        </div>
+      </body>
+    </html>"""
+
+    msg.attach(MIMEText(text, 'plain'))
+    msg.attach(MIMEText(html, 'html'))
+
+    from app.repositories import email_repo
+    try:
+        server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10)
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SMTP_USER, [to_email], msg.as_string())
+        server.quit()
+        email_repo.log_sent_email(to_email, msg['Subject'], html, "sent")
+    except Exception as e:
+        email_repo.log_sent_email(to_email, msg['Subject'], html, "failed", str(e))
+        raise e
+
+

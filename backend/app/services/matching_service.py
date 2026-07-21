@@ -300,7 +300,108 @@ def run_matching_cycle():
                     conn.close()
                     
     logger.info(f"Ollama B2B segment matching complete. Added {matches_added} new match records.")
+    
+    try:
+        perform_audit_and_notify()
+    except Exception as audit_err:
+        logger.error(f"Error executing matchmaking audit cycle: {audit_err}")
 
+def perform_audit_and_notify():
+    """
+    Compares the current database status of matches against the latest snapshot log
+    to detect state transitions (new, rejected, connected) and sends a summary report.
+    """
+    from app.services.email import send_match_summary_email
+    
+    conn = get_conn()
+    c = conn.cursor()
+    
+    # 1. Fetch current matches audit data
+    c.execute("""
+        SELECT 
+            m.id AS match_id,
+            m.score AS score,
+            CONCAT(ROUND(m.score, 0), '%') AS match_percentage_formatted,
+            m.status AS match_status,
+            m.match_reason AS ai_synergy_reason,
+            ind.name AS industry,
+            sub.name AS sub_industry,
+            CONCAT(u1.first_name, ' ', u1.last_name) AS user_1_name,
+            u1.company_name AS user_1_company,
+            ui1.intention AS user_1_intention,
+            CONCAT(u2.first_name, ' ', u2.last_name) AS user_2_name,
+            u2.company_name AS user_2_company,
+            ui2.intention AS user_2_intention
+        FROM matches m
+        JOIN users u1 ON m.user_id_1 = u1.id
+        JOIN user_intents ui1 ON u1.id = ui1.user_id
+        JOIN users u2 ON m.user_id_2 = u2.id
+        JOIN user_intents ui2 ON u2.id = ui2.user_id
+        JOIN sub_industries sub ON ui1.sub_industry_id = sub.id AND ui2.sub_industry_id = sub.id
+        JOIN industries ind ON ui1.industry_id = ind.id
+        WHERE 
+            (ui1.type = 'buy' AND ui2.type = 'give') 
+            OR (ui1.type = 'give' AND ui2.type = 'buy');
+    """)
+    current_matches = [dict(row) for row in c.fetchall()]
+    
+    # Map current matches by ID
+    current_map = {m["match_id"]: m for m in current_matches}
+    
+    # 2. Fetch the latest snapshot status for each match
+    c.execute("""
+        SELECT DISTINCT ON (match_id) match_id, status 
+        FROM matches_status_snapshot 
+        ORDER BY match_id, logged_at DESC;
+    """)
+    snapshot_records = [dict(row) for row in c.fetchall()]
+    snapshot_map = {r["match_id"]: r["status"] for r in snapshot_records}
+    
+    new_matches = []
+    rejected_matches = []
+    connected_matches = []
+    
+    # 3. Detect changes
+    for match_id, curr in current_map.items():
+        curr_status = curr["match_status"]
+        prev_status = snapshot_map.get(match_id)
+        
+        # New Match detection
+        if prev_status is None:
+            new_matches.append(curr)
+        # Status change to rejected detection
+        elif curr_status == 'rejected' and prev_status != 'rejected':
+            rejected_matches.append({
+                "match_id": match_id,
+                "match_percentage": round(curr["score"]),
+                "user_1_name": curr["user_1_name"],
+                "user_1_company": curr["user_1_company"],
+                "user_2_name": curr["user_2_name"],
+                "user_2_company": curr["user_2_company"]
+            })
+        # Status change to connected/converted detection
+        elif curr_status in ['connected', 'converted'] and prev_status not in ['connected', 'converted']:
+            connected_matches.append({
+                "match_id": match_id,
+                "match_percentage": round(curr["score"]),
+                "user_1_name": curr["user_1_name"],
+                "user_1_company": curr["user_1_company"],
+                "user_2_name": curr["user_2_name"],
+                "user_2_company": curr["user_2_company"]
+            })
+            
+    # 4. Send email (even if 0 changes, to notify that the scheduler ran successfully)
+    send_match_summary_email("ndingibr@gmail.com", new_matches, rejected_matches, connected_matches)
+    
+    # 5. Insert new snapshot for all matches
+    for match_id, curr in current_map.items():
+        c.execute(
+            "INSERT INTO matches_status_snapshot (match_id, status) VALUES (%s, %s)",
+            (match_id, curr["match_status"])
+        )
+    conn.commit()
+    conn.close()
+    logger.info("Matchmaking status snapshot logged and audit notification completed.")
 
 def run_matching_for_user(user_id: int):
     """
