@@ -63,7 +63,7 @@ export default function SignIn() {
     setLoading(true);
     try {
       await signInUser({ email, password });
-      navigate("/profile");
+      navigate("/matches");
     } catch (err) {
       setError(
         err.response?.data?.detail ||
@@ -101,7 +101,7 @@ export default function SignIn() {
         justifyContent: "space-between",
         alignItems: "center",
         width: "100%",
-        maxWidth: "1060px",
+        maxWidth: "1280px",
         margin: "0 auto 2.5rem auto",
         padding: "0 24px",
         boxSizing: "border-box"
@@ -133,11 +133,11 @@ export default function SignIn() {
       </div>
 
       <div className="split-page-section" style={{ flex: 1, display: "flex", alignItems: "center" }}>
-        <div className="login-split-container" style={{ display: "flex", gap: "60px", flexWrap: "wrap", width: "100%", maxWidth: "1060px", margin: "0 auto", padding: "0 24px", boxSizing: "border-box", alignItems: "center" }}>
+        <div className="login-split-container" style={{ display: "flex", gap: "60px", flexWrap: "wrap", width: "100%", maxWidth: "1280px", margin: "0 auto", padding: "0 24px", boxSizing: "border-box", alignItems: "center" }}>
           
           {/* LEFT COLUMN: BRAND VALUE PROP INSPIRATION FROM HERO */}
           <div className="login-left-banner circles-content" style={{ 
-            flex: "1 1 450px", 
+            flex: "1 1 520px", 
             color: "#35453f",
             display: "flex",
             flexDirection: "column",
@@ -179,7 +179,7 @@ export default function SignIn() {
                     animation: "spin 0.8s linear infinite"
                   }} />
                   <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.88rem" }}>
-                    Small Circles AI Engine
+                    Small Circles Matchmaker Engine
                   </span>
                 </div>
                 <div style={{ color: "#ec5e3b", fontWeight: "600", fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>
@@ -287,7 +287,7 @@ export default function SignIn() {
                 <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> Verified Businesses
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
-                <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> AI Matching
+                <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> Verified Synergy Matching
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
                 <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> Private Introductions
@@ -307,30 +307,6 @@ export default function SignIn() {
               boxSizing: "border-box",
               color: "#1f2937"
             }}>
-              {showIntent && (
-                <div style={{
-                  backgroundColor: "#fef8f3",
-                  border: "1px solid #fbdcbd",
-                  borderRadius: "12px",
-                  padding: "12px 16px",
-                  marginBottom: "20px",
-                  textAlign: "left"
-                }}>
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "4px" }}>
-                    <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span>
-                    <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.85rem" }}>
-                      Matching Partners Found
-                    </span>
-                  </div>
-                  <div style={{ color: "#6b7280", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    Intent query:
-                  </div>
-                  <div style={{ color: "#ec5e3b", fontWeight: "700", fontSize: "1.05rem", fontStyle: "italic" }}>
-                    "{pendingIntent}"
-                  </div>
-                </div>
-              )}
-
               <div className="form-card-header" style={{ marginBottom: "24px" }}>
                 <h3 className="form-card-header-title" style={{
                   color: "#35453f",

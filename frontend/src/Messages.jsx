@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getInboxMessages, getSentMessages, sendMessage, markMessageRead, logout, isAuthenticated, getUserProfile, getOtherUserProfile, getMatches, updateMatchStatus } from "./api";
-import { Mail, Send, Inbox, MessageSquare, Paperclip, Image, Smile, X } from "lucide-react";
+import { getInboxMessages, getSentMessages, sendMessage, markMessageRead, isAuthenticated, getUserProfile, getOtherUserProfile } from "./api";
+import { Mail, Send, MessageSquare, ArrowLeft, Smile, CheckCircle, User, Phone, Building } from "lucide-react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import threeProfessionalsImg from "./img/three_professionals.png";
 
 export default function Messages() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [threads, setThreads] = useState([]);
-  const [mobileShowDetails, setMobileShowDetails] = useState(false);
-  const [showCelebrateModal, setShowCelebrateModal] = useState(false);
-  const [attachedFile, setAttachedFile] = useState(null);
-  const fileInputRef = useRef(null);
+  const [viewState, setViewState] = useState("list"); // "list" or "chat"
   const [activeThreadId, setActiveThreadId] = useState(null);
 
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -20,10 +20,8 @@ export default function Messages() {
   const [messageSuccess, setMessageSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const [currentUserPhoto, setCurrentUserPhoto] = useState(null);
-  const [currentUserInitial, setCurrentUserInitial] = useState("Y");
-  const [currentUserPhone, setCurrentUserPhone] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
+  const messagesEndRef = useRef(null);
 
   const activeThread = threads.find(t => t.partnerId === activeThreadId);
 
@@ -48,7 +46,6 @@ export default function Messages() {
       return threadMap[partnerId];
     };
 
-    // Add inbox messages (incoming)
     inbox.forEach((msg) => {
       const partnerId = msg.sender_id;
       const name = `${msg.sender_first_name} ${msg.sender_last_name}`;
@@ -58,15 +55,9 @@ export default function Messages() {
       const role = msg.sender_role;
       const thread = getOrCreateThread(partnerId, name, company);
       
-      if (photo && !thread.partnerPhoto) {
-        thread.partnerPhoto = photo;
-      }
-      if (phone && !thread.partnerPhone) {
-        thread.partnerPhone = phone;
-      }
-      if (role && !thread.partnerRole) {
-        thread.partnerRole = role;
-      }
+      if (photo && !thread.partnerPhoto) thread.partnerPhoto = photo;
+      if (phone && !thread.partnerPhone) thread.partnerPhone = phone;
+      if (role && !thread.partnerRole) thread.partnerRole = role;
       
       thread.messages.push({
         id: msg.id,
@@ -82,7 +73,6 @@ export default function Messages() {
       }
     });
 
-    // Add sent messages (outgoing)
     sent.forEach((msg) => {
       const partnerId = msg.recipient_id;
       const name = `${msg.recipient_first_name} ${msg.recipient_last_name}`;
@@ -92,15 +82,9 @@ export default function Messages() {
       const role = msg.recipient_role;
       const thread = getOrCreateThread(partnerId, name, company);
 
-      if (photo && !thread.partnerPhoto) {
-        thread.partnerPhoto = photo;
-      }
-      if (phone && !thread.partnerPhone) {
-        thread.partnerPhone = phone;
-      }
-      if (role && !thread.partnerRole) {
-        thread.partnerRole = role;
-      }
+      if (photo && !thread.partnerPhoto) thread.partnerPhoto = photo;
+      if (phone && !thread.partnerPhone) thread.partnerPhone = phone;
+      if (role && !thread.partnerRole) thread.partnerRole = role;
 
       thread.messages.push({
         id: msg.id,
@@ -112,7 +96,6 @@ export default function Messages() {
       });
     });
 
-    // Process and sort each thread
     const threadsList = Object.values(threadMap).map((thread) => {
       thread.messages.sort((a, b) => a.sentAt - b.sentAt);
       if (thread.messages.length > 0) {
@@ -121,101 +104,32 @@ export default function Messages() {
       return thread;
     });
 
-    // Sort threads by latest message time descending
-    threadsList.sort((a, b) => b.latestTime - a.latestTime);
+    threadsList.sort((a, b) => (b.latestTime || 0) - (a.latestTime || 0));
     return threadsList;
   };
 
   const loadMessages = (selectPartnerId = null) => {
-    // Attempt to load from sessionStorage cache first
-    const cachedInbox = sessionStorage.getItem("linkmate_inbox");
-    const cachedSent = sessionStorage.getItem("linkmate_sent");
-    let loadedFromCache = false;
-
-    if (cachedInbox && cachedSent) {
-      try {
-        const inboxList = JSON.parse(cachedInbox);
-        const sentList = JSON.parse(cachedSent);
-        const conversationThreads = buildThreads(inboxList, sentList);
-        
-        setThreads(conversationThreads);
-        
-        if (selectPartnerId) {
-          setActiveThreadId(Number(selectPartnerId));
-        } else if (!activeThreadId && conversationThreads.length > 0) {
-          setActiveThreadId(conversationThreads[0].partnerId);
-        }
-        loadedFromCache = true;
-      } catch (e) {
-        console.error("Failed to parse message cache:", e);
-      }
-    }
-
-    if (!loadedFromCache) {
-      setLoadingMessages(true);
-    }
-
+    setLoadingMessages(true);
     Promise.all([getInboxMessages(), getSentMessages()])
       .then(([inbox, sent]) => {
         const inboxList = Array.isArray(inbox) ? inbox : [];
         const sentList = Array.isArray(sent) ? sent : [];
         
-        // Cache the latest messages
-        sessionStorage.setItem("linkmate_inbox", JSON.stringify(inboxList));
-        sessionStorage.setItem("linkmate_sent", JSON.stringify(sentList));
-        
         const conversationThreads = buildThreads(inboxList, sentList);
-        
-        // Check if the selected partner ID already has a thread
-        const hasThread = selectPartnerId ? conversationThreads.some(t => t.partnerId === Number(selectPartnerId)) : false;
+        setThreads(conversationThreads);
 
-        if (selectPartnerId && !hasThread) {
-          // Fetch the partner details to construct a placeholder thread
-          getOtherUserProfile(selectPartnerId)
-            .then((partnerProfile) => {
-              if (partnerProfile) {
-                const newThread = {
-                  partnerId: partnerProfile.id,
-                  partnerName: `${partnerProfile.first_name} ${partnerProfile.last_name}`,
-                  partnerCompany: partnerProfile.company_name,
-                  partnerPhoto: partnerProfile.photo,
-                  partnerPhone: partnerProfile.phone,
-                  messages: [],
-                  latestTime: new Date(),
-                  unreadCount: 0
-                };
-                setThreads([newThread, ...conversationThreads]);
-                setActiveThreadId(partnerProfile.id);
-              } else {
-                setThreads(conversationThreads);
-                if (conversationThreads.length > 0) {
-                  setActiveThreadId(conversationThreads[0].partnerId);
-                }
-              }
-            })
-            .catch((err) => {
-              console.error("Failed to load other user profile for placeholder thread:", err);
-              setThreads(conversationThreads);
-              if (conversationThreads.length > 0) {
-                setActiveThreadId(conversationThreads[0].partnerId);
-              }
-            });
-        } else {
-          setThreads(conversationThreads);
-          if (conversationThreads.length > 0) {
-            if (selectPartnerId) {
-              setActiveThreadId(Number(selectPartnerId));
-            } else if (!activeThreadId) {
-              setActiveThreadId(conversationThreads[0].partnerId);
-            }
-          }
+        if (selectPartnerId) {
+          setActiveThreadId(Number(selectPartnerId));
+          setViewState("chat");
         }
       })
-      .catch((err) => console.error("Failed to load messages:", err))
-      .finally(() => setLoadingMessages(false));
+      .catch((err) => {
+        console.error("Failed to load messages:", err);
+      })
+      .finally(() => {
+        setLoadingMessages(false);
+      });
   };
-
-  const location = useLocation();
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -223,105 +137,61 @@ export default function Messages() {
       return;
     }
 
-    // Fetch logged-in user profile to get their photo, initials, and phone
     getUserProfile()
       .then((profile) => {
-        if (profile) {
-          if (profile.id) {
-            setCurrentUserId(profile.id);
-          }
-          if (profile.photo) {
-            setCurrentUserPhoto(profile.photo);
-          }
-          if (profile.first_name) {
-            setCurrentUserInitial(profile.first_name[0].toUpperCase());
-          }
-          if (profile.phone) {
-            setCurrentUserPhone(profile.phone);
-          }
+        if (profile && profile.id) {
+          setCurrentUserId(profile.id);
         }
       })
-      .catch((err) => console.error("Error loading user profile details:", err));
+      .catch(() => {});
 
-    const partnerIdFromState = location.state?.partnerId;
-    loadMessages(partnerIdFromState);
-  }, [navigate, location.state]);
+    const params = new URLSearchParams(window.location.search);
+    const partnerIdParam = params.get("partner_id");
+    loadMessages(partnerIdParam);
+  }, [navigate]);
 
-  // Mark all unread incoming messages in current active thread as read
   useEffect(() => {
-    if (!activeThread) return;
-    const unreadMsgs = activeThread.messages.filter(m => m.direction === "incoming" && !m.isRead);
-    if (unreadMsgs.length === 0) return;
+    if (viewState === "chat" && activeThread) {
+      // Auto-scroll chat to bottom
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
-    Promise.all(unreadMsgs.map(m => markMessageRead(m.id)))
-      .then(() => {
-        sessionStorage.removeItem("linkmate_inbox");
-        sessionStorage.removeItem("linkmate_sent");
-        // Update local state to clear unread badges
-        setThreads(threads.map(t => {
-          if (t.partnerId === activeThreadId) {
-            return {
-              ...t,
-              unreadCount: 0,
-              messages: t.messages.map(m => m.direction === "incoming" ? { ...m, isRead: true } : m)
-            };
-          }
-          return t;
-        }));
-        window.dispatchEvent(new CustomEvent("refreshHeaderCounts"));
-      })
-      .catch(err => console.error("Error marking thread read:", err));
-  }, [activeThreadId, threads.length]);
+      // Mark unread incoming messages as read
+      activeThread.messages.forEach(msg => {
+        if (msg.direction === "incoming" && !msg.isRead) {
+          markMessageRead(msg.id).catch(err => console.error(err));
+        }
+      });
+    }
+  }, [viewState, activeThreadId, activeThread?.messages?.length]);
 
-  const handleReplySubmit = async (e) => {
+  const handleSendMessage = (e) => {
     e.preventDefault();
-    if ((!replyText.trim() && !attachedFile) || !activeThread) return;
+    if (!replyText.trim() || !activeThread) return;
 
     setSendingMessage(true);
     setError("");
-    setMessageSuccess("");
 
-    try {
-      const lastMsg = activeThread.messages[activeThread.messages.length - 1];
-      const subject = lastMsg ? (lastMsg.subject.startsWith("Re:") ? lastMsg.subject : `Re: ${lastMsg.subject}`) : "Connection Inquiry";
-
-      let finalBody = replyText;
-      if (attachedFile) {
-        finalBody += `\n\n[Attachment: ${attachedFile.name}]`;
-      }
-
-      const sentMsg = await sendMessage({
-        recipient_id: activeThread.partnerId,
-        subject: subject,
-        body: finalBody
+    sendMessage({
+      recipient_id: activeThread.partnerId,
+      subject: `Message to ${activeThread.partnerName}`,
+      body: replyText.trim()
+    })
+      .then(() => {
+        setReplyText("");
+        setMessageSuccess("Message sent!");
+        setTimeout(() => setMessageSuccess(""), 3000);
+        loadMessages(activeThread.partnerId);
+      })
+      .catch((err) => {
+        setError(err.response?.data?.detail || "Failed to send message.");
+      })
+      .finally(() => {
+        setSendingMessage(false);
       });
-
-      // Optimistically update sent cache
-      const cachedSent = sessionStorage.getItem("linkmate_sent");
-      if (cachedSent) {
-        try {
-          const sentList = JSON.parse(cachedSent);
-          sentList.push(sentMsg);
-          sessionStorage.setItem("linkmate_sent", JSON.stringify(sentList));
-        } catch (e) {
-          console.error("Failed to update sent cache:", e);
-        }
-      }
-
-      setReplyText("");
-      setAttachedFile(null);
-      setMessageSuccess("Reply sent!");
-      loadMessages(activeThread.partnerId); // reload and keep focus on this thread
-      setTimeout(() => setMessageSuccess(""), 3000);
-    } catch (err) {
-      setError("Failed to send reply. Please try again.");
-    } finally {
-      setSendingMessage(false);
-    }
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fbf7f3", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#eef1f6", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <Header />
 
       <style>{`
@@ -334,1140 +204,355 @@ export default function Messages() {
           flex: 1;
           display: flex;
           flex-direction: column;
+          gap: 24px;
         }
 
-        /* Matches Ring & Carousel styles */
-        .matches-ring-section {
-          padding: 14px 16px;
-          border-bottom: 1px solid #f3f4f6;
-          background: #fdfaf6;
-          text-align: left;
-        }
-        .matches-ring-title {
-          font-size: 0.72rem;
-          font-weight: 850;
-          color: #f17c13;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          margin-bottom: 12px;
-        }
-        .matches-ring-scroll {
+        .thread-card-item {
           display: flex;
-          gap: 16px;
-          overflow-x: auto;
-          padding-bottom: 6px;
-        }
-        .matches-ring-scroll::-webkit-scrollbar {
-          height: 4px;
-        }
-        .matches-ring-scroll::-webkit-scrollbar-thumb {
-          background-color: #ffd8b3;
-          border-radius: 4px;
-        }
-        .matches-ring-item {
-          display: flex;
-          flex-direction: column;
           align-items: center;
+          justify-content: space-between;
+          padding: 20px 24px;
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 20px;
           cursor: pointer;
-          flex-shrink: 0;
+          transition: all 0.2s ease;
+          gap: 16px;
         }
-        .matches-ring-avatar-wrapper {
-          position: relative;
+        .thread-card-item:hover {
+          border-color: #ec5e3b;
+          box-shadow: 0 8px 24px rgba(236, 94, 59, 0.08);
+          transform: translateY(-2px);
+        }
+
+        .avatar-frame {
           width: 52px;
           height: 52px;
-        }
-        .matches-ring-avatar {
-          width: 100%;
-          height: 100%;
           border-radius: 50%;
-          background: linear-gradient(135deg, #f17c13 0%, #ffedd5 100%);
+          background: linear-gradient(135deg, #ec5e3b 0%, #ffedd5 100%);
           color: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 800;
-          font-size: 1rem;
-          overflow: hidden;
-          border: 2px solid #f17c13;
-          box-shadow: 0 3px 8px rgba(241, 124, 19, 0.15);
-          transition: transform 0.2s ease;
-        }
-        .matches-ring-item:hover .matches-ring-avatar {
-          transform: scale(1.06);
-        }
-        .matches-ring-percentage {
-          position: absolute;
-          bottom: -2px;
-          right: -2px;
-          background: #f17c13;
-          color: #ffffff;
-          font-size: 0.62rem;
-          font-weight: 850;
-          padding: 2px 4px;
-          border-radius: 6px;
-          border: 1px solid #ffffff;
-          line-height: 1;
-        }
-        .matches-ring-name {
-          font-size: 0.72rem;
-          font-weight: 700;
-          color: #4b5563;
-          margin-top: 5px;
-          max-width: 56px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .msg-detail-empty {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-          min-height: 500px;
-          padding: 40px;
-          box-sizing: border-box;
-          color: #4b5563;
-          text-align: center;
-          background: #ffffff;
-        }
-        .msg-detail-empty-icon {
-          width: 72px;
-          height: 72px;
-          border-radius: 50%;
-          background: #fffbeb;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #f17c13;
-          margin-bottom: 20px;
-          box-shadow: 0 4px 12px rgba(241, 124, 19, 0.1);
-        }
-        .msg-detail-empty-title {
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #111827;
-          margin: 0 0 8px 0;
-        }
-        .msg-detail-empty-text {
-          font-size: 0.875rem;
-          color: #6b7280;
-          max-width: 320px;
-          line-height: 1.5;
-          margin: 0 0 28px 0;
-        }
-        .msg-detail-empty-steps {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          text-align: left;
-          width: 100%;
-          max-width: 360px;
-          padding: 20px;
-          border-radius: 14px;
-          background: #fafafb;
-          border: 1px solid #e5e7eb;
-          box-sizing: border-box;
-        }
-        .msg-detail-empty-step {
-          display: flex;
-          gap: 12px;
-          align-items: flex-start;
-        }
-        .msg-detail-empty-step-num {
-          background: #ffedd5;
-          color: #f17c13;
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.75rem;
-          font-weight: 800;
-          flex-shrink: 0;
-        }
-        .msg-detail-empty-step-content {
-          font-size: 0.82rem;
-          color: #374151;
-          line-height: 1.4;
-        }
-
-        .contacts-tabs {
-          display: flex;
-          border-bottom: 1px solid #e5e7eb;
-          background: #ffffff;
-        }
-        .contacts-tab {
-          flex: 1;
-          background: none;
-          border: none;
-          padding: 14px 16px;
-          cursor: pointer;
-          font-size: 0.9rem;
-          font-weight: 700;
-          color: #9ca3af;
-          border-bottom: 2px solid transparent;
-          transition: all 0.15s;
-          text-align: center;
-        }
-        .contacts-tab:hover {
-          color: #374151;
-          background: #fafafb;
-        }
-        .contacts-tab.active {
-          color: #f17c13;
-          border-bottom-color: #f17c13;
-        }
-
-        /* OkCupid celebrate modal overlay styles */
-        .celebrate-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(17, 24, 39, 0.85);
-          backdrop-filter: blur(8px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .celebrate-card {
-          background: #ffffff;
-          border-radius: 20px;
-          width: 90%;
-          max-width: 420px;
-          padding: 28px 24px;
-          box-sizing: border-box;
-          text-align: center;
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-          position: relative;
-          animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          border: 1px solid #eddcd2;
-        }
-        @keyframes scaleUp {
-          from { transform: scale(0.9); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        .celebrate-close-btn {
-          position: absolute;
-          top: 16px;
-          right: 16px;
-          background: none;
-          border: none;
-          color: #9ca3af;
-          cursor: pointer;
-          padding: 4px;
-          transition: color 0.15s;
-        }
-        .celebrate-close-btn:hover {
-          color: #374151;
-        }
-        .celebrate-circles-row {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin: 16px 0 20px;
-          position: relative;
-        }
-        .celebrate-circle {
-          width: 90px;
-          height: 90px;
-          border-radius: 50%;
-          background: #fdfbf7;
-          border: 3px solid #ffffff;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 1.8rem;
-          color: #f17c13;
-          flex-shrink: 0;
-        }
-        .celebrate-circle.left-avatar {
-          background: linear-gradient(135deg, #f17c13 0%, #ffedd5 100%);
-          color: white;
-          z-index: 2;
-        }
-        .celebrate-circle.right-avatar {
-          margin-left: -25px;
-          z-index: 1;
-          border: 3px solid #ffffff;
-        }
-        .celebrate-heart-badge {
-          position: absolute;
-          z-index: 3;
-          background: #f17c13;
-          color: white;
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 8px rgba(241, 124, 19, 0.4);
-          animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
-        }
-        .celebrate-title {
-          font-size: 1.4rem;
-          font-weight: 700;
-          color: #111827;
-          margin: 0 0 6px 0;
-        }
-        .celebrate-reason {
-          font-size: 0.85rem;
-          color: #4b5563;
-          line-height: 1.5;
-          margin: 12px 0 20px 0;
-          padding: 12px;
-          background: #fafafb;
-          border-radius: 10px;
-          border: 1px solid #e5e7eb;
-          text-align: left;
-        }
-        .celebrate-match-badge {
-          display: inline-block;
-          background: #fffbeb;
-          color: #d97706;
-          font-weight: 700;
-          font-size: 0.75rem;
-          padding: 4px 12px;
-          border-radius: 12px;
-          margin-bottom: 10px;
-          border: 1px solid #fef3c7;
-        }
-        .celebrate-action-link {
-          display: block;
-          width: fit-content;
-          margin: 16px auto 0 auto;
-          background: #f17c13;
-          color: #ffffff;
-          font-weight: 700;
-          font-size: 0.95rem;
-          padding: 10px 24px;
-          border-radius: 10px;
-          cursor: pointer;
-          transition: background 0.15s;
-          text-decoration: none;
-          box-shadow: 0 4px 10px rgba(241, 124, 19, 0.2);
-        }
-        .celebrate-action-link:hover {
-          background: #d96a0a;
-          color: #ffffff;
-        }
-        .celebrate-decline {
-          display: block;
-          width: fit-content;
-          margin: 16px auto 0 auto;
-          font-size: 0.8rem;
-          color: #9ca3af;
-          cursor: pointer;
-          text-decoration: none;
-          transition: color 0.15s;
-        }
-        .celebrate-decline:hover {
-          color: #4b5563;
-        }
-        .msg-page-title {
-          font-size: 2rem;
-          font-weight: 800;
-          color: #f17c13;
-          margin: 20px 0 4px;
-          letter-spacing: -0.03em;
-          text-align: left;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .msg-page-sub {
-          font-size: 0.95rem;
-          color: #6b7280;
-          margin: 0 0 24px 0;
-          text-align: left;
-        }
-        
-        /* LinkedIn-style Layout: Chat (Left) & Contacts (Right) */
-        .msg-layout {
-          display: grid;
-          grid-template-columns: 1fr 340px;
-          gap: 24px;
-          background: #ffffff;
-          border: 1px solid #f3f4f6;
-          border-radius: 16px;
-          overflow: hidden;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-          min-height: 600px;
-          height: 650px;
-        }
-
-        /* ─── LEFT PANEL: ACTIVE CHAT SCREEN ─── */
-        .chat-panel {
-          display: flex;
-          flex-direction: column;
-          border-right: 1px solid #f3f4f6;
-          height: 100%;
-          overflow: hidden;
-          background: #ffffff;
-        }
-        .chat-header-container {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          border-bottom: 1px solid #e5e7eb;
-          padding: 18px 24px;
-          background: #ffffff;
-          text-align: left;
-        }
-        .chat-header-left {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          min-width: 0;
-        }
-        .chat-header-avatar {
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #f17c13 0%, #ffedd5 100%);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 1.5rem;
-          overflow: hidden;
-          flex-shrink: 0;
-        }
-        .chat-header-avatar img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        .chat-header-info {
-          min-width: 0;
-          text-align: left;
-        }
-        .chat-header-info h3 {
-          margin: 0;
           font-size: 1.2rem;
-          font-weight: 700;
-          color: #111827;
-          line-height: 1.2;
-        }
-        .chat-header-info p {
-          font-size: 0.85rem;
-          color: #4b5563;
-          margin: 4px 0 0 0;
-          line-height: 1.3;
-        }
-        .chat-header-badge {
-          background: #fffbeb;
-          color: #d97706;
-          font-weight: 750;
-          font-size: 0.8rem;
-          padding: 6px 12px;
-          border-radius: 20px;
-          border: 1px solid #fef3c7;
-          white-space: nowrap;
-          flex-shrink: 0;
-        }
-        .mobile-only-badge {
-          display: none !important;
-        }
-        .desktop-only-badge {
-          display: block !important;
-        }
-        .chat-partner-company {
-          font-size: 0.8rem;
-          color: #f17c13;
-          font-weight: 700;
-        }
-        .chat-timeline {
-          flex: 1;
-          overflow-y: auto;
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-          background: #ffffff;
-        }
-        
-        /* Chat bubble styles */
-        .chat-bubble-row {
-          display: flex;
-          flex-direction: column;
-        }
-        .chat-bubble-row.incoming {
-          align-items: flex-start;
-        }
-        .chat-bubble-row.outgoing {
-          align-items: flex-end;
-        }
-        .chat-bubble {
-          padding: 12px 18px;
-          border-radius: 14px;
-          font-size: 0.92rem;
-          line-height: 1.5;
-          text-align: left;
-          white-space: pre-line;
-          word-break: break-word;
-        }
-        .chat-bubble-row.incoming .chat-bubble {
-          background: #f3f4f6;
-          color: #374151;
-          border: none;
-          border-top-left-radius: 0;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-        }
-        .chat-bubble-row.outgoing .chat-bubble {
-          background: #f17c13;
-          color: #ffffff;
-          border-top-right-radius: 0;
-          box-shadow: 0 2px 8px rgba(241, 124, 19, 0.15);
-        }
-        .chat-bubble-meta {
-          font-size: 0.72rem;
-          color: #9ca3af;
-        }
-
-        .chat-input-area {
-          padding: 18px 24px;
-          border-top: 1px solid #f3f4f6;
-          background: #ffffff;
-        }
-        .chat-form {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .chat-textarea {
-          width: 100%;
-          height: 72px;
-          padding: 12px 16px;
-          border: 1px solid #d1d5db;
-          border-radius: 10px;
-          font-size: 0.9rem;
-          outline: none;
-          resize: none;
-          font-family: inherit;
-          box-sizing: border-box;
-          line-height: 1.5;
-          transition: all 0.15s;
-        }
-        .chat-textarea:focus {
-          border-color: #f17c13;
-          box-shadow: 0 0 0 3px rgba(241,124,19,0.15);
-        }
-        .chat-action-bar {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        
-        /* ─── RIGHT PANEL: CONTACTS LIST ─── */
-        .contacts-panel {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          overflow: hidden;
-          background: #ffffff;
-        }
-        .contacts-header {
-          padding: 18px;
-          border-bottom: 1px solid #f3f4f6;
-          font-weight: 800;
-          font-size: 1rem;
-          color: #111827;
-          background: #ffffff;
-          text-align: left;
-        }
-        .contacts-items {
-          flex: 1;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-        }
-        .contact-item {
-          padding: 16px 20px;
-          border-bottom: 1px solid #f1f5f9;
-          background: #ffffff;
-          cursor: pointer;
-          transition: background 0.15s;
-          position: relative;
-          text-align: left;
-        }
-        .contact-item:hover {
-          background: #f9fafb;
-        }
-        .contact-item.selected {
-          background: #ffffff;
-          border-left: 4px solid #f17c13;
-        }
-        .contact-avatar-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 6px;
-        }
-        .contact-avatar {
-          width: 38px;
-          height: 38px;
-          border-radius: 50%;
-          background: #f17c13;
-          color: #ffffff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          font-size: 0.95rem;
           overflow: hidden;
           flex-shrink: 0;
-          border: 1px solid #e5e7eb;
-        }
-        .contact-name {
-          font-weight: 800;
-          font-size: 0.9rem;
-          color: #111827;
-        }
-        .contact-company {
-          font-size: 0.75rem;
-          color: #f17c13;
-          font-weight: 700;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          max-width: 200px;
-        }
-        .contact-snippet {
-          font-size: 0.8rem;
-          color: #6b7280;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          margin-left: 50px;
-        }
-        .contact-badge {
-          background: #10b981;
-          color: white;
-          font-size: 0.65rem;
-          font-weight: 850;
-          padding: 2px 7px;
-          border-radius: 10px;
-          position: absolute;
-          top: 18px;
-          right: 20px;
         }
 
-        .ps-btn-primary {
-          background: #f17c13;
-          color: #fff;
+        .btn-action-primary {
+          background: #ec5e3b;
+          color: #ffffff;
           border: none;
-          padding: 8px 18px;
-          border-radius: 8px;
-          font-size: 0.85rem;
+          padding: 12px 32px;
+          border-radius: 30px;
           font-weight: 700;
           cursor: pointer;
-          font-family: inherit;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
+          font-size: 0.9rem;
+          box-shadow: 0 4px 14px rgba(236, 94, 59, 0.35);
           transition: background 0.15s;
+          width: auto;
+          min-width: 140px;
         }
-        .ps-btn-primary:hover {
-          background: #d96a0a;
+        .btn-action-primary:hover {
+          background: #d94e2b;
         }
-        .ps-btn-primary:disabled {
+        .btn-action-primary:disabled {
           opacity: 0.65;
           cursor: not-allowed;
         }
-        
-        .ps-alert-ok {
-          color: #065f46;
-          font-size: 0.8rem;
+
+        .btn-back-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: #ffffff;
+          color: #35453f;
+          border: 1px solid #d1d5db;
+          padding: 8px 18px;
+          border-radius: 20px;
           font-weight: 700;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          width: fit-content;
         }
-        .ps-alert-err {
-          color: #b91c1c;
-          font-size: 0.8rem;
-          font-weight: 700;
+        .btn-back-link:hover {
+          border-color: #ec5e3b;
+          color: #ec5e3b;
+          background: #fff7ed;
         }
 
-        @media (max-width: 768px) {
-          .msg-layout {
-            grid-template-columns: 1fr;
-            height: 580px;
-            min-height: unset;
-            border-radius: 12px;
-          }
-          .mobile-hide {
-            display: none !important;
-          }
-          .mobile-show {
-            display: flex !important;
-            flex-direction: column;
-            height: 100% !important;
-          }
-          .contacts-panel {
-            border-top: none;
-            height: 100% !important;
-          }
-          .mobile-back-btn {
-            display: flex !important;
-          }
-          .chat-header-container {
-            padding: 12px 14px;
-            gap: 10px;
-            flex-wrap: nowrap;
-          }
-          .chat-header-left {
-            gap: 10px;
-            flex: 1;
-            min-width: 0;
-          }
-          .chat-header-avatar {
-            width: 44px;
-            height: 44px;
-            font-size: 1.1rem;
-          }
-          .chat-header-info h3 {
-            font-size: 0.95rem;
-          }
-          .chat-header-info p {
-            font-size: 0.75rem;
-          }
-          .chat-header-badge {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-          }
-          .mobile-only-badge {
-            display: inline-block !important;
-            margin-top: 6px;
-            align-self: flex-start;
-          }
-          .desktop-only-badge {
-            display: none !important;
-          }
+        .msg-bubble-incoming {
+          background: #f3f4f6;
+          color: #1f2937;
+          border-radius: 18px 18px 18px 4px;
+          padding: 14px 18px;
+          max-width: 75%;
+          align-self: flex-start;
+          font-size: 0.92rem;
+          line-height: 1.5;
+        }
+        .msg-bubble-outgoing {
+          background: #35453f;
+          color: #ffffff;
+          border-radius: 18px 18px 4px 18px;
+          padding: 14px 18px;
+          max-width: 75%;
+          align-self: flex-end;
+          font-size: 0.92rem;
+          line-height: 1.5;
         }
       `}</style>
 
       <div className="msg-container">
-        <h1 className="msg-page-title">
-          <MessageSquare size={32} style={{ color: "#f17c13" }} />
-          Messages
-        </h1>
-        <p className="msg-page-sub">
-          Manage your messages, conversations, and preferences.
-        </p>
+        
+        {/* ════ PERMANENT HERO HEADER BANNER (SWATCH COLOR #eef1f6 WITH 104px PICTURE) ════ */}
+        <div style={{
+          backgroundColor: "#eef1f6",
+          borderRadius: "24px",
+          padding: "2.2rem 2.2rem",
+          color: "#1f2937",
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.03)",
+          border: "1px solid #d1d5db",
+          width: "100%",
+          boxSizing: "border-box"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "28px", flexWrap: "wrap" }}>
+            
+            {/* 104px Picture Frame (Matching Profile Page Avatar Size) */}
+            <div style={{
+              width: "104px",
+              height: "104px",
+              borderRadius: "50%",
+              backgroundColor: "#ffffff",
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "3.5px solid #d1d5db",
+              boxShadow: "0 6px 18px rgba(0, 0, 0, 0.08)",
+              flexShrink: 0
+            }}>
+              <img src={threeProfessionalsImg} alt="Messages" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </div>
 
-        <div className="msg-layout">
-          {/* LEFT PANEL: ACTIVE CHAT WINDOW */}
-          <div className={`chat-panel ${mobileShowDetails ? "mobile-show" : "mobile-hide"}`}>
-            {activeThread ? (
-              <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                {/* Chat Partner Details Header styled EXACTLY like the Matches header */}
-                {(() => {
-                  const initial = activeThread.partnerName ? activeThread.partnerName[0].toUpperCase() : "?";
+            {/* Header Content */}
+            <div style={{ flex: 1, minWidth: "240px" }}>
+              <div style={{ color: "#ec5e3b", fontWeight: "800", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <CheckCircle size={14} /> Direct Communications
+              </div>
+
+              <h1 style={{ fontSize: "2.1rem", fontWeight: "800", color: "#35453f", margin: "0 0 6px 0", letterSpacing: "-0.02em" }}>
+                Messages
+              </h1>
+
+              <p style={{ color: "#4b5563", fontSize: "0.95rem", margin: 0, fontWeight: "500", lineHeight: "1.5", maxWidth: "820px" }}>
+                Communicate directly with your verified connections in real time.
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ════ VIEW 1: MESSAGES LIST VIEW (INITIAL LOAD) ════ */}
+        {viewState === "list" && (
+          <div className="form-card-premium" style={{ backgroundColor: "#ffffff", borderRadius: "24px", padding: "2rem 2.2rem", border: "1px solid #e5e7eb", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.05)", width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
+            
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "700", color: "#35453f", margin: 0 }}>
+                Conversations
+              </h2>
+              <span style={{ backgroundColor: "#ec5e3b", color: "#ffffff", padding: "4px 14px", borderRadius: "16px", fontSize: "0.8rem", fontWeight: "700" }}>
+                {threads.length} {threads.length === 1 ? "Conversation" : "Conversations"}
+              </span>
+            </div>
+
+            {loadingMessages ? (
+              <div style={{ textAlign: "center", padding: "60px 0", color: "#6b7280" }}>
+                Loading messages...
+              </div>
+            ) : threads.length === 0 ? (
+              <div style={{ padding: "60px 20px", textAlign: "center", border: "1px dashed #d1d5db", borderRadius: "20px", background: "#f8fafc" }}>
+                <Smile size={42} color="#ec5e3b" style={{ margin: "0 auto 12px", opacity: 0.8 }} />
+                <h3 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#35453f", margin: "0 0 6px" }}>No Messages Yet</h3>
+                <p style={{ color: "#6b7280", fontSize: "0.9rem", maxWidth: "460px", margin: "0 auto", lineHeight: "1.5" }}>
+                  Connect with partners on your Matches page to establish direct communication threads.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {threads.map((t) => {
+                  const initial = t.partnerName ? t.partnerName[0].toUpperCase() : "?";
+                  const lastMsg = t.messages.length > 0 ? t.messages[t.messages.length - 1] : null;
+
                   return (
-                    <div className="chat-header-container">
-                      <div className="chat-header-left">
-                        {/* Back button visible only on mobile */}
-                        <button
-                          type="button"
-                          className="mobile-back-btn"
-                          onClick={() => setMobileShowDetails(false)}
-                          style={{
-                            display: "none",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "#f17c13",
-                            padding: "4px 4px 4px 0",
-                            marginRight: "4px"
-                          }}
-                        >
-                          <span style={{ fontSize: "1.5rem", fontWeight: "900" }}>←</span>
-                        </button>
-                        <div className="chat-header-avatar">
-                          {activeThread.partnerPhoto ? (
-                            <img src={activeThread.partnerPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <div
+                      key={t.partnerId}
+                      className="thread-card-item"
+                      onClick={() => {
+                        setActiveThreadId(t.partnerId);
+                        setViewState("chat");
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1, minWidth: 0 }}>
+                        <div className="avatar-frame">
+                          {t.partnerPhoto ? (
+                            <img src={t.partnerPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           ) : (
                             initial
                           )}
                         </div>
-                        <div className="chat-header-info">
-                          <h3 style={{ cursor: "pointer" }} onClick={() => navigate(`/profile/${activeThread.partnerId}`)}>
-                            {activeThread.partnerName}
-                          </h3>
-                          <p style={{ margin: "2px 0 0 0" }}>
-                            {activeThread.partnerRole || "Business Friend"} @ <strong>{activeThread.partnerCompany || "N/A"}</strong>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                            <h3 style={{ fontSize: "1.05rem", fontWeight: "700", color: "#1f2937", margin: 0 }}>
+                              {t.partnerName}
+                            </h3>
+                            {t.unreadCount > 0 && (
+                              <span style={{ backgroundColor: "#ec5e3b", color: "#ffffff", fontSize: "0.72rem", fontWeight: "700", padding: "2px 8px", borderRadius: "10px" }}>
+                                {t.unreadCount} Unread
+                              </span>
+                            )}
+                          </div>
+
+                          <p style={{ color: "#ec5e3b", fontSize: "0.85rem", fontWeight: "600", margin: "2px 0 4px" }}>
+                            {t.partnerRole || "Executive Member"} {t.partnerCompany ? `• ${t.partnerCompany}` : ""}
                           </p>
-                          {/* Mobile-only Turn Badge inside info block */}
-                          {(() => {
-                            const latestMsg = activeThread.messages[activeThread.messages.length - 1];
-                            let turnText = "New Connection";
-                            if (latestMsg) {
-                              if (latestMsg.direction === "incoming") {
-                                turnText = "Your Turn";
-                              } else {
-                                turnText = "Awaiting Reply";
-                              }
-                            }
-                            return (
-                              <div className="chat-header-badge mobile-only-badge">
-                                {turnText}
-                              </div>
-                            );
-                          })()}
+
+                          {lastMsg && (
+                            <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {lastMsg.direction === "outgoing" ? "You: " : ""}{lastMsg.body}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      
-                      {/* Desktop-only Turn Badge styled like Compatibility Badge */}
-                      {(() => {
-                        const latestMsg = activeThread.messages[activeThread.messages.length - 1];
-                        let turnText = "New Connection";
-                        if (latestMsg) {
-                          if (latestMsg.direction === "incoming") {
-                            turnText = "Your Turn";
-                          } else {
-                            turnText = "Awaiting Reply";
-                          }
-                        }
-                        return (
-                          <div className="chat-header-badge desktop-only-badge">
-                            {turnText}
-                          </div>
-                        );
-                      })()}
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#ec5e3b", fontWeight: "700", fontSize: "0.85rem" }}>
+                        Open Conversation →
+                      </div>
                     </div>
                   );
-                })()}
+                })}
+              </div>
+            )}
 
-                {/* Timeline of Messages bubbles */}
-                <div className="chat-timeline">
-                  {activeThread.messages.map((m) => {
-                    const isIncoming = m.direction === "incoming";
-                    const avatarPhoto = isIncoming ? activeThread.partnerPhoto : currentUserPhoto;
-                    const initial = isIncoming 
-                      ? (activeThread.partnerName ? activeThread.partnerName[0].toUpperCase() : "?")
-                      : currentUserInitial;
+          </div>
+        )}
 
-                    return (
-                      <div 
-                        key={m.id} 
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: "12px",
-                          alignSelf: isIncoming ? "flex-start" : "flex-end",
-                          width: "100%",
-                          maxWidth: "90%"
-                        }}
-                      >
-                        {/* Avatar on the left for incoming messages */}
-                        {isIncoming && (
-                          <div 
-                            onClick={() => navigate(`/profile/${activeThread.partnerId}`)}
-                            style={{
-                              width: "36px",
-                              height: "36px",
-                              borderRadius: "50%",
-                              backgroundColor: "#f17c13",
-                              color: "#ffffff",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontWeight: "800",
-                              fontSize: "0.85rem",
-                              overflow: "hidden",
-                              flexShrink: 0,
-                              border: "1px solid #eddcd2",
-                              boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-                              cursor: "pointer"
-                            }}
-                          >
-                            {avatarPhoto ? (
-                              <img src={avatarPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            ) : (
-                              initial
-                            )}
-                          </div>
+        {/* ════ VIEW 2: SINGLE CONVERSATION VIEW (ON CLICK) ════ */}
+        {viewState === "chat" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%" }}>
+            
+            {/* Main Chat Card (White Pane) */}
+            <div className="form-card-premium" style={{ backgroundColor: "#ffffff", borderRadius: "24px", padding: "2.2rem 2.2rem", border: "1px solid #e5e7eb", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.05)", display: "flex", flexDirection: "column", gap: "20px", width: "100%", maxWidth: "100%", boxSizing: "border-box", minHeight: "560px" }}>
+              
+              {/* Back to Messages Button Inside White Pane */}
+              <div>
+                <button
+                  type="button"
+                  className="btn-back-link"
+                  onClick={() => setViewState("list")}
+                >
+                  <ArrowLeft size={16} /> Back to Messages
+                </button>
+              </div>
+
+              {activeThread ? (
+                <>
+                  {/* Chat Partner Header Row */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "18px", borderBottom: "1px solid #f3f4f6", flexWrap: "wrap", gap: "16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <div className="avatar-frame" style={{ width: "56px", height: "56px", fontSize: "1.3rem" }}>
+                        {activeThread.partnerPhoto ? (
+                          <img src={activeThread.partnerPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          activeThread.partnerName ? activeThread.partnerName[0].toUpperCase() : "?"
                         )}
+                      </div>
 
-                        {/* Message Bubble Container */}
-                        <div className={`chat-bubble-row ${isIncoming ? "incoming" : "outgoing"}`} style={{ width: "100%" }}>
-                          {/* Name and Phone metadata ABOVE the bubble */}
-                          <div className="chat-bubble-meta" style={{ marginBottom: "4px", alignSelf: isIncoming ? "flex-start" : "flex-end" }}>
-                            {isIncoming ? (
-                              <span 
-                                onClick={() => navigate(`/profile/${activeThread.partnerId}`)}
-                                style={{ cursor: "pointer", fontWeight: "600", transition: "color 0.15s" }}
-                                onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
-                                onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
-                              >
-                                {activeThread.partnerName} ({activeThread.partnerPhone || "No Phone"})
-                              </span>
-                            ) : (
-                              `You (${currentUserPhone || "No Phone"})`
-                            )}
-                            {" • "}{m.sentAt.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}
-                          </div>
-                          
-                          <div className="chat-bubble">
-                            {m.body.includes("[Attachment:") ? (
-                              <div>
-                                <div style={{ whiteSpace: "pre-line" }}>
-                                  {m.body.split("[Attachment:")[0]}
-                                </div>
-                                <div 
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "10px",
-                                    backgroundColor: isIncoming ? "#ffffff" : "rgba(255, 255, 255, 0.18)",
-                                    padding: "8px 12px",
-                                    borderRadius: "8px",
-                                    marginTop: "8px",
-                                    border: isIncoming ? "1px solid #e5e7eb" : "none"
-                                  }}
-                                >
-                                  <Paperclip size={14} />
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontSize: "0.8rem", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                      {m.body.split("[Attachment:")[1].replace("]", "")}
-                                    </div>
-                                    <div style={{ fontSize: "0.68rem", opacity: 0.85 }}>Attached Document</div>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              m.body
-                            )}
+                      <div>
+                        <h2 style={{ fontSize: "1.3rem", fontWeight: "800", color: "#35453f", margin: "0 0 2px" }}>
+                          {activeThread.partnerName}
+                        </h2>
+                        <p style={{ color: "#ec5e3b", fontSize: "0.88rem", margin: 0, fontWeight: "600" }}>
+                          {activeThread.partnerRole || "Executive Member"} {activeThread.partnerCompany ? `• ${activeThread.partnerCompany}` : ""}
+                        </p>
+                      </div>
+                    </div>
+
+                    {activeThread.partnerPhone && (
+                      <span style={{ backgroundColor: "#f8fafc", color: "#4b5563", border: "1px solid #e2e8f0", fontSize: "0.82rem", fontWeight: "600", padding: "6px 14px", borderRadius: "18px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <Phone size={14} color="#ec5e3b" /> {activeThread.partnerPhone}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Messages Thread Bubbles */}
+                  <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "14px", padding: "12px 4px", minHeight: "260px", maxHeight: "400px" }}>
+                    {activeThread.messages.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "40px", color: "#6b7280", fontSize: "0.9rem" }}>
+                        No messages exchanged yet. Send a message below to start the conversation.
+                      </div>
+                    ) : (
+                      activeThread.messages.map((msg, idx) => (
+                        <div key={idx} className={msg.direction === "outgoing" ? "msg-bubble-outgoing" : "msg-bubble-incoming"}>
+                          <div>{msg.body}</div>
+                          <div style={{ fontSize: "0.72rem", opacity: 0.75, marginTop: "4px", textAlign: msg.direction === "outgoing" ? "right" : "left" }}>
+                            {msg.sentAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      ))
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
 
-                {/* Form to submit reply */}
-                <form className="chat-input-area" onSubmit={handleReplySubmit}>
-                  {attachedFile && (
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      backgroundColor: "#fef3c7",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      fontSize: "0.8rem",
-                      fontWeight: "600",
-                      color: "#b45309",
-                      marginBottom: "10px"
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Paperclip size={14} />
-                        <span>Attached: {attachedFile.name}</span>
-                      </div>
-                      <button 
-                        type="button" 
-                        onClick={() => setAttachedFile(null)}
-                        style={{ background: "none", border: "none", color: "#b45309", cursor: "pointer", display: "flex", alignItems: "center" }}
-                      >
-                        <X size={16} />
-                      </button>
+                  {/* Feedback toasts */}
+                  {messageSuccess && (
+                    <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #86efac", color: "#166534", padding: "10px 16px", borderRadius: "12px", fontSize: "0.88rem", fontWeight: "600" }}>
+                      ✓ {messageSuccess}
+                    </div>
+                  )}
+                  {error && (
+                    <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "10px 16px", borderRadius: "12px", fontSize: "0.88rem", fontWeight: "600" }}>
+                      ⚠️ {error}
                     </div>
                   )}
 
-                  {error && <div className="ps-alert-err" style={{ marginBottom: "10px" }}>{error}</div>}
-                  {messageSuccess && <div className="ps-alert-success" style={{ marginBottom: "10px" }}>{messageSuccess}</div>}
-
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
-                    <button 
-                      type="button" 
-                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "#9ca3af",
-                        padding: "8px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        transition: "color 0.15s"
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.color = "#f17c13"}
-                      onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
-                      title="Attach file"
-                    >
-                      <Paperclip size={20} />
-                    </button>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files.length > 0) {
-                          setAttachedFile(e.target.files[0]);
-                        }
-                      }} 
-                      style={{ display: "none" }} 
-                    />
-
-                    <input 
-                      type="text"
-                      className="chat-text-input"
-                      placeholder="Type your message here..."
+                  {/* Reply Input Form */}
+                  <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "12px", paddingTop: "12px", borderTop: "1px solid #f3f4f6" }}>
+                    <textarea
+                      rows={3}
+                      className="input-premium"
+                      placeholder="Type your message..."
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
-                      disabled={sendingMessage}
-                      style={{
-                        flex: 1,
-                        padding: "12px 18px",
-                        borderRadius: "24px",
-                        border: "1px solid #e5e7eb",
-                        outline: "none",
-                        fontSize: "0.92rem",
-                        boxSizing: "border-box"
-                      }}
+                      style={{ resize: "vertical" }}
+                      required
                     />
 
-                    <button 
-                      type="submit" 
-                      className="chat-send-btn"
-                      disabled={sendingMessage || (!replyText.trim() && !attachedFile)}
-                      style={{
-                        backgroundColor: "#f17c13",
-                        color: "#ffffff",
-                        border: "none",
-                        borderRadius: "50%",
-                        width: "44px",
-                        height: "44px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        transition: "background-color 0.15s",
-                        flexShrink: 0
-                      }}
-                    >
-                      <Send size={18} />
-                    </button>
-                  </div>
-                </form>
-              </div>
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: "40px", color: "#6b7280" }}>
-                Select a message thread to start chatting.
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT PANEL: CONTACTS SIDEBAR LIST */}
-          <div className={`contacts-panel ${mobileShowDetails ? "mobile-hide" : "mobile-show"}`}>
-            <div className="contacts-header">
-              Conversations
-            </div>
-            <div className="contacts-items">
-              {loadingMessages ? (
-                <div style={{ padding: "32px 16px", color: "#6b7280", textAlign: "center" }}>
-                  Loading messages...
-                </div>
-              ) : threads.length === 0 ? (
-                <div style={{ 
-                  margin: "20px 16px",
-                  padding: "32px 16px", 
-                  color: "#6b7280", 
-                  textAlign: "center", 
-                  border: "1px dashed #e5e7eb", 
-                  borderRadius: "12px", 
-                  background: "#fafafb" 
-                }}>
-                  <Inbox size={28} style={{ color: "#9ca3af", marginBottom: "8px", opacity: 0.7 }} />
-                  <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "#374151" }}>Inbox is empty</div>
-                  <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "4px", lineHeight: 1.4 }}>
-                    Once you connect with matches, your messages will appear here.
-                  </div>
-                </div>
-              ) : (
-                threads.map((thread) => {
-                  const isSelected = activeThreadId === thread.partnerId;
-                  const latestMsg = thread.messages[thread.messages.length - 1];
-                  const initial = thread.partnerName ? thread.partnerName[0].toUpperCase() : "?";
-                  
-                  return (
-                    <div
-                      key={thread.partnerId}
-                      className={`contact-item ${isSelected ? "selected" : ""}`}
-                      onClick={() => {
-                        setActiveThreadId(thread.partnerId);
-                        setMobileShowDetails(true);
-                      }}
-                    >
-                      <div className="contact-avatar-row">
-                        <div className="contact-avatar">
-                          {thread.partnerPhoto ? (
-                            <img src={thread.partnerPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          ) : (
-                            initial
-                          )}
-                        </div>
-                        
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <div className="contact-name">
-                              {thread.partnerName}
-                            </div>
-                            
-                            {thread.unreadCount > 0 && (
-                              <span style={{
-                                backgroundColor: "#f17c13",
-                                color: "#ffffff",
-                                fontSize: "0.7rem",
-                                fontWeight: "800",
-                                padding: "2px 6px",
-                                borderRadius: "10px",
-                                lineHeight: "1"
-                              }}>
-                                {thread.unreadCount} unread
-                              </span>
-                            )}
-                          </div>
-                          {thread.partnerCompany && (
-                            <div className="contact-company">{thread.partnerCompany}</div>
-                          )}
-                        </div>
-                      </div>
-
-                      {latestMsg && (
-                        <div className="contact-snippet">
-                          {latestMsg.direction === "outgoing" ? "You: " : ""}{latestMsg.body}
-                        </div>
-                      )}
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button
+                        type="submit"
+                        disabled={sendingMessage}
+                        className="btn-action-primary"
+                      >
+                        {sendingMessage ? "Sending..." : "Send Message"}
+                      </button>
                     </div>
-                  );
-                })
+                  </form>
+                </>
+              ) : (
+                <div style={{ textAlign: "center", padding: "60px 0", color: "#6b7280" }}>
+                  Select a conversation from the list to view messages.
+                </div>
               )}
+
             </div>
+
           </div>
-        </div>
+        )}
+
       </div>
 
       <Footer />

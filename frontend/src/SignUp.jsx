@@ -1,117 +1,225 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { signUpUser, activateUser } from "./api";
+import { useNavigate } from "react-router-dom";
+import { signUpUser, activateUser, createUserIntent, updateUserProfile, analyzeIntent } from "./api";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import imgThreeProfessionals from "./img/three_professionals.png";
 
 export default function SignUp() {
   const navigate = useNavigate();
-  const location = useLocation();
+
+  // Wizard Step State: 1 (Identity), 2 (Verification), 3 (Intention & Budget)
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Form Fields State
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
     email: "",
     phone: "",
-    company_name: "",
     password: "",
+    company_name: "",
+    role: "",
+    location: "",
+    type: "buy",
+    intention: "",
+    influence: "Recommend / Influence",
+    has_budget: false,
+    budget_min: "",
+    budget_max: "",
+    budget_currency: "ZAR",
+    intent_lifespan: "90 Days"
   });
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pendingIntent, setPendingIntent] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [showIntent, setShowIntent] = useState(false);
-  const [intentLoading, setIntentLoading] = useState(false);
-  const [loaderText, setLoaderText] = useState("Analyzing search query...");
-
-  const [userIntent, setUserIntent] = useState("");
-  const [preselectedDriver, setPreselectedDriver] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-  const [showOtpScreen, setShowOtpScreen] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
 
-  // Check if a driver was selected on the home page or search was performed
+  // OTP State
+  const [otpCode, setOtpCode] = useState("");
+  const [companyVerified, setCompanyVerified] = useState(false);
+
+  // AI Evaluation State
+  const [aiScore, setAiScore] = useState(null);
+  const [aiClarity, setAiClarity] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+
+  // Location Autocomplete State
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const COMMON_LOCATIONS = [
+    "Sandton, Johannesburg", "Centurion, Pretoria", "Stellenbosch, Cape Town",
+    "Umhlanga, Durban", "Randburg, Johannesburg", "Rosebank, Johannesburg",
+    "Midrand, Johannesburg", "Pretoria East, Pretoria", "Cape Town City Centre",
+    "Bellville, Cape Town", "Somerset West, Cape Town", "Durban North, Durban",
+    "Gqeberha (Port Elizabeth)", "Bloemfontein, Free State", "Polokwane, Limpopo",
+    "Nelspruit (Mbombela), Mpumalanga", "Rustenburg, North West", "George, Garden Route",
+    "Soweto, Johannesburg", "Johannesburg, Gauteng", "Cape Town, Western Cape",
+    "Durban, KwaZulu-Natal", "Pretoria, Gauteng", "South Africa"
+  ];
+
   useEffect(() => {
     const savedIntent = localStorage.getItem("pending_intent");
-    const isFromSearch = location.state?.fromSearch;
-    if (savedIntent && isFromSearch) {
-      setPendingIntent(savedIntent);
-      setIntentLoading(true);
-      setLoaderText("Analyzing search query...");
-      
-      const t1 = setTimeout(() => {
-        setLoaderText("Scanning circles network for partners...");
-      }, 1500);
-
-      const t2 = setTimeout(() => {
-        setLoaderText("Finding verified decision-makers...");
-      }, 3000);
-
-      const t3 = setTimeout(() => {
-        setIntentLoading(false);
-        setShowIntent(true);
-      }, 4500);
-
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-        clearTimeout(t3);
-      };
-    }
-    const driver = location.state?.driver;
-    if (driver) {
-      setPreselectedDriver(driver);
-      setUserIntent(driver.intent);
+    if (savedIntent && savedIntent.trim()) {
+      setForm(f => ({ ...f, intention: savedIntent }));
     }
   }, []);
 
+  useEffect(() => {
+    if (!form.intention || !form.intention.trim()) {
+      setAiScore(null); setAiClarity("");
+      return;
+    }
+    const t = setTimeout(async () => {
+      setAnalyzing(true);
+      try {
+        const result = await analyzeIntent(form.intention);
+        setAiScore(result.score);
+        setAiClarity(result.clarity_level);
+      } catch (e) {
+        console.warn("AI evaluation fallback:", e);
+      } finally {
+        setAnalyzing(false);
+      }
+    }, 800);
+    return () => clearTimeout(t);
+  }, [form.intention]);
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleLocationChange = (val) => {
+    setForm({ ...form, location: val });
+    if (val.trim()) {
+      const filtered = COMMON_LOCATIONS.filter(loc => loc.toLowerCase().includes(val.toLowerCase()));
+      setLocationSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setLocationSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const isCorporateDomain = () => {
+    if (!form.email || !form.email.includes("@")) return false;
+    const domain = form.email.toLowerCase().split("@")[1];
+    const publicWebmail = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "live.com", "aol.com", "protonmail.com", "zoho.com"];
+    return !publicWebmail.includes(domain);
+  };
+
+  // ════ STEP 1: IMMEDIATELY HIT DATABASE WITH USER DETAILS & SEND OTP ════
+  const handleSignUpStep1 = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    setSuccessMessage("");
+    if (!form.first_name.trim()) { setError("First Name is required."); return; }
+    if (!form.last_name.trim()) { setError("Surname / Last Name is required."); return; }
+    if (!form.email || !form.email.includes("@")) { setError("Valid email address is required."); return; }
+    if (!form.password || form.password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (!form.company_name.trim()) { setError("Company Name is required."); return; }
 
-    const nameParts = fullName.trim().split(/\s+/);
-    const firstName = nameParts[0] || "";
-    const lastName = nameParts.slice(1).join(" ") || "";
-    const updatedForm = {
-      ...form,
-      first_name: firstName,
-      last_name: lastName
+    setLoading(true);
+    const payload = {
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      password: form.password,
+      company_name: form.company_name.trim(),
+      role: form.role.trim()
     };
 
     try {
-      // Save intent to localStorage so user can access it in their dashboard once signed up
-      localStorage.setItem("pending_intent", userIntent || pendingIntent);
-      await signUpUser(updatedForm);
-      setSuccessMessage(`Sign up successful! We've sent a 6-digit verification code to ${form.email}.`);
-      setShowOtpScreen(true);
+      await signUpUser(payload);
+      setSuccessMessage(`Account created! We've sent a 6-digit verification code to ${form.email}.`);
+      setCurrentStep(2);
     } catch (err) {
-      setError(
-        err.response?.data?.detail ||
-          "Sign up failed. Try a different email."
-      );
+      setError(err.response?.data?.detail || "Sign up failed. Please check your information.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOtp = async (e) => {
+  // ════ STEP 2: VERIFY OTP CODE ════
+  const handleVerifyOtpStep2 = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
+    if (!otpCode || otpCode.length < 6) {
+      setError("Please enter the full 6-digit verification code.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await activateUser(form.email, otpCode);
-      setSuccessMessage("✅ Account activated successfully! Redirecting you to sign in...");
-      setTimeout(() => {
-        navigate("/signin");
-      }, 2500);
+      const res = await activateUser(form.email, otpCode);
+      const isCorp = res?.company_verified;
+      setCompanyVerified(isCorp);
+
+      if (res?.access_token) {
+        localStorage.setItem("linkmate_auth_token", res.access_token);
+      }
+
+      setSuccessMessage(
+        isCorp
+          ? "🎉 Email Verified & Company Listing Auto-Verified! Please describe your business intention below."
+          : "✅ Email Verified! Please describe your business intention below."
+      );
+
+      setCurrentStep(3);
     } catch (err) {
       setError(err.response?.data?.detail || "Invalid or expired verification code.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ════ STEP 3: SUBMIT BUSINESS INTENTION & LOCATION, THEN GO TO MATCHES ════
+  const handleCompleteIntentionStep3 = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!form.location || !form.location.trim()) {
+      setError("Please specify your company location.");
+      return;
+    }
+    if (!form.intention || !form.intention.trim()) {
+      setError("Please provide a brief business intention statement.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Update location on profile
+      await updateUserProfile({ location: form.location });
+
+      // Save initial intention
+      const intentPayload = {
+        title: `${form.company_name} Intention`,
+        type: form.type || "buy",
+        intention: form.intention.trim(),
+        influence: form.influence,
+        has_budget: form.has_budget,
+        budget_min: form.budget_min ? parseFloat(form.budget_min) : null,
+        budget_max: form.budget_max ? parseFloat(form.budget_max) : null,
+        budget_currency: form.budget_currency,
+        intent_lifespan: form.intent_lifespan
+      };
+
+      await createUserIntent(intentPayload);
+      localStorage.removeItem("pending_intent");
+
+      setSuccessMessage("Business intention created! Redirecting straight to your matches...");
+      setTimeout(() => {
+        navigate("/matches", { state: { justRegistered: true } });
+      }, 1000);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Failed to save intention. Redirecting to matches...");
+      setTimeout(() => {
+        navigate("/matches", { state: { justRegistered: true } });
+      }, 1800);
     } finally {
       setLoading(false);
     }
@@ -120,18 +228,18 @@ export default function SignUp() {
   return (
     <div className="split-page-wrapper" style={{ backgroundColor: "#eef1f6", minHeight: "100vh", display: "flex", flexDirection: "column", padding: "40px 0" }}>
 
-      {/* TOP HEADER ROW: LOGO & ALREADY A MEMBER */}
+      {/* TOP HEADER ROW: WIDE CONTAINER (1420px) */}
       <div style={{
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         width: "100%",
-        maxWidth: "1060px",
+        maxWidth: "1420px",
         margin: "0 auto 2.5rem auto",
         padding: "0 24px",
         boxSizing: "border-box"
       }}>
-        {/* Official Brand Logo Block */}
+        {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }} onClick={() => navigate("/")}>
           <svg width="34" height="34" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: "10px", flexShrink: 0 }}>
             <circle cx="25" cy="18" r="11" stroke="#b0a296" strokeWidth="3" fill="none" />
@@ -158,170 +266,119 @@ export default function SignUp() {
       </div>
 
       <div className="split-page-section" style={{ flex: 1, display: "flex", alignItems: "center" }}>
-        <div className="login-split-container" style={{ display: "flex", gap: "60px", flexWrap: "wrap", width: "100%", maxWidth: "1060px", margin: "0 auto", padding: "0 24px", boxSizing: "border-box", alignItems: "center" }}>
-          
-          {/* LEFT COLUMN: BRAND VALUE PROP INSPIRATION FROM HERO */}
-          <div className="login-left-banner circles-content" style={{ 
-            flex: "1 1 450px", 
-            color: "#35453f",
+        <div
+          className="login-split-container"
+          style={{
             display: "flex",
-            flexDirection: "column",
-            justifyContent: "center"
-          }}>
-            
-            {/* Conditional Layout A (From Search) vs B (Direct Navigation) */}
-            {intentLoading ? (
-              <div style={{
-                marginBottom: "2rem",
-                width: "100%",
-                padding: "20px",
-                borderRadius: "16px",
-                border: "1px solid rgba(236, 94, 59, 0.2)",
-                backgroundColor: "rgba(236, 94, 59, 0.03)",
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-                animation: "pulse 1.8s infinite ease-in-out"
-              }}>
-                <style>{`
-                  @keyframes pulse {
-                    0% { opacity: 0.7; }
-                    50% { opacity: 1; }
-                    100% { opacity: 0.7; }
-                  }
-                  @keyframes spin {
-                    to { transform: rotate(360deg); }
-                  }
-                `}</style>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{
-                    width: "18px",
-                    height: "18px",
-                    border: "2.5px solid rgba(236, 94, 59, 0.2)",
-                    borderTopColor: "#ec5e3b",
-                    borderRadius: "50%",
-                    animation: "spin 0.8s linear infinite"
-                  }} />
-                  <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.88rem" }}>
-                    Small Circles AI Engine
-                  </span>
-                </div>
-                <div style={{ color: "#ec5e3b", fontWeight: "600", fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>
-                  Status: {loaderText}
-                </div>
-              </div>
-            ) : showIntent ? (
-              <div style={{
-                marginBottom: "2rem",
-                width: "100%",
-                boxSizing: "border-box"
-              }}>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "10px" }}>
-                  <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span>
-                  <span style={{ color: "#35453f", fontWeight: "700", fontSize: "0.9rem" }}>
-                   There are potential partners that may match your needs:
-                  </span>
-                </div>
-                <div style={{ color: "#6b7280", fontSize: "0.8rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>
-                  Looking for
-                </div>
-                <div style={{ color: "#ec5e3b", fontWeight: "700", fontSize: "1.3rem", fontStyle: "italic", lineHeight: "1.3" }}>
-                  "{pendingIntent}"
-                </div>
-              </div>
-            ) : (
-              <>
-                <span style={{
-                  color: "#4a5d5e",
-                  fontWeight: "700",
-                  fontSize: "0.78rem",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  padding: "6px 14px",
-                  borderRadius: "20px",
-                  backgroundColor: "rgba(160, 167, 171, 0.15)",
-                  border: "1px solid rgba(160, 167, 171, 0.3)",
-                  marginBottom: "1.2rem",
-                  width: "fit-content",
-                  letterSpacing: "0.02em"
-                }}>
-                  Meet Businesses Ready to Do Business
-                </span>
-                <h1 className="left-banner-title" style={{
-                  color: "#35453f",
-                  fontSize: "2.5rem",
-                  fontWeight: "600",
-                  lineHeight: "1.2",
-                  margin: "0 0 1.2rem 0",
-                  letterSpacing: "-0.03em"
-                }}>
-                  Connect with <br />
-                  verified <span style={{ color: "#ec5e3b" }}>partners.</span>
-                </h1>
-              </>
-            )}
-
-            {/* Centered Single Circle Image Frame */}
-            <div style={{
-              position: "relative",
-              width: "220px",
-              height: "220px",
-              margin: "0 auto 2rem auto",
-              borderRadius: "50%",
-              border: "3px solid rgba(176, 162, 150, 0.35)",
-              overflow: "hidden",
-              flexShrink: 0,
-              boxShadow: "0 8px 24px rgba(38, 70, 58, 0.1)"
-            }}>
-              <img
-                src={imgThreeProfessionals}
-                alt="Three Professionals Partnership Connection"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block"
-                }}
-              />
-            </div>
-
-            <p style={{
+            gap: "60px",
+            flexWrap: "wrap",
+            width: "100%",
+            maxWidth: currentStep === 1 ? "1420px" : "800px",
+            margin: "0 auto",
+            padding: "0 24px",
+            boxSizing: "border-box",
+            alignItems: "center",
+            justifyContent: currentStep === 1 ? "space-between" : "center"
+          }}
+        >
+          {/* LEFT COLUMN: BRAND VALUE PROP BANNER (RENDERED ONLY IN STEP 1 & HIDDEN ON MOBILE) */}
+          {currentStep === 1 && (
+            <div className="login-left-banner circles-content" style={{ 
+              flex: "1 1 520px", 
               color: "#35453f",
-              fontSize: "1.2rem",
-              fontWeight: "700",
-              lineHeight: "1.4",
-              margin: "0 0 8px 0",
-              letterSpacing: "-0.01em"
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center"
             }}>
-              Small Circles doesn't show you hundreds of listings.
-            </p>
-            <p style={{
-              color: "#4b5563",
-              fontSize: "1rem",
-              fontWeight: "500",
-              lineHeight: "1.5",
-              margin: "0 0 1.8rem 0"
-            }}>
-              We introduce businesses that are most likely to work with you.
-            </p>
+              <span style={{
+                color: "#4a5d5e",
+                fontWeight: "700",
+                fontSize: "0.78rem",
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "6px 14px",
+                borderRadius: "20px",
+                backgroundColor: "rgba(160, 167, 171, 0.15)",
+                border: "1px solid rgba(160, 167, 171, 0.3)",
+                marginBottom: "1.2rem",
+                width: "fit-content",
+                letterSpacing: "0.02em"
+              }}>
+                Meet Businesses Ready to Do Business
+              </span>
 
-            {/* Checklist items from wireframe */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", margin: "0 0 1rem 0" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
-                <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> Verified Businesses
+              <h1 className="left-banner-title" style={{
+                color: "#35453f",
+                fontSize: "2.5rem",
+                fontWeight: "600",
+                lineHeight: "1.2",
+                margin: "0 0 1.2rem 0",
+                letterSpacing: "-0.03em"
+              }}>
+                Connect with <br />
+                verified <span style={{ color: "#ec5e3b" }}>partners.</span>
+              </h1>
+
+              {/* Circle Image Frame */}
+              <div style={{
+                position: "relative",
+                width: "220px",
+                height: "220px",
+                margin: "0 auto 2rem auto",
+                borderRadius: "50%",
+                border: "3px solid rgba(176, 162, 150, 0.35)",
+                overflow: "hidden",
+                flexShrink: 0,
+                boxShadow: "0 8px 24px rgba(38, 70, 58, 0.1)"
+              }}>
+                <img
+                  src={imgThreeProfessionals}
+                  alt="Three Professionals Partnership Connection"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block"
+                  }}
+                />
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
-                <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> AI Matching
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
-                <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> Private Introductions
+
+              <p style={{
+                color: "#35453f",
+                fontSize: "1.2rem",
+                fontWeight: "700",
+                lineHeight: "1.4",
+                margin: "0 0 8px 0",
+                letterSpacing: "-0.01em"
+              }}>
+                Small Circles doesn't show you hundreds of listings.
+              </p>
+              <p style={{
+                color: "#4b5563",
+                fontSize: "1rem",
+                fontWeight: "500",
+                lineHeight: "1.5",
+                margin: "0 0 1.8rem 0"
+              }}>
+                We introduce businesses that are most likely to work with you.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", margin: "0 0 1rem 0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> Verified Businesses
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> Verified Synergy Matching
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.95rem", fontWeight: "600" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold", fontSize: "1.1rem" }}>✓</span> Private Introductions
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* RIGHT COLUMN: REGISTER CARD */}
-          <div className="login-right-form" style={{ flex: "1 1 450px", display: "flex", justifyContent: "flex-end", width: "100%" }}>
+          {/* RIGHT / MAIN COLUMN: FORM CARD */}
+          <div className="login-right-form" style={{ flex: currentStep === 1 ? "1 1 600px" : "1 1 100%", display: "flex", justifyContent: currentStep === 1 ? "flex-end" : "center", width: "100%" }}>
             <div className="form-card-premium" style={{ 
               backgroundColor: "#ffffff",
               borderRadius: "24px",
@@ -332,277 +389,374 @@ export default function SignUp() {
               boxSizing: "border-box",
               color: "#1f2937"
             }}>
-              <div>
-                {showIntent && (
-                  <div style={{
-                    backgroundColor: "#fef8f3",
-                    border: "1px solid #fbdcbd",
-                    borderRadius: "12px",
-                    padding: "12px 16px",
-                    marginBottom: "20px",
-                    textAlign: "left"
-                  }}>
-    
-                    <div style={{ color: "#6b7280", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                      Intent query:
-                    </div>
-                    <div style={{ color: "#ec5e3b", fontWeight: "700", fontSize: "1.05rem", fontStyle: "italic" }}>
-                      "{pendingIntent}"
-                    </div>
-                  </div>
-                )}
-
-                <div className="form-card-header" style={{ marginBottom: "24px" }}>
-                  <h3 className="form-card-header-title" style={{
-                    color: "#35453f",
-                    fontSize: "1.5rem",
-                    fontWeight: "600",
-                    margin: "0 0 6px 0",
-                    letterSpacing: "-0.01em"
-                  }}>
-                    Create Your Account
-                  </h3>
-                  <p className="form-card-header-desc" style={{
-                    color: "#6b7280",
-                    fontSize: "0.9rem",
-                    lineHeight: "1.4",
-                    margin: 0
-                  }}>
-                    {showIntent 
-                      ? "There are potential partners we would like to introduce you to. Complete the form below to connect."
-                      : "Join Small Circles to connect with verified partners matching your business intent."
-                    }
-                  </p>
-                </div>
+              
+              {/* Stepper Indicator */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px", position: "relative" }}>
+                <div style={{ position: "absolute", top: "16px", left: "15%", right: "15%", height: "2px", background: "#e5e7eb", zIndex: 1 }} />
                 
-                <hr style={{ border: "0", borderTop: "1px solid #e5e7eb", margin: "20px 0" }} />
-
-                {error && (
-                  <div className="alert-error-premium" style={{
-                    backgroundColor: "#fef2f2",
-                    border: "1px solid #fca5a5",
-                    color: "#b91c1c",
-                    padding: "12px 16px",
-                    borderRadius: "8px",
-                    fontSize: "0.85rem",
-                    display: "flex",
-                    gap: "8px",
-                    alignItems: "center",
-                    marginBottom: "20px"
-                  }}>
-                    <span>⚠️</span>
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                {successMessage && (
-                  <div className="alert-success-premium" style={{
-                    backgroundColor: "#f0fdf4",
-                    border: "1px solid #86efac",
-                    color: "#166534",
-                    padding: "12px 16px",
-                    borderRadius: "8px",
-                    fontSize: "0.85rem",
-                    marginBottom: "20px",
-                    fontWeight: "500"
-                  }}>
-                    {successMessage}
-                  </div>
-                )}
-
-                {!showOtpScreen ? (
-                  <form onSubmit={handleSubmit}>
-                    
-                    <div className="input-group-premium">
-                      <label className="input-label-premium">Full Name</label>
-                      <input
-                        type="text"
-                        className="input-premium"
-                        placeholder="John Doe"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-row-premium">
-                      <div className="input-group-premium flex-1">
-                        <label className="input-label-premium">Work Email</label>
-                        <input
-                          type="email"
-                          name="email"
-                          className="input-premium"
-                          placeholder="john@company.com"
-                          value={form.email}
-                          onChange={handleChange}
-                          required
-                        />
+                {[
+                  { num: 1, label: "Identity" },
+                  { num: 2, label: "Verification" },
+                  { num: 3, label: "Intention & Budget" }
+                ].map((step) => {
+                  const isActive = currentStep === step.num;
+                  const isDone = currentStep > step.num;
+                  return (
+                    <div key={step.num} style={{ display: "flex", flexDirection: "column", alignItems: "center", zIndex: 2 }}>
+                      <div style={{
+                        width: "32px", height: "32px", borderRadius: "50%",
+                        background: isActive ? "#ec5e3b" : isDone ? "#10b981" : "#f3f4f6",
+                        color: isActive || isDone ? "#ffffff" : "#9ca3af",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontWeight: "700", fontSize: "0.85rem",
+                        boxShadow: isActive ? "0 4px 10px rgba(236, 94, 59, 0.3)" : "none"
+                      }}>
+                        {isDone ? "✓" : step.num}
                       </div>
-                      <div className="input-group-premium flex-1">
-                        <label className="input-label-premium">Phone Number</label>
-                        <input
-                          type="text"
-                          name="phone"
-                          className="input-premium"
-                          placeholder="+27 82 123 4567"
-                          value={form.phone}
-                          onChange={handleChange}
-                        />
-                      </div>
+                      <span style={{ fontSize: "0.78rem", fontWeight: isActive ? "700" : "500", color: "#065f46", marginTop: "6px", textTransform: "none", letterSpacing: "normal" }}>
+                        {step.label}
+                      </span>
                     </div>
+                  );
+                })}
+              </div>
 
-                    <div className="input-group-premium">
-                      <label className="input-label-premium">Company Name</label>
-                      <input
-                        type="text"
-                        name="company_name"
-                        className="input-premium"
-                        placeholder="Acme Corp"
-                        value={form.company_name}
-                        onChange={handleChange}
-                      />
+              {error && (
+                <div className="alert-error-premium" style={{
+                  backgroundColor: "#fef2f2",
+                  border: "1px solid #fca5a5",
+                  color: "#b91c1c",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  display: "flex",
+                  gap: "8px",
+                  alignItems: "center",
+                  marginBottom: "20px"
+                }}>
+                  <span>⚠️</span>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="alert-success-premium" style={{
+                  backgroundColor: "#f0fdf4",
+                  border: "1px solid #86efac",
+                  color: "#166534",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  marginBottom: "20px",
+                  fontWeight: "500"
+                }}>
+                  <span>✅</span>
+                  <span>{successMessage}</span>
+                </div>
+              )}
+
+              {/* ════ STEP 1: USER & COMPANY IDENTITY (HITS DATABASE DIRECTLY) ════ */}
+              {currentStep === 1 && (
+                <form onSubmit={handleSignUpStep1} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <div className="form-card-header" style={{ marginBottom: "8px" }}>
+                    <h3 className="form-card-header-title" style={{ color: "#35453f", fontSize: "1.4rem", fontWeight: "600", margin: "0 0 4px 0" }}>
+                      Create Your Account
+                    </h3>
+                    <p className="form-card-header-desc" style={{ color: "#6b7280", fontSize: "0.88rem", margin: 0 }}>
+                      Step 1: Contact details and company identity
+                    </p>
+                  </div>
+
+                  <div className="form-row-premium">
+                    <div className="input-group-premium flex-1" style={{ flex: 1 }}>
+                      <label className="input-label-premium">First Name *</label>
+                      <input type="text" name="first_name" className="input-premium" placeholder="John" value={form.first_name} onChange={handleChange} required />
                     </div>
-
-                    <div className="input-group-premium mb-1-5">
-                      <label className="input-label-premium">Password</label>
-                      <input
-                        type="password"
-                        name="password"
-                        className="input-premium"
-                        placeholder="••••••••"
-                        value={form.password}
-                        onChange={handleChange}
-                        required
-                      />
+                    <div className="input-group-premium flex-1" style={{ flex: 1 }}>
+                      <label className="input-label-premium">Surname *</label>
+                      <input type="text" name="last_name" className="input-premium" placeholder="Doe" value={form.last_name} onChange={handleChange} required />
                     </div>
+                  </div>
 
+                  <div className="form-row-premium">
+                    <div className="input-group-premium flex-1" style={{ flex: 1 }}>
+                      <label className="input-label-premium">Work Email *</label>
+                      <input type="email" name="email" className="input-premium" placeholder="john@company.com" value={form.email} onChange={handleChange} required />
+                    </div>
+                    <div className="input-group-premium flex-1" style={{ flex: 1 }}>
+                      <label className="input-label-premium">Phone Number</label>
+                      <input type="text" name="phone" className="input-premium" placeholder="+27 82 123 4567" value={form.phone} onChange={handleChange} />
+                    </div>
+                  </div>
+
+                  <div className="form-row-premium">
+                    <div className="input-group-premium flex-1" style={{ flex: 1 }}>
+                      <label className="input-label-premium">Company Name *</label>
+                      <input type="text" name="company_name" className="input-premium" placeholder="Acme Corp" value={form.company_name} onChange={handleChange} required />
+                    </div>
+                    <div className="input-group-premium flex-1" style={{ flex: 1 }}>
+                      <label className="input-label-premium">Job Title / Role</label>
+                      <input type="text" name="role" className="input-premium" placeholder="Procurement Director" value={form.role} onChange={handleChange} />
+                    </div>
+                  </div>
+
+                  <div className="input-group-premium">
+                    <label className="input-label-premium">Password *</label>
+                    <input type="password" name="password" className="input-premium" placeholder="••••••••" value={form.password} onChange={handleChange} required />
+                  </div>
+
+                  {/* SIGN UP BUTTON (HITS DATABASE & DISPATCHES OTP) */}
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
                     <button
                       type="submit"
                       disabled={loading}
                       className="form-submit-btn-premium"
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px"
+                        backgroundColor: "#ec5e3b",
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "14px 36px",
+                        borderRadius: "30px",
+                        fontWeight: "700",
+                        fontSize: "0.95rem",
+                        cursor: "pointer",
+                        boxShadow: "0 4px 14px rgba(236, 94, 59, 0.35)"
                       }}
                     >
-                      {loading ? "Signing Up..." : "Get My Introductions"}
+                      {loading ? "Creating Account..." : "Sign Up"}
                     </button>
+                  </div>
+                </form>
+              )}
 
-                    <div style={{ display: "flex", alignItems: "center", margin: "16px 0" }}>
-                      <div style={{ flex: 1, height: "1px", backgroundColor: "#e5e7eb" }}></div>
-                      <span style={{ padding: "0 12px", color: "#9ca3af", fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em" }}>or</span>
-                      <div style={{ flex: 1, height: "1px", backgroundColor: "#e5e7eb" }}></div>
-                    </div>
+              {/* ════ STEP 2: ACCOUNT & COMPANY VERIFICATION (ENTER OTP) ════ */}
+              {currentStep === 2 && (
+                <form onSubmit={handleVerifyOtpStep2} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <div className="form-card-header" style={{ marginBottom: "8px" }}>
+                    <h3 className="form-card-header-title" style={{ color: "#35453f", fontSize: "1.4rem", fontWeight: "600", margin: "0 0 4px 0" }}>
+                      Email Verification
+                    </h3>
+                    <p className="form-card-header-desc" style={{ color: "#6b7280", fontSize: "0.88rem", margin: 0 }}>
+                      Step 2: Enter the 6-digit code sent to <strong>{form.email}</strong>.
+                    </p>
+                  </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                      <button
-                        type="button"
-                        onClick={() => window.location.href = "/auth/google"}
-                        style={{
-                          background: "#ffffff",
-                          color: "#374151",
-                          border: "1px solid #d1d5db",
-                          padding: "10px 16px",
-                          borderRadius: "24px",
-                          fontWeight: "600",
-                          fontSize: "0.85rem",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "10px",
-                          transition: "all 0.2s ease",
-                          width: "100%"
-                        }}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
-                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
-                        </svg>
-                        Continue with Google
-                      </button>
+                  {/* Corporate vs Webmail Domain Status Banner */}
+                  <div style={{
+                    padding: "12px 16px", borderRadius: "12px", marginBottom: "8px", fontSize: "0.82rem",
+                    backgroundColor: isCorporateDomain() ? "#f0fdf4" : "#fef8f3",
+                    border: `1px solid ${isCorporateDomain() ? "#86efac" : "#fbdcbd"}`,
+                    color: isCorporateDomain() ? "#166534" : "#b45309"
+                  }}>
+                    {isCorporateDomain() ? (
+                      <div>
+                        <strong>🏢 Corporate Domain Email ({form.email.split("@")[1]})</strong>
+                        <p style={{ margin: "4px 0 0", fontSize: "0.78rem" }}>Your Company Listing for <strong>{form.company_name}</strong> will be <strong>Auto-Verified</strong> upon confirmation!</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <strong>📧 Public Webmail Email Address</strong>
+                        <p style={{ margin: "4px 0 0", fontSize: "0.78rem" }}>Your account will be activated, but company listing will remain unverified until domain proof is confirmed.</p>
+                      </div>
+                    )}
+                  </div>
 
-                      <button
-                        type="button"
-                        onClick={() => window.location.href = "/auth/linkedin"}
-                        style={{
-                          background: "#ffffff",
-                          color: "#374151",
-                          border: "1px solid #d1d5db",
-                          padding: "10px 16px",
-                          borderRadius: "24px",
-                          fontWeight: "600",
-                          fontSize: "0.85rem",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "10px",
-                          transition: "all 0.2s ease",
-                          width: "100%"
-                        }}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" fill="#0A66C2" />
-                        </svg>
-                        Continue with LinkedIn
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyOtp}>
-                    <div className="input-group-premium mb-1-75">
-                      <label className="input-label-premium">6-Digit Verification Code</label>
-                      <input
-                        type="text"
-                        maxLength={6}
-                        className="input-premium otp-input-premium"
-                        placeholder="123456"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                        required
-                      />
-                    </div>
+                  <div className="input-group-premium">
+                    <label className="input-label-premium">6-Digit Verification Code</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      className="input-premium otp-input-premium"
+                      style={{ fontSize: "1.5rem", letterSpacing: "0.25em", textAlign: "center" }}
+                      placeholder="123456"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                      required
+                    />
+                  </div>
 
+                  {/* VERIFY BUTTON */}
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
                     <button
                       type="submit"
                       disabled={loading}
-                      className="form-submit-btn-premium mb-1-5"
+                      className="form-submit-btn-premium"
+                      style={{
+                        backgroundColor: "#ec5e3b",
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "14px 32px",
+                        borderRadius: "30px",
+                        fontWeight: "700",
+                        fontSize: "1rem",
+                        cursor: "pointer",
+                        boxShadow: "0 4px 14px rgba(236, 94, 59, 0.35)"
+                      }}
                     >
                       {loading ? "Verifying..." : "Verify Code"}
                     </button>
-                  </form>
-                )}
+                  </div>
+                </form>
+              )}
 
-                {/* Under-button Checklist (Wireframe footer) */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "20px", borderTop: "1px solid #f3f4f6", paddingTop: "15px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6b7280", fontSize: "0.82rem", fontWeight: "500" }}>
-                    <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> No public profile
+              {/* ════ STEP 3: BUSINESS INTENTION, LOCATION & BUDGET ════ */}
+              {currentStep === 3 && (
+                <form onSubmit={handleCompleteIntentionStep3} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <div className="form-card-header" style={{ marginBottom: "8px" }}>
+                    <h3 className="form-card-header-title" style={{ color: "#35453f", fontSize: "1.4rem", fontWeight: "600", margin: "0 0 4px 0" }}>
+                      Business Intention
+                    </h3>
+                    <p className="form-card-header-desc" style={{ color: "#6b7280", fontSize: "0.88rem", margin: 0 }}>
+                      Step 3: Location, intention statement and criteria
+                    </p>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6b7280", fontSize: "0.82rem", fontWeight: "500" }}>
-                    <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> Verified businesses only
+
+                  {/* Location Autocomplete */}
+                  <div className="input-group-premium" style={{ position: "relative" }}>
+                    <label className="input-label-premium">Company Location (South Africa) *</label>
+                    <input
+                      type="text"
+                      className="input-premium"
+                      placeholder="e.g. Sandton, Centurion, Stellenbosch..."
+                      value={form.location}
+                      onChange={(e) => handleLocationChange(e.target.value)}
+                      required
+                    />
+                    {showSuggestions && locationSuggestions.length > 0 && (
+                      <ul style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#ffffff", border: "1px solid #d1d5db", borderRadius: "8px", margin: "4px 0 0", padding: "4px 0", listStyle: "none", zIndex: 100, maxHeight: "160px", overflowY: "auto", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
+                        {locationSuggestions.map((loc, idx) => (
+                          <li key={idx} style={{ padding: "8px 14px", fontSize: "0.85rem", cursor: "pointer", color: "#374151" }} onMouseDown={() => { setForm({ ...form, location: loc }); setShowSuggestions(false); }}>
+                            📍 {loc}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6b7280", fontSize: "0.82rem", fontWeight: "500" }}>
-                    <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> Takes less than 60 seconds
+
+                  {/* Budget Options */}
+                  <div className="input-group-premium" style={{ background: "#f9fafb", padding: "12px 14px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600", color: "#374151" }}>
+                      <input type="checkbox" name="has_budget" checked={form.has_budget} onChange={handleChange} style={{ accentColor: "#ec5e3b", width: "16px", height: "16px" }} />
+                      Specify Budget / Financial Criteria
+                    </label>
+                    {form.has_budget && (
+                      <div className="form-row-premium" style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                        <div style={{ flex: 1 }}>
+                          <label className="input-label-premium">Currency</label>
+                          <select name="budget_currency" className="input-premium" value={form.budget_currency} onChange={handleChange}>
+                            <option value="ZAR">ZAR (R)</option>
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                          </select>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label className="input-label-premium">Min Budget</label>
+                          <input type="number" name="budget_min" className="input-premium" placeholder="e.g. 50000" value={form.budget_min} onChange={handleChange} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label className="input-label-premium">Max Budget</label>
+                          <input type="number" name="budget_max" className="input-premium" placeholder="e.g. 200000" value={form.budget_max} onChange={handleChange} />
+                        </div>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Intention Statement */}
+                  <div className="input-group-premium">
+                    <label className="input-label-premium">Intention Statement *</label>
+                    <textarea
+                      name="intention"
+                      rows={3}
+                      className="input-premium"
+                      style={{ resize: "vertical" }}
+                      placeholder="Describe specifically what your business needs or offers..."
+                      value={form.intention}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* AI Strength Evaluation */}
+                  {form.intention && (
+                    <div style={{ background: "#f9fafb", padding: "10px 14px", borderRadius: "10px", border: "1px solid #e5e7eb" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4b5563", marginBottom: "4px" }}>
+                        <span>Intention Clarity</span>
+                        <span style={{ color: aiScore >= 75 ? "#10b981" : "#ec5e3b" }}>{analyzing ? "Evaluating..." : `${aiClarity} (${aiScore || 0}%)`}</span>
+                      </div>
+                      <div style={{ height: "6px", background: "#e5e7eb", borderRadius: "3px", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${aiScore || 0}%`, background: aiScore >= 75 ? "#10b981" : "#ec5e3b", transition: "width 0.4s ease" }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Influence & Lifespan */}
+                  <div className="form-row-premium">
+                    <div className="input-group-premium flex-1" style={{ flex: 1 }}>
+                      <label className="input-label-premium">Decision Influence</label>
+                      <select name="influence" className="input-premium" value={form.influence} onChange={handleChange}>
+                        <option value="Sole Decision Maker">Sole Decision Maker</option>
+                        <option value="Recommend / Influence">Recommend / Influence</option>
+                        <option value="No Direct Influence">No Direct Influence</option>
+                      </select>
+                    </div>
+                    <div className="input-group-premium flex-1" style={{ flex: 1 }}>
+                      <label className="input-label-premium">Active Lifespan</label>
+                      <select name="intent_lifespan" className="input-premium" value={form.intent_lifespan} onChange={handleChange}>
+                        <option value="30 Days">30 Days</option>
+                        <option value="90 Days">90 Days</option>
+                        <option value="6 Months">6 Months</option>
+                        <option value="Indefinite">Indefinite</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* FINISH BUTTON */}
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      style={{
+                        backgroundColor: "#ec5e3b",
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "14px 36px",
+                        borderRadius: "30px",
+                        fontWeight: "700",
+                        fontSize: "0.95rem",
+                        cursor: "pointer",
+                        boxShadow: "0 4px 14px rgba(236, 94, 59, 0.35)"
+                      }}
+                    >
+                      {loading ? "Completing Registration..." : "Complete & View Matches"}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Under-button Checklist */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "20px", borderTop: "1px solid #f3f4f6", paddingTop: "15px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6b7280", fontSize: "0.82rem", fontWeight: "500" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> No public profile
                 </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6b7280", fontSize: "0.82rem", fontWeight: "500" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> Verified businesses only
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6b7280", fontSize: "0.82rem", fontWeight: "500" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> Takes less than 60 seconds
+                </div>
+              </div>
 
-                <p className="login-switch-footer">
-                  Already have an account?{" "}
-                  <span onClick={() => navigate("/signin")} style={{ color: "#ec5e3b", fontWeight: "700" }}>
-                    Sign In here
-                  </span>
-                </p>
-              </div> {/* closes inner div */}
-            </div> {/* closes form-card-premium */}
-          </div> {/* closes login-right-form */}
+              <p className="login-switch-footer" style={{ textAlign: "center", marginTop: "16px", fontSize: "0.85rem", color: "#6b7280" }}>
+                Already have an account?{" "}
+                <span onClick={() => navigate("/signin")} style={{ color: "#ec5e3b", fontWeight: "700", cursor: "pointer" }}>
+                  Sign In here
+                </span>
+              </p>
+            </div>
+          </div>
 
-        </div> {/* closes login-split-container */}
-      </div> {/* closes split-page-section */}
+        </div>
+      </div>
 
       <Footer />
     </div>

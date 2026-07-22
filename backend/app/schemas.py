@@ -32,7 +32,17 @@ class UserSignUp(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     company_name: Optional[str] = None
+    role: Optional[str] = None
+    location: Optional[str] = None
     password: str
+    type: Optional[str] = "buy"
+    intention: Optional[str] = None
+    influence: Optional[str] = "Recommend / Influence"
+    has_budget: Optional[bool] = False
+    budget_min: Optional[float] = None
+    budget_max: Optional[float] = None
+    budget_currency: Optional[str] = "ZAR"
+    intent_lifespan: Optional[str] = "90 Days"
 
 
 class UserSignIn(BaseModel):
@@ -42,21 +52,52 @@ class UserSignIn(BaseModel):
 
 class UserIntentSchema(BaseModel):
     id: int
-    industry_id: int
-    industry_name: str
-    sub_industry_id: int
-    sub_industry_name: str
-    type: str
-    intention: str
-
-
-class UserIntentCreate(BaseModel):
+    user_id: int
+    title: Optional[str] = None
     industry_id: Optional[int] = None
     industry_name: Optional[str] = None
     sub_industry_id: Optional[int] = None
     sub_industry_name: Optional[str] = None
     type: str
     intention: str
+    influence: Optional[str] = "Recommend / Influence"
+    has_budget: Optional[bool] = False
+    budget_min: Optional[float] = None
+    budget_max: Optional[float] = None
+    budget_currency: Optional[str] = "ZAR"
+    intent_lifespan: Optional[str] = "90 Days"
+    is_active: Optional[bool] = True
+    created_at: Optional[datetime] = None
+
+
+class UserIntentCreate(BaseModel):
+    title: Optional[str] = None
+    industry_id: Optional[int] = None
+    sub_industry_id: Optional[int] = None
+    type: str = "buy"
+    intention: str
+    influence: Optional[str] = "Recommend / Influence"
+    has_budget: Optional[bool] = False
+    budget_min: Optional[float] = None
+    budget_max: Optional[float] = None
+    budget_currency: Optional[str] = "ZAR"
+    intent_lifespan: Optional[str] = "90 Days"
+    is_active: Optional[bool] = True
+
+
+class UserIntentUpdate(BaseModel):
+    title: Optional[str] = None
+    industry_id: Optional[int] = None
+    sub_industry_id: Optional[int] = None
+    type: Optional[str] = None
+    intention: Optional[str] = None
+    influence: Optional[str] = None
+    has_budget: Optional[bool] = None
+    budget_min: Optional[float] = None
+    budget_max: Optional[float] = None
+    budget_currency: Optional[str] = None
+    intent_lifespan: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
 class UserProfile(BaseModel):
@@ -81,6 +122,7 @@ class UserProfile(BaseModel):
     intent_lifespan: Optional[str] = None
     location: Optional[str] = None
     intent_active: Optional[bool] = True
+    company_verified: Optional[bool] = False
     photo: Optional[str] = None
     intents: Optional[List[UserIntentSchema]] = None
 

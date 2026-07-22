@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { submitContact } from "./api";
+import { Mail, ShieldCheck, Clock, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function ContactSection() {
   const [form, setForm] = useState({
@@ -39,411 +40,218 @@ export default function ContactSection() {
   };
 
   return (
-    <div className="premium-contact-section">
-      <style>{`
-        .premium-contact-section {
-          display: flex;
-          gap: 4rem;
-          align-items: stretch;
-          color: #ffffff;
-          font-family: 'Inter', system-ui, -apple-system, sans-serif;
-          margin-top: 2rem;
-          text-align: left;
-        }
-        
-        @media (max-width: 991px) {
-          .premium-contact-section {
-            flex-direction: column;
-            gap: 3rem;
+    <div
+      className="form-card-premium"
+      style={{
+        backgroundColor: "#ffffff",
+        borderRadius: "24px",
+        padding: "2.5rem 2.2rem",
+        border: "1px solid #e5e7eb",
+        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.05)",
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box"
+      }}
+    >
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1.3fr",
+        gap: "32px",
+        alignItems: "start"
+      }} className="contact-grid-wrapper">
+
+        <style>{`
+          @media (max-width: 850px) {
+            .contact-grid-wrapper {
+              grid-template-columns: 1fr !important;
+            }
           }
-        }
-        
-        .contact-info-col {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          gap: 2rem;
-        }
-        
-        .contact-intro {
-          margin-bottom: 1.5rem;
-        }
+        `}</style>
 
-        .contact-intro h3 {
-          font-size: 1.4rem;
-          font-weight: 700;
-          color: #ffffff;
-          margin: 0 0 0.75rem 0;
-          line-height: 1.3;
-        }
+        {/* LEFT COLUMN: CLEVER DIGITAL DESK CARDS (NO FAKE ADDRESS/PHONE) */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          
+          <div>
+            <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "#35453f", margin: "0 0 8px 0" }}>
+              Let's establish business connections
+            </h3>
+            <p style={{ color: "#4b5563", fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>
+              Whether you want to source key capabilities, list your supply offerings, or configure automated match alerts, our desk is ready to partner with you.
+            </p>
+          </div>
 
-        .contact-intro p {
-          color: #9ca3af;
-          font-size: 0.9rem;
-          line-height: 1.5;
-          margin: 0;
-        }
-        
-        .contact-cards-container {
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-        }
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            {/* Digital Desk Card */}
+            <div style={{
+              background: "#f8fafc",
+              borderRadius: "18px",
+              padding: "1.2rem 1.4rem",
+              border: "1px solid #e2e8f0",
+              display: "flex",
+              alignItems: "center",
+              gap: "16px"
+            }}>
+              <div style={{ width: "42px", height: "42px", borderRadius: "12px", background: "rgba(236, 94, 59, 0.12)", color: "#ec5e3b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <h4 style={{ fontSize: "0.88rem", fontWeight: "700", color: "#35453f", margin: "0 0 2px 0" }}>Digital-First Desk</h4>
+                <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: 0 }}>Sandton & Remote, South Africa</p>
+              </div>
+            </div>
 
-        .contact-card-premium {
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 16px;
-          padding: 1.5rem;
-          display: flex;
-          align-items: center;
-          gap: 1.25rem;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .contact-card-premium:hover {
-          transform: translateY(-4px);
-          background: rgba(255, 255, 255, 0.04);
-          border-color: rgba(241, 124, 19, 0.4);
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        .contact-icon-box {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
-          background: rgba(241, 124, 19, 0.1);
-          color: #f17c13;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          transition: all 0.3s ease;
-        }
-        
-        .contact-card-premium:hover .contact-icon-box {
-          background: #f17c13;
-          color: #ffffff;
-          box-shadow: 0 0 15px rgba(241, 124, 19, 0.4);
-        }
-        
-        .contact-card-text h4 {
-          font-size: 0.9rem;
-          font-weight: 600;
-          margin: 0 0 0.25rem 0;
-          color: #e5e7eb;
-        }
-        
-        .contact-card-text p {
-          font-size: 0.85rem;
-          margin: 0;
-          color: #9ca3af;
-          line-height: 1.5;
-        }
-        
-        .contact-card-text a {
-          color: #f17c13;
-          text-decoration: none;
-          font-weight: 500;
-          transition: color 0.2s;
-        }
+            {/* Rapid Response Desk Card */}
+            <div style={{
+              background: "#f8fafc",
+              borderRadius: "18px",
+              padding: "1.2rem 1.4rem",
+              border: "1px solid #e2e8f0",
+              display: "flex",
+              alignItems: "center",
+              gap: "16px"
+            }}>
+              <div style={{ width: "42px", height: "42px", borderRadius: "12px", background: "rgba(236, 94, 59, 0.12)", color: "#ec5e3b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Clock size={20} />
+              </div>
+              <div>
+                <h4 style={{ fontSize: "0.88rem", fontWeight: "700", color: "#35453f", margin: "0 0 2px 0" }}>Rapid Response Desk</h4>
+                <p style={{ fontSize: "0.82rem", color: "#ec5e3b", margin: 0, fontWeight: "600" }}>Reviewed within 2 business hours</p>
+              </div>
+            </div>
 
-        .contact-card-text a:hover {
-          color: #ff9d42;
-        }
-        
-        .contact-form-premium {
-          flex: 1.2;
-          background: rgba(255, 255, 255, 0.02);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 24px;
-          padding: 2.5rem;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .contact-form-premium::before {
-          content: '';
-          position: absolute;
-          top: -30%;
-          right: -30%;
-          width: 60%;
-          height: 60%;
-          background: radial-gradient(circle, rgba(241, 124, 19, 0.08) 0%, transparent 70%);
-          pointer-events: none;
-          z-index: 0;
-        }
-        
-        .contact-form-title {
-          font-size: 1.2rem;
-          font-weight: 700;
-          color: #ffffff;
-          margin: 0 0 1.25rem 0;
-          position: relative;
-          z-index: 1;
-        }
+            {/* Email Card */}
+            <div style={{
+              background: "#f8fafc",
+              borderRadius: "18px",
+              padding: "1.2rem 1.4rem",
+              border: "1px solid #e2e8f0",
+              display: "flex",
+              alignItems: "center",
+              gap: "16px"
+            }}>
+              <div style={{ width: "42px", height: "42px", borderRadius: "12px", background: "rgba(236, 94, 59, 0.12)", color: "#ec5e3b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Mail size={20} />
+              </div>
+              <div>
+                <h4 style={{ fontSize: "0.88rem", fontWeight: "700", color: "#35453f", margin: "0 0 2px 0" }}>General Inquiries</h4>
+                <p style={{ fontSize: "0.82rem", color: "#ec5e3b", margin: 0, fontWeight: "600" }}>contact@smallcircles.co.za</p>
+              </div>
+            </div>
+          </div>
 
-        .form-group-premium {
-          margin-bottom: 1.25rem;
-          position: relative;
-          z-index: 1;
-        }
-        
-        .form-row-premium {
-          display: flex;
-          gap: 1.25rem;
-          margin-bottom: 1.25rem;
-        }
-        
-        @media (max-width: 576px) {
-          .form-row-premium {
-            flex-direction: column;
-            gap: 1.25rem;
-            margin-bottom: 0;
-          }
-          .form-row-premium .form-group-premium {
-            margin-bottom: 1.25rem;
-          }
-        }
-        
-        .input-label-premium {
-          display: block;
-          font-size: 0.7rem;
-          font-weight: 600;
-          color: #9ca3af;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          margin-bottom: 0.4rem;
-        }
-        
-        .input-premium {
-          width: 100%;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 10px;
-          padding: 0.75rem 1rem;
-          color: #ffffff;
-          font-size: 0.85rem;
-          outline: none;
-          transition: all 0.2s ease;
-          box-sizing: border-box;
-        }
-        
-        .input-premium:focus {
-          border-color: #f17c13;
-          background: rgba(255, 255, 255, 0.05);
-          box-shadow: 0 0 0 3px rgba(241, 124, 19, 0.15);
-        }
-        
-        .input-premium::placeholder {
-          color: #52525b;
-        }
-
-        textarea.input-premium {
-          resize: vertical;
-          min-height: 120px;
-        }
-        
-        .submit-btn-premium {
-          width: 100%;
-          background: linear-gradient(135deg, #f17c13 0%, #d96a0a 100%);
-          color: #ffffff;
-          font-weight: 700;
-          font-size: 0.85rem;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          border: none;
-          border-radius: 10px;
-          padding: 0.85rem;
-          cursor: pointer;
-          position: relative;
-          z-index: 1;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 15px rgba(241, 124, 19, 0.25);
-        }
-        
-        .submit-btn-premium:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(241, 124, 19, 0.45);
-        }
-        
-        .submit-btn-premium:active:not(:disabled) {
-          transform: translateY(0);
-        }
-        
-        .submit-btn-premium:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .alert-premium {
-          border-radius: 10px;
-          padding: 0.75rem 1rem;
-          margin-bottom: 1.5rem;
-          font-weight: 500;
-          font-size: 0.8rem;
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-          from {
-            transform: translateY(-10px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
-
-      {/* LEFT COLUMN: CONTACT INFO */}
-      <div className="contact-info-col">
-        <div className="contact-intro">
-          <h3>Let's establish trust-based business connections</h3>
-          <p>
-            Whether you want to source key capabilities, list your supply offerings, or configure automated match alerts, our support desk is ready to partner with you.
-          </p>
         </div>
 
-        <div className="contact-cards-container">
-          {/* ADDRESS */}
-          <div className="contact-card-premium">
-            <div className="contact-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-            </div>
-            <div className="contact-card-text">
-              <h4>Headquarters</h4>
-              <p>Mada Center 8th floor, 379 Hudson St, New York, NY 10018</p>
-            </div>
-          </div>
+        {/* RIGHT COLUMN: CONTACT FORM */}
+        <div>
+          <h3 style={{ fontSize: "1.25rem", fontWeight: "700", color: "#35453f", margin: "0 0 20px 0" }}>
+            Send Us A Message
+          </h3>
 
-          {/* PHONE */}
-          <div className="contact-card-premium">
-            <div className="contact-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
+          {status === "success" && (
+            <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #86efac", color: "#166534", padding: "12px 16px", borderRadius: "12px", marginBottom: "20px", fontSize: "0.88rem", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
+              <CheckCircle size={18} /> Thank you! Your message was submitted successfully.
             </div>
-            <div className="contact-card-text">
-              <h4>Let's Talk</h4>
-              <p><a href="tel:+18001236879">+1 (800) 123-6879</a></p>
+          )}
+
+          {status === "error" && (
+            <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "12px 16px", borderRadius: "12px", marginBottom: "20px", fontSize: "0.88rem", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
+              <AlertCircle size={18} /> {errorMsg}
             </div>
-          </div>
+          )}
 
-          {/* EMAIL */}
-          <div className="contact-card-premium">
-            <div className="contact-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="20" height="16" x="2" y="4" rx="2"/>
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-              </svg>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+            
+            <div style={{ display: "flex", gap: "16px" }} className="form-row-premium">
+              <div className="input-group-premium" style={{ flex: 1 }}>
+                <label className="input-label-premium">First Name *</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  placeholder="John"
+                  className="input-premium"
+                  value={form.firstName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="input-group-premium" style={{ flex: 1 }}>
+                <label className="input-label-premium">Surname *</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  placeholder="Doe"
+                  className="input-premium"
+                  value={form.lastName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
             </div>
-            <div className="contact-card-text">
-              <h4>General Inquiries</h4>
-              <p><a href="mailto:contact@example.com">contact@example.com</a></p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* RIGHT COLUMN: MODERN FORM */}
-      <div className="contact-form-premium">
-        <h4 className="contact-form-title">Send Us A Message</h4>
-
-        {status === "success" && (
-          <div className="alert-premium" style={{ backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#34d399", border: "1px solid rgba(16, 185, 129, 0.2)" }}>
-            <span>✅</span>
-            <span>Thank you! Your message was submitted successfully.</span>
-          </div>
-        )}
-
-        {status === "error" && (
-          <div className="alert-premium" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", color: "#f87171", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
-            <span>❌</span>
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-row-premium">
-            <div className="form-group-premium" style={{ flex: 1 }}>
-              <label className="input-label-premium">First Name *</label>
+            <div className="input-group-premium">
+              <label className="input-label-premium">Email Address *</label>
               <input
-                type="text"
-                name="firstName"
-                placeholder="John"
+                type="email"
+                name="email"
+                placeholder="john@example.com"
                 className="input-premium"
-                value={form.firstName}
+                value={form.email}
                 onChange={handleChange}
                 required
               />
             </div>
-            <div className="form-group-premium" style={{ flex: 1 }}>
-              <label className="input-label-premium">Last Name *</label>
+
+            <div className="input-group-premium">
+              <label className="input-label-premium">Phone Number</label>
               <input
-                type="text"
-                name="lastName"
-                placeholder="Doe"
+                type="tel"
+                name="phone"
+                placeholder="+27 82 123 4567"
                 className="input-premium"
-                value={form.lastName}
+                value={form.phone}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="input-group-premium">
+              <label className="input-label-premium">Your Message *</label>
+              <textarea
+                name="message"
+                rows={4}
+                placeholder="Tell us about your project, timeline, and goals..."
+                className="input-premium"
+                value={form.message}
                 onChange={handleChange}
                 required
               />
             </div>
-          </div>
 
-          <div className="form-group-premium">
-            <label className="input-label-premium">Email Address *</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="john@example.com"
-              className="input-premium"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            {/* FAR RIGHT COMPACT ACTION BUTTON */}
+            <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: "8px" }}>
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                style={{
+                  backgroundColor: "#ec5e3b",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "14px 44px",
+                  borderRadius: "30px",
+                  fontWeight: "700",
+                  fontSize: "0.95rem",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(236, 94, 59, 0.35)",
+                  width: "auto",
+                  minWidth: "180px"
+                }}
+              >
+                {status === "loading" ? "Sending..." : "Send Message"}
+              </button>
+            </div>
 
-          <div className="form-group-premium">
-            <label className="input-label-premium">Phone Number</label>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="+1 (555) 000-0000"
-              className="input-premium"
-              value={form.phone}
-              onChange={handleChange}
-            />
-          </div>
+          </form>
+        </div>
 
-          <div className="form-group-premium">
-            <label className="input-label-premium">Your Message *</label>
-            <textarea
-              name="message"
-              placeholder="Tell us about your project, timeline, and goals..."
-              className="input-premium"
-              value={form.message}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <button type="submit" className="submit-btn-premium" disabled={status === "loading"}>
-            {status === "loading" ? "Sending Message..." : "Send Message"}
-          </button>
-        </form>
       </div>
     </div>
   );

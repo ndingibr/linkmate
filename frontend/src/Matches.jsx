@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { isAuthenticated, getUserProfile, getMatches, updateMatchStatus } from "./api";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import { Smile, Briefcase } from "lucide-react";
+import { Smile, ArrowLeft, ShieldCheck, MapPin, Building, ChevronRight, User, CheckCircle } from "lucide-react";
+import execHandshakeImg from "./img/exec_handshake.jpg";
 
 export default function Matches() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [matches, setMatches] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const [viewState, setViewState] = useState("list"); // "list" or "details"
   const [connectingMatchId, setConnectingMatchId] = useState(null);
   const [connectMessage, setConnectMessage] = useState(null);
-  const [mobileShowDetails, setMobileShowDetails] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
@@ -23,10 +26,6 @@ export default function Matches() {
     getMatches()
       .then((data) => {
         setMatches(data);
-        const pendingMatches = data.filter(m => m.status !== 'rejected' && m.status !== 'converted' && m.status !== 'connected');
-        if (pendingMatches.length > 0) {
-          setSelectedMatch(pendingMatches[0]);
-        }
       })
       .catch(err => console.error("Error loading matches:", err));
 
@@ -39,8 +38,10 @@ export default function Matches() {
       .catch((err) => console.error("Error loading user profile details:", err));
   }, [navigate]);
 
+  const activeMatches = matches.filter(m => m.status !== 'rejected' && m.status !== 'converted' && m.status !== 'connected');
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fbf7f3", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#eef1f6", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <Header />
 
       <style>{`
@@ -53,503 +54,374 @@ export default function Matches() {
           flex: 1;
           display: flex;
           flex-direction: column;
-        }
-
-        .msg-page-title {
-          font-size: 1.8rem;
-          font-weight: 900;
-          color: #111827;
-          margin: 0 0 4px 0;
-          letter-spacing: -0.025em;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          text-align: left;
-        }
-        .msg-page-sub {
-          font-size: 0.95rem;
-          color: #6b7280;
-          margin: 0 0 24px 0;
-          text-align: left;
-        }
-
-        /* LinkedIn-style Layout: Chat (Left) & Contacts (Right) */
-        .msg-layout {
-          display: grid;
-          grid-template-columns: 1fr 340px;
           gap: 24px;
-          background: #ffffff;
-          border: 1px solid #f3f4f6;
-          border-radius: 16px;
-          overflow: hidden;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-          min-height: 600px;
-          height: 650px;
         }
 
-        /* ─── LEFT PANEL: ACTIVE CHAT SCREEN ─── */
-        .chat-panel {
-          display: flex;
-          flex-direction: column;
-          border-right: 1px solid #f3f4f6;
-          height: 100%;
-          overflow: hidden;
-          background: #ffffff;
-        }
-
-        .chat-header-container {
+        /* Match Card Item in List View */
+        .match-card-item {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 16px;
-          border-bottom: 1px solid #e5e7eb;
-          padding: 18px 24px;
+          padding: 20px 24px;
           background: #ffffff;
-          text-align: left;
-        }
-        .chat-header-left {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          min-width: 0;
-        }
-        .chat-header-avatar {
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #f17c13 0%, #ffedd5 100%);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 1.5rem;
-          overflow: hidden;
-          flex-shrink: 0;
-        }
-        .chat-header-avatar img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        .chat-header-info {
-          min-width: 0;
-          text-align: left;
-        }
-        .chat-header-info h3 {
-          margin: 0;
-          font-size: 1.2rem;
-          font-weight: 700;
-          color: #111827;
-          line-height: 1.2;
-        }
-        .chat-header-info p {
-          font-size: 0.85rem;
-          color: #4b5563;
-          margin: 4px 0 0 0;
-          line-height: 1.3;
-        }
-        .chat-header-badge {
-          background: #fffbeb;
-          color: #d97706;
-          font-weight: 750;
-          font-size: 0.8rem;
-          padding: 6px 12px;
+          border: 1px solid #e5e7eb;
           border-radius: 20px;
-          border: 1px solid #fef3c7;
-          white-space: nowrap;
-          flex-shrink: 0;
-        }
-        .mobile-only-badge {
-          display: none !important;
-        }
-        .desktop-only-badge {
-          display: block !important;
-        }
-
-        /* ─── RIGHT PANEL: CONTACTS SIDEBAR LIST ─── */
-        .contacts-panel {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          overflow: hidden;
-          background: #fcfbfa;
-        }
-        .contacts-header {
-          padding: 18px 24px;
-          font-size: 0.95rem;
-          font-weight: 800;
-          color: #111827;
-          border-bottom: 1px solid #f3f4f6;
-          text-align: left;
-          background: #ffffff;
-        }
-        .contacts-items {
-          flex: 1;
-          overflow-y: auto;
-        }
-
-        /* Contact list item styled premium */
-        .contact-item {
-          display: flex;
-          flex-direction: column;
-          padding: 16px 20px;
-          border-bottom: 1px solid #f9f8f6;
           cursor: pointer;
-          transition: all 0.15s ease;
-          text-align: left;
-          position: relative;
+          transition: all 0.2s ease;
+          gap: 16px;
         }
-        .contact-item:hover {
-          background: #fdfaf6;
+        .match-card-item:hover {
+          border-color: #ec5e3b;
+          box-shadow: 0 8px 24px rgba(236, 94, 59, 0.08);
+          transform: translateY(-2px);
         }
-        .contact-item.selected {
-          background: #fff7ed;
-          border-left: 4px solid #f17c13;
-          padding-left: 16px;
-        }
-        
-        .contact-avatar-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .contact-avatar {
-          width: 38px;
-          height: 38px;
-          borderRadius: 50%;
-          background: linear-gradient(135deg, #f17c13 0%, #ffedd5 100%);
-          color: white;
+
+        .avatar-frame {
+          width: 52px;
+          height: 52px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #ec5e3b 0%, #ffedd5 100%);
+          color: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 800;
-          font-size: 0.85rem;
+          font-size: 1.2rem;
           overflow: hidden;
           flex-shrink: 0;
         }
-        .contact-avatar img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        
-        .contact-name {
-          font-weight: 800;
-          font-size: 0.9rem;
-          color: #111827;
-        }
-        .contact-company {
-          font-size: 0.75rem;
-          color: #f17c13;
-          font-weight: 700;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          max-width: 200px;
-        }
-        .contact-snippet {
-          font-size: 0.8rem;
-          color: #6b7280;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          margin-top: 4px;
-        }
 
-        .ps-btn-primary {
-          background: #f17c13;
+        /* Compact Far-Right Primary Action Button */
+        .btn-action-primary {
+          background: #ec5e3b;
           color: #ffffff;
           border: none;
-          padding: 10px 20px;
-          border-radius: 8px;
+          padding: 12px 32px;
+          border-radius: 30px;
           font-weight: 700;
           cursor: pointer;
-          font-size: 0.85rem;
+          font-size: 0.9rem;
+          box-shadow: 0 4px 14px rgba(236, 94, 59, 0.35);
           transition: background 0.15s;
+          width: auto;
+          min-width: 140px;
         }
-        .ps-btn-primary:hover {
-          background: #d96a0a;
+        .btn-action-primary:hover {
+          background: #d94e2b;
         }
-        .ps-btn-primary:disabled {
+        .btn-action-primary:disabled {
           opacity: 0.65;
           cursor: not-allowed;
         }
 
-        .ps-btn-secondary {
+        .btn-action-secondary {
           background: transparent;
-          color: #ef4444;
-          border: 1px solid #fecaca;
-          padding: 10px 20px;
-          border-radius: 8px;
-          font-weight: 700;
+          color: #6b7280;
+          border: 1px solid #d1d5db;
+          padding: 12px 24px;
+          border-radius: 30px;
+          font-weight: 600;
           cursor: pointer;
-          font-size: 0.85rem;
-          transition: background 0.15s;
+          font-size: 0.88rem;
+          transition: all 0.15s;
         }
-        .ps-btn-secondary:hover {
-          background: #fef2f2;
+        .btn-action-secondary:hover {
+          background: #f3f4f6;
+          color: #374151;
         }
 
-        @media (max-width: 768px) {
-          .msg-layout {
-            grid-template-columns: 1fr;
-            height: 580px;
-            min-height: unset;
-            border-radius: 12px;
-          }
-          .mobile-hide {
-            display: none !important;
-          }
-          .mobile-show {
-            display: flex !important;
-            flex-direction: column;
-            height: 100% !important;
-          }
-          .contacts-panel {
-            border-top: none;
-            height: 100% !important;
-          }
-          .mobile-back-btn {
-            display: flex !important;
-          }
-          .chat-header-container {
-            padding: 12px 14px;
-            gap: 10px;
-            flex-wrap: nowrap;
-          }
-          .chat-header-left {
-            gap: 10px;
-            flex: 1;
-            min-width: 0;
-          }
-          .chat-header-avatar {
-            width: 44px;
-            height: 44px;
-            font-size: 1.1rem;
-          }
-          .chat-header-info h3 {
-            font-size: 0.95rem;
-          }
-          .chat-header-info p {
-            font-size: 0.75rem;
-          }
-          .chat-header-badge {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-          }
-          .mobile-only-badge {
-            display: inline-block !important;
-            margin-top: 6px;
-            align-self: flex-start;
-          }
-          .desktop-only-badge {
-            display: none !important;
-          }
+        .btn-back-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: #ffffff;
+          color: #35453f;
+          border: 1px solid #d1d5db;
+          padding: 8px 18px;
+          border-radius: 20px;
+          font-weight: 700;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          width: fit-content;
+        }
+        .btn-back-link:hover {
+          border-color: #ec5e3b;
+          color: #ec5e3b;
+          background: #fff7ed;
         }
       `}</style>
 
       <div className="msg-container">
-        <h1 className="msg-page-title">
-          <Briefcase size={32} style={{ color: "#f17c13" }} />
-          Matches
-        </h1>
-        <p className="msg-page-sub">
-          Review your South African B2B synergy matches and establish mutual connections.
-        </p>
+        
+        {/* ════ PERMANENT HERO HEADER BANNER (SWATCH COLOR #eef1f6 WITH 104px PICTURE) ════ */}
+        <div style={{
+          backgroundColor: "#eef1f6",
+          borderRadius: "24px",
+          padding: "2.2rem 2.2rem",
+          color: "#1f2937",
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.03)",
+          border: "1px solid #d1d5db",
+          width: "100%",
+          boxSizing: "border-box"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "28px", flexWrap: "wrap" }}>
+            
+            {/* 104px Picture Frame (Matching Profile Page Avatar Size) */}
+            <div style={{
+              width: "104px",
+              height: "104px",
+              borderRadius: "50%",
+              backgroundColor: "#ffffff",
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "3.5px solid #d1d5db",
+              boxShadow: "0 6px 18px rgba(0, 0, 0, 0.08)",
+              flexShrink: 0
+            }}>
+              <img src={execHandshakeImg} alt="Matches" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </div>
 
-        <div className="msg-layout">
-          {/* LEFT PANEL: MATCH SYNERGY DETAILS */}
-          <div className={`chat-panel ${mobileShowDetails ? "mobile-show" : "mobile-hide"}`}>
-            {selectedMatch ? (() => {
-              const hasAccepted = (currentUserId === selectedMatch.user_id_1 && selectedMatch.status === "accepted_1") ||
-                                  (currentUserId === selectedMatch.user_id_2 && selectedMatch.status === "accepted_2");
-              return (
-                <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-                  {/* Header card formatted with avatar and details */}
-                  <div className="chat-header-container">
-                    <div className="chat-header-left">
-                      {/* Back button visible only on mobile */}
-                      <button
-                        type="button"
-                        className="mobile-back-btn"
-                        onClick={() => setMobileShowDetails(false)}
-                        style={{
-                          display: "none",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: "#f17c13",
-                          padding: "4px 4px 4px 0",
-                          marginRight: "4px"
-                        }}
-                      >
-                        <span style={{ fontSize: "1.5rem", fontWeight: "900" }}>←</span>
-                      </button>
-                      <div className="chat-header-avatar">
-                        {selectedMatch.partner.photo ? (
-                          <img src={selectedMatch.partner.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          selectedMatch.partner.first_name ? selectedMatch.partner.first_name[0].toUpperCase() : "?"
-                        )}
-                      </div>
-                      <div className="chat-header-info">
-                        <h3>
-                          {selectedMatch.partner.first_name} {selectedMatch.partner.last_name}
-                        </h3>
-                        <p style={{ margin: "2px 0 0 0" }}>
-                          {selectedMatch.partner.role || "Business Friend"} @ <strong>{selectedMatch.partner.company_name || "N/A"}</strong>
-                        </p>
-                        {/* Mobile-only Compatibility Badge */}
-                        <div className="chat-header-badge mobile-only-badge">
-                          {Math.round(selectedMatch.score)}% Compatibility
+            {/* Header Content */}
+            <div style={{ flex: 1, minWidth: "240px" }}>
+              <div style={{ color: "#ec5e3b", fontWeight: "800", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <CheckCircle size={14} /> Matchmaker Active
+              </div>
+
+              <h1 style={{ fontSize: "2.1rem", fontWeight: "800", color: "#35453f", margin: "0 0 6px 0", letterSpacing: "-0.02em" }}>
+                Matches
+              </h1>
+
+              <p style={{ color: "#4b5563", fontSize: "0.95rem", margin: 0, fontWeight: "500", lineHeight: "1.5", maxWidth: "820px" }}>
+                As soon as high-probability business matches happen, you will see them here in real time.
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ════ VIEW 1: MATCHES LIST VIEW (INITIAL LOAD) ════ */}
+        {viewState === "list" && (
+          <div className="form-card-premium" style={{ backgroundColor: "#ffffff", borderRadius: "24px", padding: "2rem 2.2rem", border: "1px solid #e5e7eb", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.05)", width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
+            
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "700", color: "#35453f", margin: 0 }}>
+                Introducible Matches
+              </h2>
+              <span style={{ backgroundColor: "#ec5e3b", color: "#ffffff", padding: "4px 14px", borderRadius: "16px", fontSize: "0.8rem", fontWeight: "700" }}>
+                {activeMatches.length} {activeMatches.length === 1 ? "Match" : "Matches"}
+              </span>
+            </div>
+
+            {activeMatches.length === 0 ? (
+              <div style={{ padding: "60px 20px", textAlign: "center", border: "1px dashed #d1d5db", borderRadius: "20px", background: "#f8fafc" }}>
+                <Smile size={42} color="#ec5e3b" style={{ margin: "0 auto 12px", opacity: 0.8 }} />
+                <h3 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#35453f", margin: "0 0 6px" }}>No Matches Available Yet</h3>
+                <p style={{ color: "#6b7280", fontSize: "0.9rem", maxWidth: "460px", margin: "0 auto", lineHeight: "1.5" }}>
+                  Our Matchmaker engine is actively evaluating registered intentions across South Africa. High-synergy matches will appear right here as soon as they are found.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {activeMatches.map((m) => {
+                  const initial = m.partner.first_name ? m.partner.first_name[0].toUpperCase() : "?";
+                  const userHasAccepted = (currentUserId === m.user_id_1 && m.status === "accepted_1") ||
+                                      (currentUserId === m.user_id_2 && m.status === "accepted_2");
+
+                  return (
+                    <div
+                      key={m.id}
+                      className="match-card-item"
+                      onClick={() => {
+                        setSelectedMatch(m);
+                        setViewState("details");
+                        setConnectMessage(null);
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1, minWidth: 0 }}>
+                        <div className="avatar-frame">
+                          {m.partner.photo ? (
+                            <img src={m.partner.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : (
+                            initial
+                          )}
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                            <h3 style={{ fontSize: "1.05rem", fontWeight: "700", color: "#1f2937", margin: 0 }}>
+                              {m.partner.first_name} {m.partner.last_name}
+                            </h3>
+                            <span style={{ backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", fontSize: "0.75rem", fontWeight: "700", padding: "2px 8px", borderRadius: "12px" }}>
+                              {Math.round(m.score)}% Synergy
+                            </span>
+                          </div>
+
+                          <p style={{ color: "#ec5e3b", fontSize: "0.85rem", fontWeight: "600", margin: "2px 0 4px" }}>
+                            {m.partner.role || "Executive Member"} {m.partner.company_name ? `• ${m.partner.company_name}` : ""}
+                          </p>
+
+                          <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            "{m.partner.intent}"
+                          </p>
+
+                          {userHasAccepted && (
+                            <div style={{ fontSize: "0.78rem", color: "#c2410c", marginTop: "4px", fontWeight: "600" }}>
+                              • Authorization sent — Awaiting partner confirmation
+                            </div>
+                          )}
                         </div>
                       </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#ec5e3b", fontWeight: "700", fontSize: "0.85rem" }}>
+                        View Details <ChevronRight size={18} />
+                      </div>
                     </div>
-                    
-                    {/* Desktop-only Badge */}
-                    <div className="chat-header-badge desktop-only-badge">
-                      {Math.round(selectedMatch.score)}% Compatibility
+                  );
+                })}
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* ════ VIEW 2: SINGLE MATCH DETAILS VIEW (ON CLICK) ════ */}
+        {viewState === "details" && selectedMatch && (() => {
+          const hasAccepted = (currentUserId === selectedMatch.user_id_1 && selectedMatch.status === "accepted_1") ||
+                              (currentUserId === selectedMatch.user_id_2 && selectedMatch.status === "accepted_2");
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%" }}>
+              
+              {/* Main Details Card (White Pane) */}
+              <div className="form-card-premium" style={{ backgroundColor: "#ffffff", borderRadius: "24px", padding: "2.2rem 2.2rem", border: "1px solid #e5e7eb", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.05)", display: "flex", flexDirection: "column", gap: "24px", width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
+                
+                {/* Back to Matches Button Inside White Pane */}
+                <div>
+                  <button
+                    type="button"
+                    className="btn-back-link"
+                    onClick={() => setViewState("list")}
+                  >
+                    <ArrowLeft size={16} /> Back to Matches
+                  </button>
+                </div>
+
+                {/* Header Row */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "20px", borderBottom: "1px solid #f3f4f6", flexWrap: "wrap", gap: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                    <div className="avatar-frame" style={{ width: "64px", height: "64px", fontSize: "1.5rem" }}>
+                      {selectedMatch.partner.photo ? (
+                        <img src={selectedMatch.partner.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        selectedMatch.partner.first_name ? selectedMatch.partner.first_name[0].toUpperCase() : "?"
+                      )}
+                    </div>
+
+                    <div>
+                      <h2 style={{ fontSize: "1.4rem", fontWeight: "800", color: "#35453f", margin: "0 0 4px" }}>
+                        {selectedMatch.partner.first_name} {selectedMatch.partner.last_name}
+                      </h2>
+                      <p style={{ color: "#ec5e3b", fontSize: "0.92rem", margin: 0, fontWeight: "600" }}>
+                        {selectedMatch.partner.role || "Executive Member"} {selectedMatch.partner.company_name ? `• ${selectedMatch.partner.company_name}` : ""}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Scrollable details wrapper */}
-                  <div style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "24px", boxSizing: "border-box" }}>
+                  <span style={{ backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", fontSize: "0.85rem", fontWeight: "700", padding: "6px 16px", borderRadius: "20px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                    <CheckCircle size={15} /> {Math.round(selectedMatch.score)}% Synergy Match
+                  </span>
+                </div>
 
-                    {/* Intention statement */}
-                    <div>
-                      <h4 style={{ margin: "0 0 8px 0", fontSize: "0.9rem", color: "#374151", fontWeight: "700" }}>Partner Intention</h4>
-                      <div style={{ 
-                        padding: "16px", 
-                        background: "#fafafb", 
-                        borderRadius: "12px", 
-                        border: "1px solid #e5e7eb", 
-                        fontSize: "0.9rem", 
-                        color: "#111827", 
-                        lineHeight: 1.5,
-                        whiteSpace: "pre-line",
-                        textAlign: "left"
-                      }}>
-                        "{selectedMatch.partner.intent}"
-                      </div>
+                {/* Partner Business Intention */}
+                <div>
+                  <h3 style={{ margin: "0 0 10px 0", fontSize: "0.85rem", color: "#6b7280", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    Partner Business Intention
+                  </h3>
+                  <div style={{ 
+                    padding: "20px 22px", 
+                    background: "#f8fafc", 
+                    borderRadius: "18px", 
+                    border: "1px solid #e2e8f0", 
+                    fontSize: "0.95rem", 
+                    color: "#1f2937", 
+                    lineHeight: 1.6,
+                    fontStyle: "italic"
+                  }}>
+                    "{selectedMatch.partner.intent}"
+                  </div>
+                </div>
+
+                {/* Synergy Evaluation */}
+                <div>
+                  <h3 style={{ margin: "0 0 10px 0", fontSize: "0.85rem", color: "#6b7280", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    Synergy Evaluation
+                  </h3>
+                  <div style={{ 
+                    padding: "20px 22px", 
+                    background: "#fff7ed", 
+                    borderRadius: "18px", 
+                    border: "1px solid #ffedd5", 
+                    fontSize: "0.92rem", 
+                    color: "#c2410c", 
+                    lineHeight: 1.6
+                  }}>
+                    {selectedMatch.match_reason}
+                  </div>
+                </div>
+
+                {/* Connection Status Toast */}
+                {connectMessage && (
+                  <div style={{
+                    padding: "14px 20px",
+                    borderRadius: "14px",
+                    fontSize: "0.92rem",
+                    fontWeight: "600",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    background: connectMessage.type === "success" ? "#f0fdf4" : "#fff7ed",
+                    border: connectMessage.type === "success" ? "1px solid #86efac" : "1px solid #ffedd5",
+                    color: connectMessage.type === "success" ? "#166534" : "#c2410c"
+                  }}>
+                    {connectMessage.text}
+                  </div>
+                )}
+
+                {/* Compact Far-Right Action Buttons */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "12px", paddingTop: "12px" }}>
+                  {hasAccepted ? (
+                    <div style={{
+                      background: "#fff7ed",
+                      border: "1px solid #ffedd5",
+                      color: "#c2410c",
+                      padding: "12px 24px",
+                      borderRadius: "30px",
+                      fontSize: "0.88rem",
+                      fontWeight: "700",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}>
+                      <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#ec5e3b" }}></span>
+                      Authorization sent — Awaiting partner confirmation...
                     </div>
-
-                    {/* Synergy reasoning */}
-                    <div>
-                      <h4 style={{ margin: "0 0 8px 0", fontSize: "0.9rem", color: "#374151", fontWeight: "700" }}>Why You Matched</h4>
-                      <div style={{ 
-                        padding: "16px", 
-                        background: "#fdfaf6", 
-                        borderRadius: "12px", 
-                        border: "1px solid #eddcd2", 
-                        fontSize: "0.875rem", 
-                        color: "#4b5563", 
-                        lineHeight: 1.5,
-                        textAlign: "left"
-                      }}>
-                        {selectedMatch.match_reason}
-                      </div>
-                    </div>
-
-                    {/* Connection Status Message Banner */}
-                    {connectMessage && (
-                      <div style={{
-                        marginTop: "16px",
-                        padding: "12px 18px",
-                        borderRadius: "8px",
-                        fontSize: "0.9rem",
-                        fontWeight: "600",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        background: connectMessage.type === "success" ? "#ecfdf5" : "#fdfaf6",
-                        border: connectMessage.type === "success" ? "1px solid #a7f3d0" : "1px solid #eddcd2",
-                        color: connectMessage.type === "success" ? "#047857" : "#d97706"
-                      }}>
-                        {connectMessage.text}
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "16px" }}>
-                      {hasAccepted ? (
-                        <div style={{
-                          background: "#fdfaf6",
-                          border: "1px solid #eddcd2",
-                          color: "#d97706",
-                          padding: "10px 20px",
-                          borderRadius: "10px",
-                          fontSize: "0.9rem",
-                          fontWeight: "700",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px"
-                        }}>
-                          <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#f17c13" }}></span>
-                          Awaiting partner authorization...
-                        </div>
-                      ) : (
-                        <button 
-                          type="button" 
-                          className="ps-btn-primary" 
-                          style={{ padding: "12px 28px", borderRadius: "12px", width: "auto" }}
-                          disabled={connectingMatchId === selectedMatch.id}
-                          onClick={() => {
-                            setConnectingMatchId(selectedMatch.id);
-                            setConnectMessage(null);
-                            
-                            updateMatchStatus(selectedMatch.id, "accept")
-                              .then((res) => {
-                                getMatches().then((latestMatches) => {
-                                  setMatches(latestMatches);
-                                  window.dispatchEvent(new CustomEvent("refreshHeaderCounts"));
-                                  const status = res.status;
-                                  
-                                  if (status === "connected") {
-                                    setConnectMessage({ type: "success", text: "🎉 It's a Match! You are now connected." });
-                                    // Navigate to next unconnected match after 2.5 seconds
-                                    setTimeout(() => {
-                                      const remaining = latestMatches.filter(m => m.id !== selectedMatch.id && m.status !== 'connected' && m.status !== 'rejected');
-                                      const next = remaining[0] || null;
-                                      setSelectedMatch(next);
-                                      setConnectingMatchId(null);
-                                      setConnectMessage(null);
-                                    }, 2500);
-                                  } else {
-                                    setConnectMessage({ type: "info", text: "Awaiting partner authorization..." });
-                                    const updated = latestMatches.find(m => m.id === selectedMatch.id);
-                                    if (updated) {
-                                      setSelectedMatch(updated);
-                                    }
-                                    setConnectingMatchId(null);
-                                  }
-                                });
-                              })
-                              .catch(err => {
-                                console.error("Error accepting match:", err);
-                                setConnectingMatchId(null);
-                              });
-                          }}
-                        >
-                          {connectingMatchId === selectedMatch.id ? "Connecting..." : "Connect"}
-                        </button>
-                      )}
-                      <button 
-                        type="button" 
-                        className="ps-btn-secondary" 
-                        style={{ padding: "12px 24px", borderRadius: "12px", width: "auto", color: "#ef4444", borderColor: "#fecaca" }}
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="btn-action-secondary"
                         disabled={connectingMatchId === selectedMatch.id}
                         onClick={() => {
-                          if (window.confirm("Are you sure you want to ignore this partner match?")) {
+                          if (window.confirm("Decline this match?")) {
                             updateMatchStatus(selectedMatch.id, "reject")
                               .then(() => {
                                 getMatches().then((latestMatches) => {
                                   setMatches(latestMatches);
+                                  setViewState("list");
                                   window.dispatchEvent(new CustomEvent("refreshHeaderCounts"));
                                 });
-                                setSelectedMatch(null);
                               })
                               .catch(err => console.error(err));
                           }
@@ -557,121 +429,53 @@ export default function Matches() {
                       >
                         Decline match
                       </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })() : (
-              <div className="chat-panel" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: "40px", color: "#6b7280" }}>
-                Select a match to view details.
-              </div>
-            )}
-          </div>
 
-          {/* RIGHT PANEL: NEW PARTNER MATCHES SIDEBAR LIST */}
-          <div className={`contacts-panel ${mobileShowDetails ? "mobile-hide" : "mobile-show"}`}>
-            <div className="contacts-header">
-              New Matches
-            </div>
-            <div className="contacts-items">
-              {(() => {
-                const pendingMatches = matches.filter(m => m.status !== 'rejected' && m.status !== 'converted' && m.status !== 'connected');
-                return pendingMatches.length === 0 ? (
-                  <div style={{ 
-                    margin: "20px 16px",
-                    padding: "32px 16px", 
-                    color: "#6b7280", 
-                    textAlign: "center", 
-                    border: "1px dashed #e5e7eb", 
-                    borderRadius: "12px", 
-                    background: "#fafafb" 
-                  }}>
-                    <Smile size={28} style={{ color: "#9ca3af", marginBottom: "8px", opacity: 0.7 }} />
-                    <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "#374151" }}>No matches yet</div>
-                    <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "4px", lineHeight: 1.4 }}>
-                      Try updating your intention text to trigger new AI matches.
-                    </div>
-                  </div>
-                ) : (
-                  pendingMatches.map((m) => {
-                    const isSelected = selectedMatch && selectedMatch.id === m.id;
-                    const initial = m.partner.first_name ? m.partner.first_name[0].toUpperCase() : "?";
-                    
-                    const userHasAccepted = (currentUserId === m.user_id_1 && m.status === "accepted_1") ||
-                                            (currentUserId === m.user_id_2 && m.status === "accepted_2");
-                    
-                    return (
-                      <div
-                        key={m.id}
-                        className={`contact-item ${isSelected ? "selected" : ""}`}
+                      <button 
+                        type="button" 
+                        className="btn-action-primary" 
+                        disabled={connectingMatchId === selectedMatch.id}
                         onClick={() => {
-                          setSelectedMatch(m);
-                          setMobileShowDetails(true);
-                        }}
-                        style={{ position: "relative" }}
-                      >
-                        {userHasAccepted ? (
-                          <span style={{
-                            position: "absolute",
-                            top: "14px",
-                            right: "16px",
-                            background: "#fafafb",
-                            color: "#f17c13",
-                            fontSize: "0.68rem",
-                            fontWeight: "750",
-                            padding: "3px 8px",
-                            borderRadius: "10px",
-                            border: "1px solid #eddcd2"
-                          }}>
-                            Pending
-                          </span>
-                        ) : (
-                          <span style={{
-                            position: "absolute",
-                            top: "14px",
-                            right: "16px",
-                            background: "#fffbeb",
-                            color: "#d97706",
-                            fontSize: "0.7rem",
-                            fontWeight: "750",
-                            padding: "3px 8px",
-                            borderRadius: "10px",
-                            border: "1px solid #fef3c7"
-                          }}>
-                            {Math.round(m.score)}% Match
-                          </span>
-                        )}
-                        
-                        <div className="contact-avatar-row">
-                          <div className="contact-avatar">
-                            {m.partner.photo ? (
-                              <img src={m.partner.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            ) : (
-                              initial
-                            )}
-                          </div>
+                          setConnectingMatchId(selectedMatch.id);
+                          setConnectMessage(null);
                           
-                          <div>
-                            <div className="contact-name">
-                              {m.partner.first_name} {m.partner.last_name}
-                            </div>
-                            <div className="contact-company">
-                              {m.partner.company_name || "Business Friend"}
-                            </div>
-                          </div>
-                        </div>
+                          updateMatchStatus(selectedMatch.id, "accept")
+                            .then((res) => {
+                              getMatches().then((latestMatches) => {
+                                setMatches(latestMatches);
+                                window.dispatchEvent(new CustomEvent("refreshHeaderCounts"));
+                                const status = res.status;
+                                
+                                if (status === "connected") {
+                                  setConnectMessage({ type: "success", text: "🎉 It's a Match! You are now connected." });
+                                  setTimeout(() => {
+                                    setViewState("list");
+                                    setConnectingMatchId(null);
+                                    setConnectMessage(null);
+                                  }, 2500);
+                                } else {
+                                  setConnectMessage({ type: "success", text: "Authorization sent! Awaiting partner response." });
+                                  setConnectingMatchId(null);
+                                }
+                              });
+                            })
+                            .catch(err => {
+                              console.error("Connect error:", err);
+                              setConnectingMatchId(null);
+                            });
+                        }}
+                      >
+                        {connectingMatchId === selectedMatch.id ? "Connecting..." : "Connect & Introduce"}
+                      </button>
+                    </>
+                  )}
+                </div>
 
-                        <div className="contact-snippet" style={{ color: userHasAccepted ? "#9ca3af" : "#6b7280", marginTop: "2px" }}>
-                          {userHasAccepted ? "Awaiting partner connection..." : (m.partner.role || "Complementary Intent")}
-                        </div>
-                      </div>
-                    );
-                  })
-                );
-              })()}
+              </div>
+
             </div>
-          </div>
-        </div>
+          );
+        })()}
+
       </div>
 
       <Footer />

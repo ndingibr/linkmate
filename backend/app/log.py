@@ -41,6 +41,7 @@ def init_db():
     c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS comm_hours TEXT")
     c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS intent_lifespan TEXT")
     c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS photo TEXT")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS company_verified BOOLEAN DEFAULT FALSE")
     c.execute("ALTER TABLE users DROP COLUMN IF EXISTS intent_vector")
     c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS intent_vector vector(768)")
 
@@ -71,15 +72,32 @@ def init_db():
     CREATE TABLE IF NOT EXISTS user_intents (
         id SERIAL PRIMARY KEY,
         user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT,
         industry_id INT REFERENCES industries(id) ON DELETE RESTRICT,
         sub_industry_id INT REFERENCES sub_industries(id) ON DELETE RESTRICT,
         type TEXT NOT NULL CHECK (type IN ('buy', 'give')),
         intention TEXT NOT NULL,
+        influence TEXT,
+        has_budget BOOLEAN DEFAULT FALSE,
+        budget_min NUMERIC,
+        budget_max NUMERIC,
+        budget_currency TEXT DEFAULT 'ZAR',
+        intent_lifespan TEXT DEFAULT '90 Days',
+        is_active BOOLEAN DEFAULT TRUE,
         intent_vector vector(768),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
+
+    c.execute("ALTER TABLE user_intents ADD COLUMN IF NOT EXISTS title TEXT;")
+    c.execute("ALTER TABLE user_intents ADD COLUMN IF NOT EXISTS influence TEXT;")
+    c.execute("ALTER TABLE user_intents ADD COLUMN IF NOT EXISTS has_budget BOOLEAN DEFAULT FALSE;")
+    c.execute("ALTER TABLE user_intents ADD COLUMN IF NOT EXISTS budget_min NUMERIC;")
+    c.execute("ALTER TABLE user_intents ADD COLUMN IF NOT EXISTS budget_max NUMERIC;")
+    c.execute("ALTER TABLE user_intents ADD COLUMN IF NOT EXISTS budget_currency TEXT DEFAULT 'ZAR';")
+    c.execute("ALTER TABLE user_intents ADD COLUMN IF NOT EXISTS intent_lifespan TEXT DEFAULT '90 Days';")
+    c.execute("ALTER TABLE user_intents ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;")
 
      # 2. Seed Industries and Sub-Industries
     seeds = {
@@ -263,11 +281,27 @@ def init_db():
     )
     """)
     c.execute("""
-    CREATE TABLE IF NOT EXISTS matches_status_snapshot (
+    CREATE TABLE IF NOT EXISTS matches_history (
         id SERIAL PRIMARY KEY,
         match_id INT REFERENCES matches(id) ON DELETE CASCADE,
-        status TEXT NOT NULL,
-        logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        match_time TIMESTAMP,
+        match_percentage_numeric NUMERIC,
+        match_percentage_formatted VARCHAR(20),
+        match_status TEXT NOT NULL,
+        ai_synergy_reason TEXT,
+        industry TEXT,
+        sub_industry TEXT,
+        user_1_id INT,
+        user_1_name TEXT,
+        user_1_company TEXT,
+        user_1_intent_type TEXT,
+        user_1_intention TEXT,
+        user_2_id INT,
+        user_2_name TEXT,
+        user_2_company TEXT,
+        user_2_intent_type TEXT,
+        user_2_intention TEXT,
+        model_run_update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 

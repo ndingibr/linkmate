@@ -1,3 +1,4 @@
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, status, BackgroundTasks
 from datetime import timedelta
 
@@ -23,7 +24,7 @@ from app.core.config import settings
 router = APIRouter(tags=["users"])
 
 @router.post("/signup", response_model=UserProfile, status_code=status.HTTP_201_CREATED)
-def signup_user(data: UserSignUp):
+def signup_user(data: UserSignUp, background_tasks: BackgroundTasks):
     if user_repo.email_exists(data.email):
         if data.email.lower() == "ndinbr@gmail.com":
             user_repo.delete_user_by_email(data.email)
@@ -44,6 +45,19 @@ def signup_user(data: UserSignUp):
         auth_provider="email",
         is_active=False
     )
+
+    user_repo.update_user(
+        user["id"],
+        role=data.role,
+        location=data.location,
+        intent=data.intention,
+        influence=data.influence,
+        has_budget=data.has_budget,
+        budget_min=data.budget_min,
+        budget_max=data.budget_max,
+        budget_currency=data.budget_currency,
+        intent_lifespan=data.intent_lifespan
+    )
     
     try:
         import random
@@ -51,15 +65,15 @@ def signup_user(data: UserSignUp):
         user_repo.create_otp(user["email"], otp_code, "activation")
         
         from app.services.email import send_activation_otp_email
-        send_activation_otp_email(user["email"], user["first_name"], otp_code)
+        background_tasks.add_task(send_activation_otp_email, user["email"], user["first_name"], otp_code)
     except Exception as e:
-        print(f"Error sending activation OTP email: {e}")
+        print(f"Error queueing activation OTP email: {e}")
         
-    return user
+    return user_repo.get_user_by_id(user["id"])
 
 
 @router.post("/activate")
-def activate_user(data: UserActivateRequest):
+def activate_user(data: UserActivateRequest, background_tasks: BackgroundTasks):
     user = user_repo.get_user_by_email(data.email)
     if not user:
         raise HTTPException(
@@ -73,10 +87,86 @@ def activate_user(data: UserActivateRequest):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired verification code"
         )
+
+    # Check if email domain is corporate vs public webmail
+    email_domain = data.email.lower().split("@")[-1] if "@" in data.email else ""
+    PUBLIC_WEBMAIL_DOMAINS = {
+        "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", 
+        "icloud.com", "live.com", "aol.com", "protonmail.com", "zoho.com", "mail.com"
+    }
+    is_corporate = bool(email_domain) and (email_domain not in PUBLIC_WEBMAIL_DOMAINS)
         
-    user_repo.update_user(user["id"], is_active=True)
+    user_repo.update_user(user["id"], is_active=True, company_verified=is_corporate)
     user_repo.delete_otp(data.email, "activation")
-    return {"message": "Account activated successfully"}
+
+    # Automatically create initial business intention if statement was submitted during onboarding
+    if user.get("intent") and user["intent"].strip():
+        intent_text = user["intent"].strip()
+        from app.services.intent_service import extract_intent_segments
+        from app.services.matching_service import generate_embedding, run_matching_for_user
+
+        segments = extract_intent_segments(intent_text)
+        ind_id = 1
+        sub_id = 1
+        itype = "buy"
+
+        conn = get_conn()
+        c = conn.cursor()
+
+        if segments:
+            s = segments[0]
+            ind_name = s.get("industry", "General Business").strip()
+            sub_name = s.get("sub_industry", "Business Services").strip()
+            itype = s.get("type", itype)
+            
+            c.execute("SELECT id FROM industries WHERE LOWER(name) = LOWER(%s)", (ind_name,))
+            row = c.fetchone()
+            if row:
+                ind_id = row["id"]
+            else:
+                c.execute("INSERT INTO industries (name) VALUES (%s) RETURNING id", (ind_name,))
+                ind_id = c.fetchone()["id"]
+                
+            c.execute("SELECT id FROM sub_industries WHERE LOWER(name) = LOWER(%s)", (sub_name,))
+            row = c.fetchone()
+            if row:
+                sub_id = row["id"]
+            else:
+                c.execute("INSERT INTO sub_industries (name) VALUES (%s) RETURNING id", (sub_name,))
+                sub_id = c.fetchone()["id"]
+
+        c.execute("""
+            INSERT INTO industry_sub_industries (industry_id, sub_industry_id)
+            VALUES (%s, %s) ON CONFLICT DO NOTHING
+        """, (ind_id, sub_id))
+
+        emb = generate_embedding(intent_text)
+        title = intent_text[:40] + "..." if len(intent_text) > 40 else intent_text
+
+        c.execute("""
+            INSERT INTO user_intents (
+                user_id, title, industry_id, sub_industry_id, type, intention,
+                influence, has_budget, budget_min, budget_max, budget_currency,
+                intent_lifespan, is_active, intent_vector
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s
+            )
+        """, (
+            user["id"], title, ind_id, sub_id, itype, intent_text,
+            user.get("influence"), user.get("has_budget"), user.get("budget_min"), user.get("budget_max"), user.get("budget_currency"),
+            user.get("intent_lifespan"), True, emb if len(emb) == 768 else None
+        ))
+        conn.commit()
+        conn.close()
+
+        background_tasks.add_task(run_matching_for_user, user["id"])
+
+    return {
+        "message": "Account activated successfully",
+        "company_verified": is_corporate
+    }
 
 @router.post("/signin", response_model=TokenResponse)
 def signin_user(data: UserSignIn):
@@ -105,7 +195,7 @@ def signin_user(data: UserSignIn):
     
 
 @router.post("/forgot-password")
-def forgot_password(data: ForgotPasswordRequest):
+def forgot_password(data: ForgotPasswordRequest, background_tasks: BackgroundTasks):
     user = user_repo.get_user_by_email(data.email)
     if user:
         import random
@@ -113,13 +203,14 @@ def forgot_password(data: ForgotPasswordRequest):
         user_repo.create_otp(user["email"], otp_code, "reset")
         try:
             from app.services.email import send_password_reset_otp_email
-            send_password_reset_otp_email(
+            background_tasks.add_task(
+                send_password_reset_otp_email,
                 to_email=user["email"],
                 first_name=user["first_name"],
                 otp_code=otp_code
             )
         except Exception as e:
-            print(f"Failed to send reset OTP email: {e}")
+            print(f"Failed to queue reset OTP email: {e}")
             
     return {"message": "If an account matches that email, a 6-digit verification code has been sent."}
 
@@ -290,6 +381,191 @@ def get_user_matches(current_user: dict = Depends(auth.get_current_user)):
     return matches
 
 
+# -----------------------------
+# Multi-Intention Management API
+# -----------------------------
+from app.schemas import UserIntentCreate, UserIntentUpdate
+
+@router.get("/users/intents", response_model=List[UserIntentSchema])
+def get_user_intents(current_user: dict = Depends(auth.get_current_user)):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("""
+        SELECT ui.id, ui.user_id, ui.title, ui.industry_id, i.name as industry_name, 
+               ui.sub_industry_id, s.name as sub_industry_name, 
+               ui.type, ui.intention, ui.influence, ui.has_budget, 
+               ui.budget_min, ui.budget_max, ui.budget_currency, 
+               ui.intent_lifespan, ui.is_active, ui.created_at
+        FROM user_intents ui
+        LEFT JOIN industries i ON ui.industry_id = i.id
+        LEFT JOIN sub_industries s ON ui.sub_industry_id = s.id
+        WHERE ui.user_id = %s
+        ORDER BY ui.created_at DESC
+    """, (current_user["id"],))
+    rows = c.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+@router.post("/users/intents", response_model=UserIntentSchema)
+def create_user_intent(
+    data: UserIntentCreate,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    from app.services.intent_service import extract_intent_segments
+    from app.services.matching_service import generate_embedding, run_matching_for_user
+
+    segments = extract_intent_segments(data.intention)
+    ind_id = data.industry_id
+    sub_id = data.sub_industry_id
+    itype = data.type or "buy"
+    
+    conn = get_conn()
+    c = conn.cursor()
+    
+    if (not ind_id or not sub_id) and segments:
+        s = segments[0]
+        ind_name = s.get("industry", "General Business").strip()
+        sub_name = s.get("sub_industry", "Business Services").strip()
+        itype = s.get("type", itype)
+        
+        c.execute("SELECT id FROM industries WHERE LOWER(name) = LOWER(%s)", (ind_name,))
+        row = c.fetchone()
+        if row:
+            ind_id = row["id"]
+        else:
+            c.execute("INSERT INTO industries (name) VALUES (%s) RETURNING id", (ind_name,))
+            ind_id = c.fetchone()["id"]
+            
+        c.execute("SELECT id FROM sub_industries WHERE LOWER(name) = LOWER(%s)", (sub_name,))
+        row = c.fetchone()
+        if row:
+            sub_id = row["id"]
+        else:
+            c.execute("INSERT INTO sub_industries (name) VALUES (%s) RETURNING id", (sub_name,))
+            sub_id = c.fetchone()["id"]
+
+    if not ind_id or not sub_id:
+        c.execute("SELECT id FROM industries LIMIT 1")
+        ind_id = (c.fetchone() or {}).get("id", 1)
+        c.execute("SELECT id FROM sub_industries LIMIT 1")
+        sub_id = (c.fetchone() or {}).get("id", 1)
+
+    c.execute("""
+        INSERT INTO industry_sub_industries (industry_id, sub_industry_id)
+        VALUES (%s, %s) ON CONFLICT DO NOTHING
+    """, (ind_id, sub_id))
+
+    emb = generate_embedding(data.intention)
+
+    title = data.title or (data.intention[:40] + "..." if len(data.intention) > 40 else data.intention)
+
+    c.execute("""
+        INSERT INTO user_intents (
+            user_id, title, industry_id, sub_industry_id, type, intention,
+            influence, has_budget, budget_min, budget_max, budget_currency,
+            intent_lifespan, is_active, intent_vector
+        ) VALUES (
+            %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s,
+            %s, %s, %s
+        ) RETURNING id
+    """, (
+        current_user["id"], title, ind_id, sub_id, itype, data.intention,
+        data.influence, data.has_budget, data.budget_min, data.budget_max, data.budget_currency,
+        data.intent_lifespan, data.is_active, emb if len(emb) == 768 else None
+    ))
+    new_row = c.fetchone()
+    intent_id = new_row["id"]
+    conn.commit()
+
+    c.execute("""
+        SELECT ui.id, ui.user_id, ui.title, ui.industry_id, i.name as industry_name, 
+               ui.sub_industry_id, s.name as sub_industry_name, 
+               ui.type, ui.intention, ui.influence, ui.has_budget, 
+               ui.budget_min, ui.budget_max, ui.budget_currency, 
+               ui.intent_lifespan, ui.is_active, ui.created_at
+        FROM user_intents ui
+        LEFT JOIN industries i ON ui.industry_id = i.id
+        LEFT JOIN sub_industries s ON ui.sub_industry_id = s.id
+        WHERE ui.id = %s
+    """, (intent_id,))
+    res_dict = dict(c.fetchone())
+    conn.close()
+
+    background_tasks.add_task(run_matching_for_user, current_user["id"])
+    return res_dict
+
+
+@router.put("/users/intents/{intent_id}", response_model=UserIntentSchema)
+def update_user_intent(
+    intent_id: int,
+    data: UserIntentUpdate,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    from app.services.matching_service import generate_embedding, run_matching_for_user
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT id FROM user_intents WHERE id = %s AND user_id = %s", (intent_id, current_user["id"]))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Intention not found")
+
+    update_dict = data.dict(exclude_unset=True)
+    if "intention" in update_dict and update_dict["intention"]:
+        emb = generate_embedding(update_dict["intention"])
+        if len(emb) == 768:
+            update_dict["intent_vector"] = emb
+
+    fields = []
+    vals = []
+    for k, v in update_dict.items():
+        fields.append(f"{k} = %s")
+        vals.append(v)
+    
+    if fields:
+        fields.append("updated_at = NOW()")
+        vals.append(intent_id)
+        c.execute(f"UPDATE user_intents SET {', '.join(fields)} WHERE id = %s", tuple(vals))
+        conn.commit()
+
+    c.execute("""
+        SELECT ui.id, ui.user_id, ui.title, ui.industry_id, i.name as industry_name, 
+               ui.sub_industry_id, s.name as sub_industry_name, 
+               ui.type, ui.intention, ui.influence, ui.has_budget, 
+               ui.budget_min, ui.budget_max, ui.budget_currency, 
+               ui.intent_lifespan, ui.is_active, ui.created_at
+        FROM user_intents ui
+        LEFT JOIN industries i ON ui.industry_id = i.id
+        LEFT JOIN sub_industries s ON ui.sub_industry_id = s.id
+        WHERE ui.id = %s
+    """, (intent_id,))
+    res_dict = dict(c.fetchone())
+    conn.close()
+
+    background_tasks.add_task(run_matching_for_user, current_user["id"])
+    return res_dict
+
+
+@router.delete("/users/intents/{intent_id}")
+def delete_user_intent(
+    intent_id: int,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("DELETE FROM user_intents WHERE id = %s AND user_id = %s", (intent_id, current_user["id"]))
+    deleted = c.rowcount
+    conn.commit()
+    conn.close()
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Intention not found")
+    return {"message": "Intention deleted successfully"}
+
+
 @router.get("/users/{user_id}", response_model=UserProfile)
 def get_user_by_id(user_id: int, current_user: dict = Depends(auth.get_current_user)):
     user = user_repo.get_user_by_id(user_id)
@@ -301,12 +577,14 @@ def get_user_by_id(user_id: int, current_user: dict = Depends(auth.get_current_u
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT ui.id, ui.industry_id, i.name as industry_name, 
+        SELECT ui.id, ui.user_id, ui.title, ui.industry_id, i.name as industry_name, 
                ui.sub_industry_id, s.name as sub_industry_name, 
-               ui.type, ui.intention
+               ui.type, ui.intention, ui.influence, ui.has_budget, 
+               ui.budget_min, ui.budget_max, ui.budget_currency, 
+               ui.intent_lifespan, ui.is_active, ui.created_at
         FROM user_intents ui
-        JOIN industries i ON ui.industry_id = i.id
-        JOIN sub_industries s ON ui.sub_industry_id = s.id
+        LEFT JOIN industries i ON ui.industry_id = i.id
+        LEFT JOIN sub_industries s ON ui.sub_industry_id = s.id
         WHERE ui.user_id = %s
         ORDER BY ui.created_at DESC
     """, (user_id,))
@@ -322,12 +600,14 @@ def get_profile(current_user: dict = Depends(auth.get_current_user)):
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT ui.id, ui.industry_id, i.name as industry_name, 
+        SELECT ui.id, ui.user_id, ui.title, ui.industry_id, i.name as industry_name, 
                ui.sub_industry_id, s.name as sub_industry_name, 
-               ui.type, ui.intention
+               ui.type, ui.intention, ui.influence, ui.has_budget, 
+               ui.budget_min, ui.budget_max, ui.budget_currency, 
+               ui.intent_lifespan, ui.is_active, ui.created_at
         FROM user_intents ui
-        JOIN industries i ON ui.industry_id = i.id
-        JOIN sub_industries s ON ui.sub_industry_id = s.id
+        LEFT JOIN industries i ON ui.industry_id = i.id
+        LEFT JOIN sub_industries s ON ui.sub_industry_id = s.id
         WHERE ui.user_id = %s
         ORDER BY ui.created_at DESC
     """, (current_user["id"],))
@@ -341,7 +621,6 @@ def get_profile(current_user: dict = Depends(auth.get_current_user)):
 @router.put("/profile", response_model=UserProfile)
 def update_profile(
     data: UserUpdate,
-    background_tasks: BackgroundTasks,
     current_user: dict = Depends(auth.get_current_user)
 ):
     update_data = data.dict(exclude_unset=True)
@@ -354,71 +633,19 @@ def update_profile(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update user profile"
         )
-        
-    # If the user updated their B2B matchmaking intention statement,
-    # run the AI extraction in the backend to populate their B2B segment intents
-    if "intent" in update_data and update_data["intent"] is not None:
-        intent_text = update_data["intent"].strip()
-        from app.services.intent_service import extract_intent_segments
-        segments = extract_intent_segments(intent_text)
-        
-        conn = get_conn()
-        c = conn.cursor()
-        try:
-            # Delete old segments
-            c.execute("DELETE FROM user_intents WHERE user_id = %s", (current_user["id"],))
             
-            for s in segments:
-                ind_name = s["industry"].strip()
-                sub_name = s["sub_industry"].strip()
-                
-                # Resolve Industry
-                c.execute("SELECT id FROM industries WHERE LOWER(name) = LOWER(%s)", (ind_name,))
-                row = c.fetchone()
-                if row:
-                    industry_id = row["id"]
-                else:
-                    c.execute("INSERT INTO industries (name) VALUES (%s) RETURNING id", (ind_name,))
-                    industry_id = c.fetchone()["id"]
-                    
-                # Resolve Sub-Industry
-                c.execute("SELECT id FROM sub_industries WHERE LOWER(name) = LOWER(%s)", (sub_name,))
-                row = c.fetchone()
-                if row:
-                    sub_industry_id = row["id"]
-                else:
-                    c.execute("INSERT INTO sub_industries (name) VALUES (%s) RETURNING id", (sub_name,))
-                    sub_industry_id = c.fetchone()["id"]
-                    
-                # Link Industry and Sub-Industry
-                c.execute("""
-                    INSERT INTO industry_sub_industries (industry_id, sub_industry_id)
-                    VALUES (%s, %s) ON CONFLICT DO NOTHING
-                """, (industry_id, sub_industry_id))
-                
-                # Insert the segment intent
-                c.execute("""
-                    INSERT INTO user_intents (user_id, industry_id, sub_industry_id, type, intention)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (current_user["id"], industry_id, sub_industry_id, s["type"], s["intention"]))
-                
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            print(f"Error updating user B2B segments: {e}")
-        finally:
-            conn.close()
-            
-    # Attach updated intents list to return response
+    # Attach intents list to return response
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT ui.id, ui.industry_id, i.name as industry_name, 
+        SELECT ui.id, ui.user_id, ui.title, ui.industry_id, i.name as industry_name, 
                ui.sub_industry_id, s.name as sub_industry_name, 
-               ui.type, ui.intention
+               ui.type, ui.intention, ui.influence, ui.has_budget, 
+               ui.budget_min, ui.budget_max, ui.budget_currency, 
+               ui.intent_lifespan, ui.is_active, ui.created_at
         FROM user_intents ui
-        JOIN industries i ON ui.industry_id = i.id
-        JOIN sub_industries s ON ui.sub_industry_id = s.id
+        LEFT JOIN industries i ON ui.industry_id = i.id
+        LEFT JOIN sub_industries s ON ui.sub_industry_id = s.id
         WHERE ui.user_id = %s
         ORDER BY ui.created_at DESC
     """, (current_user["id"],))
@@ -427,12 +654,195 @@ def update_profile(
     
     updated_dict = dict(updated)
     updated_dict["intents"] = [dict(r) for r in rows]
-    
-    if "intent" in update_data and update_data["intent"] is not None:
-        from app.services.matching_service import run_matching_for_user
-        background_tasks.add_task(run_matching_for_user, current_user["id"])
-        
     return updated_dict
+
+
+# -----------------------------
+# Multi-Intention Management API
+# -----------------------------
+from app.schemas import UserIntentCreate, UserIntentUpdate
+
+@router.get("/users/intents", response_model=List[UserIntentSchema])
+def get_user_intents(current_user: dict = Depends(auth.get_current_user)):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("""
+        SELECT ui.id, ui.user_id, ui.title, ui.industry_id, i.name as industry_name, 
+               ui.sub_industry_id, s.name as sub_industry_name, 
+               ui.type, ui.intention, ui.influence, ui.has_budget, 
+               ui.budget_min, ui.budget_max, ui.budget_currency, 
+               ui.intent_lifespan, ui.is_active, ui.created_at
+        FROM user_intents ui
+        LEFT JOIN industries i ON ui.industry_id = i.id
+        LEFT JOIN sub_industries s ON ui.sub_industry_id = s.id
+        WHERE ui.user_id = %s
+        ORDER BY ui.created_at DESC
+    """, (current_user["id"],))
+    rows = c.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+@router.post("/users/intents", response_model=UserIntentSchema)
+def create_user_intent(
+    data: UserIntentCreate,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    from app.services.intent_service import extract_intent_segments
+    from app.services.matching_service import generate_embedding, run_matching_for_user
+
+    segments = extract_intent_segments(data.intention)
+    ind_id = data.industry_id
+    sub_id = data.sub_industry_id
+    itype = data.type or "buy"
+    
+    conn = get_conn()
+    c = conn.cursor()
+    
+    # If industry/sub-industry not provided, resolve from extracted AI segment or default
+    if (not ind_id or not sub_id) and segments:
+        s = segments[0]
+        ind_name = s.get("industry", "General Business").strip()
+        sub_name = s.get("sub_industry", "Business Services").strip()
+        itype = s.get("type", itype)
+        
+        c.execute("SELECT id FROM industries WHERE LOWER(name) = LOWER(%s)", (ind_name,))
+        row = c.fetchone()
+        if row:
+            ind_id = row["id"]
+        else:
+            c.execute("INSERT INTO industries (name) VALUES (%s) RETURNING id", (ind_name,))
+            ind_id = c.fetchone()["id"]
+            
+        c.execute("SELECT id FROM sub_industries WHERE LOWER(name) = LOWER(%s)", (sub_name,))
+        row = c.fetchone()
+        if row:
+            sub_id = row["id"]
+        else:
+            c.execute("INSERT INTO sub_industries (name) VALUES (%s) RETURNING id", (sub_name,))
+            sub_id = c.fetchone()["id"]
+
+    if not ind_id or not sub_id:
+        c.execute("SELECT id FROM industries LIMIT 1")
+        ind_id = (c.fetchone() or {}).get("id", 1)
+        c.execute("SELECT id FROM sub_industries LIMIT 1")
+        sub_id = (c.fetchone() or {}).get("id", 1)
+
+    # Link Industry and Sub-Industry
+    c.execute("""
+        INSERT INTO industry_sub_industries (industry_id, sub_industry_id)
+        VALUES (%s, %s) ON CONFLICT DO NOTHING
+    """, (ind_id, sub_id))
+
+    # Generate Vector Embedding
+    emb = generate_embedding(data.intention)
+
+    title = data.title or (data.intention[:40] + "..." if len(data.intention) > 40 else data.intention)
+
+    c.execute("""
+        INSERT INTO user_intents (
+            user_id, title, industry_id, sub_industry_id, type, intention,
+            influence, has_budget, budget_min, budget_max, budget_currency,
+            intent_lifespan, is_active, intent_vector
+        ) VALUES (
+            %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s,
+            %s, %s, %s
+        ) RETURNING id
+    """, (
+        current_user["id"], title, ind_id, sub_id, itype, data.intention,
+        data.influence, data.has_budget, data.budget_min, data.budget_max, data.budget_currency,
+        data.intent_lifespan, data.is_active, emb if len(emb) == 768 else None
+    ))
+    new_row = c.fetchone()
+    intent_id = new_row["id"]
+    conn.commit()
+
+    c.execute("""
+        SELECT ui.id, ui.user_id, ui.title, ui.industry_id, i.name as industry_name, 
+               ui.sub_industry_id, s.name as sub_industry_name, 
+               ui.type, ui.intention, ui.influence, ui.has_budget, 
+               ui.budget_min, ui.budget_max, ui.budget_currency, 
+               ui.intent_lifespan, ui.is_active, ui.created_at
+        FROM user_intents ui
+        LEFT JOIN industries i ON ui.industry_id = i.id
+        LEFT JOIN sub_industries s ON ui.sub_industry_id = s.id
+        WHERE ui.id = %s
+    """, (intent_id,))
+    res_dict = dict(c.fetchone())
+    conn.close()
+
+    background_tasks.add_task(run_matching_for_user, current_user["id"])
+    return res_dict
+
+
+@router.put("/users/intents/{intent_id}", response_model=UserIntentSchema)
+def update_user_intent(
+    intent_id: int,
+    data: UserIntentUpdate,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    from app.services.matching_service import generate_embedding, run_matching_for_user
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT id FROM user_intents WHERE id = %s AND user_id = %s", (intent_id, current_user["id"]))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Intention not found")
+
+    update_dict = data.dict(exclude_unset=True)
+    if "intention" in update_dict and update_dict["intention"]:
+        emb = generate_embedding(update_dict["intention"])
+        if len(emb) == 768:
+            update_dict["intent_vector"] = emb
+
+    fields = []
+    vals = []
+    for k, v in update_dict.items():
+        fields.append(f"{k} = %s")
+        vals.append(v)
+    
+    if fields:
+        fields.append("updated_at = NOW()")
+        vals.append(intent_id)
+        c.execute(f"UPDATE user_intents SET {', '.join(fields)} WHERE id = %s", tuple(vals))
+        conn.commit()
+
+    c.execute("""
+        SELECT ui.id, ui.user_id, ui.title, ui.industry_id, i.name as industry_name, 
+               ui.sub_industry_id, s.name as sub_industry_name, 
+               ui.type, ui.intention, ui.influence, ui.has_budget, 
+               ui.budget_min, ui.budget_max, ui.budget_currency, 
+               ui.intent_lifespan, ui.is_active, ui.created_at
+        FROM user_intents ui
+        LEFT JOIN industries i ON ui.industry_id = i.id
+        LEFT JOIN sub_industries s ON ui.sub_industry_id = s.id
+        WHERE ui.id = %s
+    """, (intent_id,))
+    res_dict = dict(c.fetchone())
+    conn.close()
+
+    background_tasks.add_task(run_matching_for_user, current_user["id"])
+    return res_dict
+
+
+@router.delete("/users/intents/{intent_id}")
+def delete_user_intent(
+    intent_id: int,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("DELETE FROM user_intents WHERE id = %s AND user_id = %s", (intent_id, current_user["id"]))
+    deleted = c.rowcount
+    conn.commit()
+    conn.close()
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Intention not found")
+    return {"message": "Intention deleted successfully"}
 
 from pydantic import BaseModel
 

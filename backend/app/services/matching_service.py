@@ -12,15 +12,11 @@ logger = logging.getLogger(__name__)
 
 import os
 
-OLLAMA_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+OPENAI_KEY = getattr(settings, "openai_api_key", os.environ.get("OPENAI_API_KEY", ""))
 
-# Configure Ollama local client
-client = openai.OpenAI(
-    base_url=OLLAMA_URL,
-    api_key="ollama" # Ollama doesn't require a key, but OpenAI SDK expects a non-empty string
-)
-MODEL = "llama3.1"
-EMBEDDING_MODEL = "nomic-embed-text" # 768 dimensions, blazingly fast local embedding model
+openai_client = openai.OpenAI(
+    api_key=OPENAI_KEY
+) if OPENAI_KEY else None
 
 def get_user_performance_score(user_id: int) -> float:
     """
@@ -67,60 +63,31 @@ def get_user_performance_score(user_id: int) -> float:
     ups = 0.5 + 0.5 * (converted / total) - 0.1 * stale
     return max(0.2, min(1.5, ups))
 
-def ensure_ollama_models():
-    """
-    Query the local/production Ollama instance list.
-    If llama3.1 or nomic-embed-text are missing, automatically pull them.
-    """
-    base_ollama_url = OLLAMA_URL.replace("/v1", "")
-    required_models = [MODEL, EMBEDDING_MODEL]
-    for model in required_models:
-        try:
-            # 1. Check if model is already pulled
-            req = urllib.request.Request(f"{base_ollama_url}/api/tags")
-            with urllib.request.urlopen(req) as response:
-                data = json.loads(response.read().decode())
-                installed_models = [m["name"].split(":")[0] for m in data.get("models", [])]
-                installed_names = [m["name"] for m in data.get("models", [])]
-                if model in installed_models or model in installed_names:
-                    logger.info(f"Ollama model '{model}' is already available.")
-                    continue
-            
-            # 2. If not pulled, trigger pull
-            logger.info(f"Ollama model '{model}' is missing. Pulling automatically...")
-            pull_url = f"{base_ollama_url}/api/pull"
-            payload = json.dumps({"name": model, "stream": False}).encode("utf-8")
-            pull_req = urllib.request.Request(
-                pull_url, 
-                data=payload,
-                headers={"Content-Type": "application/json"}
-            )
-            with urllib.request.urlopen(pull_req, timeout=600) as response:
-                logger.info(f"Successfully pulled Ollama model '{model}'.")
-        except urllib.error.URLError as e:
-            logger.warning(f"Could not connect to Ollama instance to verify/pull '{model}' at {base_ollama_url}: {e}")
-        except Exception as e:
-            logger.error(f"Error checking/pulling Ollama model '{model}': {e}")
-
 def generate_embedding(text: str) -> list:
     """
-    Generates a 768-dimensional vector embedding for the input text using local Ollama model (nomic-embed-text).
+    Generates a 768-dimensional vector embedding for the input text using OpenAI (text-embedding-3-small, dimensions=768).
     """
     if not text or not text.strip():
         return []
-    try:
-        response = client.embeddings.create(
-            model=EMBEDDING_MODEL,
-            input=[text.strip()]
-        )
-        return response.data[0].embedding
-    except Exception as e:
-        logger.error(f"Error generating local Ollama embedding: {e}. Make sure Ollama is running and '{EMBEDDING_MODEL}' is pulled.")
-        return []
+
+    if openai_client:
+        try:
+            response = openai_client.embeddings.create(
+                model="text-embedding-3-small",
+                input=[text.strip()],
+                dimensions=768
+            )
+            return response.data[0].embedding
+        except Exception as e:
+            logger.error(f"Error generating OpenAI embedding: {e}")
+            return []
+
+    logger.error("OPENAI_API_KEY missing, cannot generate vector embedding.")
+    return []
 
 def evaluate_intent_match(user_a: dict, user_b: dict, intent_a_text: str, intent_b_text: str, industry: str, sub_industry: str) -> dict:
     """
-    Use local Llama 3.1 via Ollama to evaluate B2B intent complementarity in a segment.
+    Use OpenAI gpt-4o-mini to evaluate B2B intent complementarity in a segment.
     Returns: is_match (bool), score (0-100), reason (str)
     """
     prompt = f"""
@@ -148,34 +115,33 @@ Return JSON ONLY with keys:
 - "score": (number, 0 to 100)
 - "reason": (string explaining the business synergy in 2-3 sentences)
 """
-    try:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-            response_format={"type": "json_object"}
-        )
-        data = json.loads(response.choices[0].message.content)
-        return {
-            "is_match": bool(data.get("is_match", False)),
-            "score": float(data.get("score", 0)),
-            "reason": str(data.get("reason", "No synergy context available."))
-        }
-    except Exception as e:
-        logger.error(f"Failed local Ollama Llama 3.1 check for {user_a['id']} and {user_b['id']}: {e}. Make sure '{MODEL}' is pulled in Ollama.")
-        return {"is_match": False, "score": 0.0, "reason": ""}
+    if openai_client:
+        try:
+            from app.ai import parse_json_response
+            response = openai_client.chat.completions.create(
+                model=settings.openai_model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0,
+                response_format={"type": "json_object"}
+            )
+            data = parse_json_response(response.choices[0].message.content)
+            return {
+                "is_match": bool(data.get("is_match", False)),
+                "score": float(data.get("score", 0)),
+                "reason": str(data.get("reason", "No synergy context available."))
+            }
+        except Exception as e:
+            logger.error(f"Failed OpenAI match evaluation for users {user_a.get('id')} and {user_b.get('id')}: {e}")
+
+    return {"is_match": False, "score": 0.0, "reason": ""}
 
 def run_matching_cycle():
     """
     Core matching loop running every 30 mins:
-    1. Verify Ollama models are pulled (pull them automatically if missing).
-    2. Ensure all active user intents have local embeddings.
-    3. Evaluate candidates within matching sub-industries having opposite (buy vs give) intents.
+    1. Ensure all active user intents have embeddings.
+    2. Evaluate candidates within matching sub-industries having opposite (buy vs give) intents.
     """
-    logger.info("Starting local B2B matches evaluation cycle using Ollama (Llama 3.1 & nomic-embed-text)...")
-    
-    # 0. Automatically check/pull missing Ollama models
-    ensure_ollama_models()
+    logger.info("Starting B2B matches evaluation cycle using OpenAI...")
     
     conn = get_conn()
     c = conn.cursor()
@@ -190,7 +156,7 @@ def run_matching_cycle():
     unembedded_intents = [dict(row) for row in c.fetchall()]
     
     if unembedded_intents:
-        logger.info(f"Generating local embeddings for {len(unembedded_intents)} user intents using {EMBEDDING_MODEL}...")
+        logger.info(f"Generating OpenAI 768-dim embeddings for {len(unembedded_intents)} user intents...")
         for ui in unembedded_intents:
             emb = generate_embedding(ui["intention"])
             if emb:
@@ -228,7 +194,6 @@ def run_matching_cycle():
           AND u1.intent_active = TRUE AND u2.intent_active = TRUE
           AND ui1.intent_vector IS NOT NULL AND ui2.intent_vector IS NOT NULL
         ORDER BY distance ASC
-        LIMIT 100
     """)
     candidates = [dict(row) for row in c.fetchall()]
     conn.close()
@@ -237,7 +202,7 @@ def run_matching_cycle():
         logger.info("No matching sub-industry buy/give intent candidates found.")
         return
         
-    logger.info(f"Evaluating {len(candidates)} potential B2B segment match pairs using Llama 3.1.")
+    logger.info(f"Evaluating {len(candidates)} potential B2B segment match pairs using OpenAI.")
     
     matches_added = 0
     evaluated_pairs = set()
@@ -316,22 +281,37 @@ def perform_audit_and_notify():
     conn = get_conn()
     c = conn.cursor()
     
-    # 1. Fetch current matches audit data
+    # 1. Fetch current matches audit data using the full rich history query
     c.execute("""
         SELECT 
             m.id AS match_id,
-            m.score AS score,
+            m.created_at AS match_time,
+            
+            -- Match Percentages (Raw score & Formatted representation)
+            m.score AS match_percentage_numeric,
             CONCAT(ROUND(m.score, 0), '%') AS match_percentage_formatted,
+            
             m.status AS match_status,
             m.match_reason AS ai_synergy_reason,
+            
+            -- Segment details
             ind.name AS industry,
             sub.name AS sub_industry,
+            
+            -- User 1 details & intention statement
+            u1.id AS user_1_id,
             CONCAT(u1.first_name, ' ', u1.last_name) AS user_1_name,
             u1.company_name AS user_1_company,
+            ui1.type AS user_1_intent_type,
             ui1.intention AS user_1_intention,
+            
+            -- User 2 details & intention statement
+            u2.id AS user_2_id,
             CONCAT(u2.first_name, ' ', u2.last_name) AS user_2_name,
             u2.company_name AS user_2_company,
+            ui2.type AS user_2_intent_type,
             ui2.intention AS user_2_intention
+
         FROM matches m
         JOIN users u1 ON m.user_id_1 = u1.id
         JOIN user_intents ui1 ON u1.id = ui1.user_id
@@ -341,21 +321,22 @@ def perform_audit_and_notify():
         JOIN industries ind ON ui1.industry_id = ind.id
         WHERE 
             (ui1.type = 'buy' AND ui2.type = 'give') 
-            OR (ui1.type = 'give' AND ui2.type = 'buy');
+            OR (ui1.type = 'give' AND ui2.type = 'buy')
+        ORDER BY m.created_at DESC;
     """)
     current_matches = [dict(row) for row in c.fetchall()]
     
     # Map current matches by ID
     current_map = {m["match_id"]: m for m in current_matches}
     
-    # 2. Fetch the latest snapshot status for each match
+    # 2. Fetch the latest history status for each match
     c.execute("""
-        SELECT DISTINCT ON (match_id) match_id, status 
-        FROM matches_status_snapshot 
-        ORDER BY match_id, logged_at DESC;
+        SELECT DISTINCT ON (match_id) match_id, match_status
+        FROM matches_history 
+        ORDER BY match_id, model_run_update_time DESC;
     """)
-    snapshot_records = [dict(row) for row in c.fetchall()]
-    snapshot_map = {r["match_id"]: r["status"] for r in snapshot_records}
+    history_records = [dict(row) for row in c.fetchall()]
+    history_map = {r["match_id"]: r["match_status"] for r in history_records}
     
     new_matches = []
     rejected_matches = []
@@ -364,7 +345,7 @@ def perform_audit_and_notify():
     # 3. Detect changes
     for match_id, curr in current_map.items():
         curr_status = curr["match_status"]
-        prev_status = snapshot_map.get(match_id)
+        prev_status = history_map.get(match_id)
         
         # New Match detection
         if prev_status is None:
@@ -373,7 +354,7 @@ def perform_audit_and_notify():
         elif curr_status == 'rejected' and prev_status != 'rejected':
             rejected_matches.append({
                 "match_id": match_id,
-                "match_percentage": round(curr["score"]),
+                "match_percentage": round(curr["match_percentage_numeric"]),
                 "user_1_name": curr["user_1_name"],
                 "user_1_company": curr["user_1_company"],
                 "user_2_name": curr["user_2_name"],
@@ -383,7 +364,7 @@ def perform_audit_and_notify():
         elif curr_status in ['connected', 'converted'] and prev_status not in ['connected', 'converted']:
             connected_matches.append({
                 "match_id": match_id,
-                "match_percentage": round(curr["score"]),
+                "match_percentage": round(curr["match_percentage_numeric"]),
                 "user_1_name": curr["user_1_name"],
                 "user_1_company": curr["user_1_company"],
                 "user_2_name": curr["user_2_name"],
@@ -393,24 +374,37 @@ def perform_audit_and_notify():
     # 4. Send email (even if 0 changes, to notify that the scheduler ran successfully)
     send_match_summary_email("ndingibr@gmail.com", new_matches, rejected_matches, connected_matches)
     
-    # 5. Insert new snapshot for all matches
+    # 5. Insert new rich history records for all matches
     for match_id, curr in current_map.items():
-        c.execute(
-            "INSERT INTO matches_status_snapshot (match_id, status) VALUES (%s, %s)",
-            (match_id, curr["match_status"])
-        )
+        c.execute("""
+            INSERT INTO matches_history (
+                match_id, match_time, match_percentage_numeric, match_percentage_formatted,
+                match_status, ai_synergy_reason, industry, sub_industry,
+                user_1_id, user_1_name, user_1_company, user_1_intent_type, user_1_intention,
+                user_2_id, user_2_name, user_2_company, user_2_intent_type, user_2_intention,
+                model_run_update_time
+            ) VALUES (
+                %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                NOW()
+            )
+        """, (
+            curr["match_id"], curr["match_time"], curr["match_percentage_numeric"], curr["match_percentage_formatted"],
+            curr["match_status"], curr["ai_synergy_reason"], curr["industry"], curr["sub_industry"],
+            curr["user_1_id"], curr["user_1_name"], curr["user_1_company"], curr["user_1_intent_type"], curr["user_1_intention"],
+            curr["user_2_id"], curr["user_2_name"], curr["user_2_company"], curr["user_2_intent_type"], curr["user_2_intention"]
+        ))
     conn.commit()
     conn.close()
-    logger.info("Matchmaking status snapshot logged and audit notification completed.")
+    logger.info("Matchmaking status history logged and audit notification completed.")
 
 def run_matching_for_user(user_id: int):
     """
     Runs matching immediately for a specific user after they update their profile.
     """
     logger.info(f"Running immediate matching cycle for user {user_id}...")
-    
-    # 0. Automatically check/pull missing Ollama models
-    ensure_ollama_models()
     
     conn = get_conn()
     c = conn.cursor()
@@ -459,7 +453,6 @@ def run_matching_for_user(user_id: int):
           AND u1.intent_active = TRUE AND u2.intent_active = TRUE
           AND ui1.intent_vector IS NOT NULL AND ui2.intent_vector IS NOT NULL
         ORDER BY distance ASC
-        LIMIT 10
     """, (user_id, user_id, user_id, user_id))
     candidates = [dict(row) for row in c.fetchall()]
     conn.close()
@@ -468,7 +461,7 @@ def run_matching_for_user(user_id: int):
         logger.info(f"No immediate candidates found for user {user_id}.")
         return
         
-    logger.info(f"Evaluating {len(candidates)} potential immediate B2B match pairs for user {user_id} using Llama 3.1.")
+    logger.info(f"Evaluating {len(candidates)} potential immediate B2B match pairs for user {user_id} using OpenAI.")
     
     matches_added = 0
     evaluated_pairs = set()

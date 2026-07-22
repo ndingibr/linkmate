@@ -73,7 +73,7 @@ export default function ForgotPassword() {
         justifyContent: "space-between",
         alignItems: "center",
         width: "100%",
-        maxWidth: "1060px",
+        maxWidth: "1280px",
         margin: "0 auto 2.5rem auto",
         padding: "0 24px",
         boxSizing: "border-box"
@@ -105,7 +105,7 @@ export default function ForgotPassword() {
       </div>
 
       <div className="split-page-section" style={{ flex: 1, display: "flex", alignItems: "center" }}>
-        <div className="login-split-container" style={{ display: "flex", gap: "60px", flexWrap: "wrap", width: "100%", maxWidth: "1060px", margin: "0 auto", padding: "0 24px", boxSizing: "border-box", alignItems: "center" }}>
+        <div className="login-split-container" style={{ display: "flex", gap: "60px", flexWrap: "wrap", width: "100%", maxWidth: "1280px", margin: "0 auto", padding: "0 24px", boxSizing: "border-box", alignItems: "center" }}>
           
           {/* LEFT COLUMN: BRAND VALUE PROP */}
           <div className="login-left-banner circles-content" style={{ 

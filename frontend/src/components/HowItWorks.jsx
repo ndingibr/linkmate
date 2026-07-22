@@ -75,11 +75,11 @@ export default function HowItWorks() {
   ];
 
   return (
-    <div className="section how-it-works" style={{ padding: "30px 0 15px", backgroundColor: "#ffffff" }}>
+    <div className="section how-it-works" style={{ padding: "50px 0", backgroundColor: "#ffffff" }}>
       <div className="container" style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
         
-        {/* Header Title Section */}
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
+        {/* Section Header */}
+        <div style={{ textAlign: "center", marginBottom: "35px" }}>
           <h2 style={{ 
             color: "#35453f", 
             fontWeight: "600", 
@@ -122,20 +122,6 @@ export default function HowItWorks() {
                   cursor: "default",
                   display: "flex",
                   flexDirection: "column"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-6px)";
-                  e.currentTarget.style.borderColor = "#ec5e3b";
-                  e.currentTarget.style.boxShadow = "0 20px 40px rgba(236, 94, 59, 0.04)";
-                  const borderLine = e.currentTarget.querySelector(".step-card-top-border");
-                  if (borderLine) borderLine.style.backgroundColor = "#ec5e3b";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.borderColor = "#eef1f6";
-                  e.currentTarget.style.boxShadow = "none";
-                  const borderLine = e.currentTarget.querySelector(".step-card-top-border");
-                  if (borderLine) borderLine.style.backgroundColor = "#eef1f6";
                 }}
               >
                 {/* Clean Top Border Indicator */}

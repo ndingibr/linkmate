@@ -28,7 +28,7 @@ def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at, intent, role, influence, has_budget, budget_min, budget_max, budget_currency, comm_channel, comm_hours, intent_lifespan, location, intent_active, photo
+        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at, intent, role, influence, has_budget, budget_min, budget_max, budget_currency, comm_channel, comm_hours, intent_lifespan, location, intent_active, photo, company_verified
         FROM users
         WHERE email = %s
     """, (email,))
@@ -40,7 +40,7 @@ def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at, intent, role, influence, has_budget, budget_min, budget_max, budget_currency, comm_channel, comm_hours, intent_lifespan, location, intent_active, photo
+        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at, intent, role, influence, has_budget, budget_min, budget_max, budget_currency, comm_channel, comm_hours, intent_lifespan, location, intent_active, photo, company_verified
         FROM users
         WHERE id = %s
     """, (user_id,))
@@ -52,7 +52,7 @@ def get_user_by_provider(provider: str, provider_id: str) -> Optional[Dict[str, 
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at, intent, role, influence, has_budget, budget_min, budget_max, budget_currency, comm_channel, comm_hours, intent_lifespan, location, intent_active, photo
+        SELECT id, first_name, last_name, email, phone, company_name, password_hash, auth_provider, provider_id, is_active, created_at, updated_at, intent, role, influence, has_budget, budget_min, budget_max, budget_currency, comm_channel, comm_hours, intent_lifespan, location, intent_active, photo, company_verified
         FROM users
         WHERE auth_provider = %s AND provider_id = %s
     """, (provider, provider_id))

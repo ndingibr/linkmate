@@ -138,6 +138,71 @@ export async function updateUserProfile(payload) {
 }
 
 // -----------------------------
+// USER INTENTIONS API
+// -----------------------------
+export async function getUserIntents() {
+  try {
+    const response = await axios.get("/users/intents", {
+      headers: getAuthHeader(),
+    });
+    if (Array.isArray(response.data) && response.data.length > 0) {
+      return response.data;
+    }
+    // Fallback: check profile intents
+    const profile = await getUserProfile();
+    if (profile && Array.isArray(profile.intents) && profile.intents.length > 0) {
+      return profile.intents;
+    }
+    return response.data || [];
+  } catch (error) {
+    console.error("Fetching intentions failed, trying profile fallback:", error);
+    try {
+      const profile = await getUserProfile();
+      if (profile && Array.isArray(profile.intents)) {
+        return profile.intents;
+      }
+    } catch (e) {}
+    throw error;
+  }
+}
+
+export async function createUserIntent(payload) {
+  try {
+    const response = await axios.post("/users/intents", payload, {
+      headers: getAuthHeader(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Creating intention failed:", error);
+    throw error;
+  }
+}
+
+export async function updateUserIntent(id, payload) {
+  try {
+    const response = await axios.put(`/users/intents/${id}`, payload, {
+      headers: getAuthHeader(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Updating intention failed:", error);
+    throw error;
+  }
+}
+
+export async function deleteUserIntent(id) {
+  try {
+    const response = await axios.delete(`/users/intents/${id}`, {
+      headers: getAuthHeader(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Deleting intention failed:", error);
+    throw error;
+  }
+}
+
+// -----------------------------
 // CONTACT FORM API
 // -----------------------------
 export async function submitContact(payload) {

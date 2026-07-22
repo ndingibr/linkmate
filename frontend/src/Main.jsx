@@ -13,7 +13,7 @@ import ContactSection from "./Contact";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import { isAuthenticated, logout, getSeoLandingCopy } from "./api";
-import { Menu, X, ArrowRight, Sparkles, Building, Briefcase, Mail, CheckCircle, Send, Zap, Search } from "lucide-react";
+import { Menu, X, ArrowRight, Sparkles, Building, Briefcase, Mail, CheckCircle, Send, Zap, Search, ChevronDown } from "lucide-react";
 
 export default function Main() {
   const navigate = useNavigate();
@@ -29,7 +29,6 @@ export default function Main() {
         .then((data) => {
           setSeoData(data);
           if (data.pre_fill) {
-            // Trim typical prefix and quotes for the active search box value
             const cleanPrefill = data.pre_fill.replace(/^e\.g\.\s*["']?|["']?$/gi, "");
             setHeroQuery(cleanPrefill);
           }
@@ -61,30 +60,12 @@ export default function Main() {
     }
   ];
 
-  const drivers = [
-    {
-      badge: "I'm Selling",
-      label: "I've got something the market needs — help me find the businesses that want it.",
-      intent: "I have a product or service ready to go and I am looking for buyers, distributors, or business clients who need exactly what I offer."
-    },
-    {
-      badge: "I'm Buying",
-      label: "I know exactly what I need for my business — I just can't find the right person to deliver it.",
-      intent: "I have a specific business need and I am looking for a verified supplier, service provider, or circle member who can fulfill it reliably."
-    },
-    {
-      badge: "I'm Connecting",
-      label: "I'm not here to sell or buy — I want to meet the right people in my space.",
-      intent: "I am looking to expand my professional network and connect with like-minded business owners, industry peers, or strategic circles."
-    }
-  ];
-
   const handleHeroSearch = (e) => {
     e.preventDefault();
     if (!heroQuery.trim()) return;
     localStorage.setItem("pending_intent", heroQuery.trim());
     if (isAuthenticated()) {
-      navigate("/profile");
+      navigate("/matches");
     } else {
       navigate("/signup", { state: { fromSearch: true } });
     }
@@ -94,13 +75,10 @@ export default function Main() {
     <>
       <Header />
 
-
-      {/* Circles Section */}
+      {/* Hero Circles Section */}
       <section id="circles" className="circles-section-light">
         <div
-          className="container"
-          data-aos="fade-up"
-          data-aos-delay="100"
+          className="container py-lg-5 py-4 my-lg-3 my-0 hero-container-1100"
           style={{
             maxWidth: "960px",
             padding: "0 20px",
@@ -172,10 +150,8 @@ export default function Main() {
 
               <form onSubmit={handleHeroSearch} style={{ position: "relative", maxWidth: "740px", marginBottom: "1.5rem" }}>
                 <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                  {/* Search Icon */}
                   <Search size={20} style={{ position: "absolute", left: "20px", color: "#9ca3af" }} />
                   
-                  {/* Input Box */}
                   <input
                     type="text"
                     value={heroQuery}
@@ -194,17 +170,8 @@ export default function Main() {
                       transition: "all 0.3s ease",
                       boxSizing: "border-box"
                     }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = "#ec5e3b";
-                      e.target.style.boxShadow = "0 8px 30px rgba(236, 94, 59, 0.08)";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = "#d1d5db";
-                      e.target.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.04)";
-                    }}
                   />
 
-                  {/* Search Button inside input */}
                   <button
                     type="submit"
                     style={{
@@ -218,8 +185,7 @@ export default function Main() {
                       fontWeight: "600",
                       fontSize: "0.88rem",
                       cursor: "pointer",
-                      boxShadow: "0 4px 12px rgba(236, 94, 59, 0.15)",
-                      transition: "all 0.3s ease"
+                      boxShadow: "0 4px 15px rgba(236, 94, 59, 0.3)"
                     }}
                   >
                     Connect
@@ -232,24 +198,45 @@ export default function Main() {
               </span>
             </div>
 
-            {/* Right Column — Handshake Picture shifted up vertically to make space */}
-            <div className="col-lg-4" style={{ position: "relative", minHeight: "450px", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
-              <div style={{
-                width: "315px",
-                height: "315px",
-                borderRadius: "50%",
-                backgroundColor: "#d1d5db",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
-                position: "absolute",
-                right: "-20px",
-                top: "38%",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-                zIndex: 1
-              }}>
+            {/* Right Column — Handshake Picture */}
+            <div className="col-lg-4 hero-handshake-col" style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", minHeight: "340px", zIndex: 1 }}>
+              <style>{`
+                @media (max-width: 991px) {
+                  .hero-handshake-col {
+                    min-height: auto !important;
+                    margin-top: 32px !important;
+                    justify-content: center !important;
+                    width: 100% !important;
+                  }
+                  .hero-handshake-circle {
+                    position: relative !important;
+                    top: 0 !important;
+                    right: 0 !important;
+                    transform: none !important;
+                    margin: 0 auto !important;
+                  }
+                }
+              `}</style>
+
+              <div
+                className="hero-handshake-circle"
+                style={{
+                  width: "280px",
+                  height: "280px",
+                  borderRadius: "50%",
+                  backgroundColor: "#d1d5db",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  position: "absolute",
+                  right: "0",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  pointerEvents: "none",
+                  zIndex: 1
+                }}
+              >
                 <img
                   src={realHandshake120}
                   alt="Business Matchmaking Connection"
@@ -267,12 +254,12 @@ export default function Main() {
       </section>
 
       {/* How It Works */}
-        <HowItWorks />
+      <HowItWorks />
 
       {/* How businesses use Small Circles */}
-        <BusinessUsage />
+      <BusinessUsage />
 
-      {/* What to Look For Section (Formal B2B layout) */}
+      {/* What to Look For Section */}
       <section
         style={{
           backgroundColor: "#f2f6f3",
@@ -284,7 +271,6 @@ export default function Main() {
         <div className="container" style={{ maxWidth: "960px", margin: "0 auto", padding: "0 20px" }}>
           <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: "48px" }}>
             
-            {/* Left column: Header */}
             <div style={{ flex: "1 1 300px" }}>
               <span
                 style={{
@@ -323,75 +309,57 @@ export default function Main() {
                 )}
               </p>
 
-              {/* Graphic element to balance section height */}
+              {/* Evaluation Criteria Checklist */}
+              <div style={{ marginTop: "1.2rem", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.9rem", fontWeight: "600" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> Business Registration & Compliance Standing
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.9rem", fontWeight: "600" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> Proven Industry Track Record & Verified Client References
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.9rem", fontWeight: "600" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> Operational Capacity & Service Delivery Readiness
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#35453f", fontSize: "0.9rem", fontWeight: "600" }}>
+                  <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> Transparent Commercial Terms & Financial Health
+                </div>
+              </div>
+            </div>
+
+            {/* Right / Centered Image Column */}
+            <div className="vetting-image-col" style={{ flex: "0 0 180px", display: "flex", justifyContent: "center", alignItems: "center" }}>
+              <style>{`
+                @media (max-width: 768px) {
+                  .vetting-image-col {
+                    flex: 1 1 100% !important;
+                    justify-content: center !important;
+                    margin-top: 16px !important;
+                  }
+                  .vetting-image-circle {
+                    margin: 0 auto !important;
+                  }
+                }
+              `}</style>
               <div 
+                className="vetting-image-circle"
                 style={{
-                  marginTop: "2.5rem",
-                  marginLeft: "auto",
-                  marginRight: "auto",
                   width: "180px",
                   height: "180px",
                   borderRadius: "50%",
-                  backgroundColor: "#d1d5db",
+                  backgroundColor: "#ffffff",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   overflow: "hidden",
-                  border: "1px solid #dbe3dd",
-                  opacity: 0.85
+                  border: "3px solid #d1d5db",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
                 }}
               >
                 <img
                   src={evaluationChecklist}
                   alt="Vetting and Trust Verification"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    display: "block"
-                  }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
-              </div>
-            </div>
-
-            {/* Right column: Clean List with Dividers */}
-            <div style={{ flex: "2 1 500px" }}>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {(seoData && seoData.what_to_look_for ? seoData.what_to_look_for : [
-                  "Verified operational credentials and verified identity status",
-                  "Direct alignment of business requirements and capability scoring",
-                  "Active circle membership and rapid response history for introductions",
-                  "Sufficient scale and logistical capability to fulfill contract requirements"
-                ]).map((point, index, arr) => (
-                  <div
-                    key={index}
-                    style={{
-                      display: "flex",
-                      gap: "24px",
-                      padding: "20px 0",
-                      borderBottom: index === arr.length - 1 ? "none" : "1px solid #e1e9e3",
-                      alignItems: "flex-start"
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: "#4a5d5e",
-                        fontFamily: "sans-serif",
-                        fontSize: "1.1rem",
-                        fontWeight: "700",
-                        paddingTop: "1px",
-                        flexShrink: 0
-                      }}
-                    >
-                      {index + 1}
-                    </span>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ color: "#1f2937", fontSize: "0.95rem", lineHeight: "1.5", margin: 0, fontWeight: "500" }}>
-                        {point}
-                      </p>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
 
@@ -400,96 +368,64 @@ export default function Main() {
       </section>
 
       {/* FAQ Section */}
-      <section
-        id="faq"
-        style={{
-          backgroundColor: "#26463a",
-          padding: "80px 0",
-        }}
-      >
-        <div className="container" style={{ maxWidth: "800px", margin: "0 auto", padding: "0 20px" }}>
+      <section style={{ backgroundColor: "#ffffff", padding: "60px 0" }}>
+        <div className="container" style={{ maxWidth: "960px", margin: "0 auto", padding: "0 20px" }}>
           <div style={{ textAlign: "center", marginBottom: "3rem" }}>
-            <span
-              style={{
-                color: "#ec5e3b",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                fontSize: "0.85rem",
-              }}
-            >
+            <span style={{ color: "#ec5e3b", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "0.8rem" }}>
               Questions & Answers
             </span>
-            <h2
-              style={{
-                fontSize: "2rem",
-                fontWeight: 600,
-                color: "#ffffff",
-                marginTop: "0.5rem",
-              }}
-            >
+            <h2 style={{ fontSize: "2rem", fontWeight: "800", color: "#35453f", marginTop: "0.4rem" }}>
               Frequently Asked Questions
             </h2>
-            <p style={{ color: "#eef1f6", fontSize: "0.95rem", margin: "8px 0 0" }}>
-              Learn more about how Small Circles connects complementary business intentions.
-            </p>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {faqItems.map((faq, index) => {
               const isOpen = openFaq === index;
               return (
                 <div
                   key={index}
                   style={{
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    borderRadius: "12px",
-                    overflow: "hidden",
-                    background: "#ffffff",
-                    transition: "all 0.25s ease"
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "16px",
+                    backgroundColor: "#f8fafc",
+                    overflow: "hidden"
                   }}
                 >
                   <button
-                    type="button"
                     onClick={() => setOpenFaq(isOpen ? null : index)}
                     style={{
                       width: "100%",
                       padding: "20px 24px",
-                      background: "transparent",
-                      border: "none",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      background: "none",
+                      border: "none",
                       cursor: "pointer",
                       textAlign: "left"
                     }}
                   >
-                    <span style={{ fontWeight: 600, fontSize: "1.05rem", color: "#26463a" }}>
+                    <span style={{ fontWeight: "700", color: "#35453f", fontSize: "1rem" }}>
                       {faq.q}
                     </span>
-                    <span style={{
-                      fontSize: "1.2rem",
-                      fontWeight: "bold",
-                      color: "#ec5e3b",
-                      transition: "transform 0.2s",
-                      transform: isOpen ? "rotate(45deg)" : "rotate(0deg)"
-                    }}>
-                      ＋
-                    </span>
+                    <ChevronDown
+                      size={20}
+                      style={{
+                        color: "#ec5e3b",
+                        transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 0.25s ease"
+                      }}
+                    />
                   </button>
-                  <div
-                    style={{
-                      maxHeight: isOpen ? "300px" : "0px",
-                      opacity: isOpen ? 1 : 0,
-                      overflow: "hidden",
-                      transition: "all 0.25s cubic-bezier(0, 1, 0.5, 1)",
-                      padding: isOpen ? "0 24px 20px" : "0 24px"
-                    }}
-                  >
-                    <p style={{ color: "#4b5563", fontSize: "0.9rem", lineHeight: "1.6", margin: 0 }}>
-                      {faq.a}
-                    </p>
-                  </div>
+
+                  {isOpen && (
+                    <div style={{ padding: "0 24px 20px" }}>
+                      <p style={{ color: "#4b5563", fontSize: "0.9rem", lineHeight: "1.6", margin: 0 }}>
+                        {faq.a}
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -118,7 +118,8 @@ export default function Header({ profileOverride }) {
   const isHome = currentPath === "/";
   const isMessages = currentPath === "/messages";
   const isMatches = currentPath === "/matches";
-  const isProfile = currentPath.startsWith("/profile");
+  const isIntentions = currentPath === "/intentions";
+  const isProfile = currentPath === "/profile";
 
   return (
     <>
@@ -495,7 +496,7 @@ export default function Header({ profileOverride }) {
                       View Profile
                     </div>
                     <div className="dropdown-item-link" onClick={() => navigate("/matches")}>
-                      My Matches
+                      Matches
                     </div>
                     <div className="dropdown-item-link sign-out" onClick={handleLogout}>
                       Sign Out
@@ -576,8 +577,8 @@ export default function Header({ profileOverride }) {
                 
                 <div className="nav-divider-pipe"></div>
 
-                <div className={`nav-tab-item ${isMessages ? "active" : ""}`} onClick={() => navigate("/messages")}>
-                  Connections
+                <div className={`nav-tab-item ${isIntentions ? "active" : ""}`} onClick={() => navigate("/intentions")}>
+                  Intentions
                 </div>
 
                 <div className="nav-divider-pipe"></div>
@@ -592,7 +593,7 @@ export default function Header({ profileOverride }) {
                 <div className="nav-divider-pipe"></div>
 
                 <div className={`nav-tab-item ${isProfile ? "active" : ""}`} onClick={() => navigate("/profile")}>
-                  Account
+                  Account Profile
                 </div>
               </nav>
 

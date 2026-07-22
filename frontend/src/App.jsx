@@ -6,6 +6,7 @@ import ContactPage from "./ContactPage";
 import SignIn from "./SignIn";
 import SignUp from "./SignUp";
 import Profile from "./Profile";
+import Intentions from "./Intentions";
 import Messages from "./Messages";
 import Matches from "./Matches";
 import ForgotPassword from "./ForgotPassword";
@@ -19,7 +20,7 @@ export default function App() {
     if (token) {
       localStorage.setItem("linkmate_auth_token", token);
       window.history.replaceState({}, document.title, window.location.pathname);
-      navigate("/profile");
+      navigate("/matches");
     }
   }, [navigate]);
 
@@ -31,6 +32,7 @@ export default function App() {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/profile/:id" element={<Profile />} />
+      <Route path="/intentions" element={<Intentions />} />
       <Route path="/messages" element={<Messages />} />
       <Route path="/matches" element={<Matches />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

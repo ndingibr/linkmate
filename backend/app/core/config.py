@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     database_url: str
 
     # --- OpenAI (required) ---
-    openai_api_key: str
+    openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
 
     # --- PayFast (public sandbox defaults; override in prod) ---

@@ -83,9 +83,9 @@ def get_seo_landing_copy(keyword: str = Query(..., description="The Google searc
                 "what_to_look_for": wtlf
             }
 
-        # 4. If still not found, call local Ollama model (Llama3.1) to generate copy dynamically!
+        # 4. If still not found, call OpenAI to generate copy dynamically!
         if not row:
-            print(f"No match found for '{keyword}' in database. Invoking local Llama3.1...")
+            print(f"No match found for '{keyword}' in database. Invoking dynamic OpenAI copy generator...")
             prompt = f"""You are a professional copywriter for LinkMate, a business partner introduction platform.
 Generate landing page copy for the following search term: "{keyword}".
 Your response MUST be a raw JSON object with exactly four fields (no markdown, no backticks, no other text):
@@ -97,47 +97,46 @@ Your response MUST be a raw JSON object with exactly four fields (no markdown, n
     "A list of exactly 3-4 professional key evaluation criteria or vetting points specific to selecting this type of partner"
   ]
 }}"""
-            try:
-                response = requests.post(
-                    "http://localhost:11434/api/generate",
-                    json={
-                        "model": "llama3.1:latest",
-                        "prompt": prompt,
-                        "stream": False,
-                        "format": "json"
-                    },
-                    timeout=8.0
-                )
-                if response.status_code == 200:
-                    res_data = response.json()
-                    parsed = json.loads(res_data.get("response", "{}"))
-                    
-                    heading = parsed.get("heading", f"Connect with a verified {keyword.title()}")
-                    description = parsed.get("description", f"Find trusted partners and service providers for {keyword} in our verified business network. Skip the gatekeepers and start matching on LinkMate.")
-                    pre_fill = parsed.get("pre_fill", f"Looking for {keyword}")
-                    wtlf = parsed.get("what_to_look_for", default_what_to_look_for)
-                    if not isinstance(wtlf, list) or len(wtlf) == 0:
-                        wtlf = default_what_to_look_for
+            parsed = None
+            if settings.openai_api_key:
+                try:
+                    import openai
+                    from app.ai import parse_json_response
+                    ai_client = openai.OpenAI(api_key=settings.openai_api_key)
+                    res = ai_client.chat.completions.create(
+                        model=settings.openai_model,
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0
+                    )
+                    parsed = parse_json_response(res.choices[0].message.content)
+                except Exception as e:
+                    print(f"Error generating dynamic copy with OpenAI: {e}")
 
-                    # Cache the new generated keyword in the database
-                    c.execute("""
-                        INSERT INTO seo_keywords (phrase, canonical_term, intent, industry_id, sub_industry_id, search_volume, difficulty, heading, description, pre_fill, what_to_look_for)
-                        VALUES (%s, %s, %s, NULL, NULL, 50, 20, %s, %s, %s, %s)
-                        ON CONFLICT (phrase) DO NOTHING
-                    """, (clean_keyword, keyword.title(), "Dynamic AI Generated", heading, description, pre_fill, json.dumps(wtlf)))
-                    conn.commit()
-                    
-                    return {
-                        "phrase": clean_keyword,
-                        "canonical_term": keyword.title(),
-                        "intent": "Dynamic AI Generated",
-                        "heading": heading,
-                        "description": description,
-                        "pre_fill": pre_fill,
-                        "what_to_look_for": wtlf
-                    }
-            except Exception as e:
-                print(f"Error generating dynamic copy with Llama3.1: {e}")
+            if parsed and isinstance(parsed, dict) and "heading" in parsed:
+                heading = parsed.get("heading", f"Connect with a verified {keyword.title()}")
+                description = parsed.get("description", f"Find trusted partners and service providers for {keyword} in our verified business network. Skip the gatekeepers and start matching on LinkMate.")
+                pre_fill = parsed.get("pre_fill", f"Looking for {keyword}")
+                wtlf = parsed.get("what_to_look_for", default_what_to_look_for)
+                if not isinstance(wtlf, list) or len(wtlf) == 0:
+                    wtlf = default_what_to_look_for
+
+                # Cache the new generated keyword in the database
+                c.execute("""
+                    INSERT INTO seo_keywords (phrase, canonical_term, intent, industry_id, sub_industry_id, search_volume, difficulty, heading, description, pre_fill, what_to_look_for)
+                    VALUES (%s, %s, %s, NULL, NULL, 50, 20, %s, %s, %s, %s)
+                    ON CONFLICT (phrase) DO NOTHING
+                """, (clean_keyword, keyword.title(), "Dynamic AI Generated", heading, description, pre_fill, json.dumps(wtlf)))
+                conn.commit()
+                
+                return {
+                    "phrase": clean_keyword,
+                    "canonical_term": keyword.title(),
+                    "intent": "Dynamic AI Generated",
+                    "heading": heading,
+                    "description": description,
+                    "pre_fill": pre_fill,
+                    "what_to_look_for": wtlf
+                }
 
         # Final Fallback if anything failed
         return {

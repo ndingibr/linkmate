@@ -67,93 +67,72 @@ export default function BusinessUsage() {
             marginRight: "auto",
             lineHeight: "1.5"
           }}>
-            Simple connections designed for commercial procurement, growth, and development.
+            Connect directly with verified corporate partners across three main focus areas.
           </p>
         </div>
 
-        {/* 3-Column Categories Grid */}
+        {/* 3 Focus Columns */}
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "30px"
+          gap: "24px"
         }}>
-          {categories.map((cat, index) => {
-            const isHovered = hoveredCard === index;
+          {categories.map((cat, idx) => {
+            const isHovered = hoveredCard === idx;
             return (
-              <div 
-                key={index} 
+              <div
+                key={idx}
+                onMouseEnter={() => setHoveredCard(idx)}
+                onMouseLeave={() => setHoveredCard(null)}
                 style={{
-                  background: isHovered ? cat.hoverBg : "#ffffff",
-                  padding: "32px 28px",
-                  borderRadius: "16px",
-                  border: isHovered ? `1px solid ${cat.hoverBorder}` : "1px solid rgba(0, 0, 0, 0.06)",
+                  backgroundColor: isHovered ? cat.hoverBg : "#ffffff",
+                  borderRadius: "20px",
+                  padding: "32px 24px",
+                  border: `1px solid ${isHovered ? cat.hoverBorder : "#e5e7eb"}`,
+                  boxShadow: isHovered 
+                    ? "0 12px 30px rgba(0, 0, 0, 0.06)" 
+                    : "0 2px 10px rgba(0, 0, 0, 0.02)",
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                  cursor: "default",
                   display: "flex",
                   flexDirection: "column",
-                  boxShadow: isHovered ? "0 12px 30px rgba(38, 70, 58, 0.03)" : "none",
-                  transform: isHovered ? "translateY(-4px)" : "translateY(0)"
+                  justifyContent: "space-between"
                 }}
-                onMouseEnter={() => setHoveredCard(index)}
-                onMouseLeave={() => setHoveredCard(null)}
               >
-                {/* Header Title & Serif Number */}
-                <div style={{ 
-                  display: "flex", 
-                  justifyContent: "space-between", 
-                  alignItems: "flex-start", 
-                  marginBottom: "16px" 
-                }}>
-                  <h3 style={{ 
-                    fontSize: "1.25rem", 
-                    fontWeight: "600", 
-                    color: "#35453f", 
-                    margin: 0,
-                    letterSpacing: "-0.01em"
+                <div>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "20px"
                   }}>
-                    {cat.title}
-                  </h3>
-                  <span style={{
-                    fontFamily: "'Outfit', sans-serif",
-                    fontSize: "2.2rem",
-                    fontWeight: "600",
-                    color: isHovered ? cat.accent : "rgba(53, 69, 63, 0.12)",
-                    lineHeight: 1,
-                    transition: "color 0.3s ease"
-                  }}>
-                    {cat.num}
-                  </span>
+                    <h3 style={{
+                      fontSize: "1.35rem",
+                      fontWeight: "600",
+                      color: "#111827",
+                      margin: 0
+                    }}>
+                      {cat.title}
+                    </h3>
+                    <span style={{
+                      fontSize: "0.85rem",
+                      fontWeight: "700",
+                      color: cat.accent,
+                      backgroundColor: "rgba(0, 0, 0, 0.04)",
+                      padding: "4px 10px",
+                      borderRadius: "12px"
+                    }}>
+                      0{cat.num}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    {cat.items.map((item, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", color: "#4b5563", fontSize: "0.95rem" }}>
+                        <span style={{ color: "#ec5e3b", fontWeight: "bold" }}>✓</span> {item}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-
-                {/* Subtle Divider Rule */}
-                <div style={{ height: "1px", backgroundColor: "#eef2f5", marginBottom: "20px" }} />
-
-                {/* List of items with custom en-dash bullets */}
-                <ul style={{ 
-                  listStyle: "none", 
-                  padding: 0, 
-                  margin: 0, 
-                  display: "flex", 
-                  flexDirection: "column", 
-                  gap: "10px" 
-                }}>
-                  {cat.items.map((item, i) => (
-                    <li 
-                      key={i} 
-                      style={{ 
-                        display: "flex", 
-                        alignItems: "baseline", 
-                        gap: "10px",
-                        fontSize: "0.95rem",
-                        color: "#4b5563",
-                        lineHeight: "1.4"
-                      }}
-                    >
-                      <span style={{ color: cat.accent, fontWeight: "700", fontSize: "0.85rem" }}>—</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
             );
           })}
